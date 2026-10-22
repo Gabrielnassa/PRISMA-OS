@@ -8,6 +8,7 @@ import {
   createContent,
   decideApproval,
   getContent,
+  getVersionDocument,
   listPendingApprovals,
   saveVersion,
   submitForApproval,
@@ -121,6 +122,9 @@ describe("primeira entrega: briefing → texto → arte → revisão → aprova�
     await expect(decideApproval(reviewer, second.approvalId, { decision: "rejected" })).rejects.toBeInstanceOf(ValidationError);
     await decideApproval(reviewer, second.approvalId, { decision: "rejected", note: "Evitar a palavra frio no título" });
     expect((await getContent(owner, created.contentId)).status).toBe("rejected");
+    // A versão reprovada nunca vira a oficial: exportá-la sai como rascunho; a aprovada continua sendo a v2.
+    expect((await getVersionDocument(owner, created.contentId, v3.versionId)).isApproved).toBe(false);
+    expect((await getVersionDocument(owner, created.contentId, v2.versionId)).isApproved).toBe(true);
     const memories = await listMemories(owner, clientId);
     expect(memories.some((m) => m.kind === "suggestion" && m.source === "approval_feedback")).toBe(true);
 

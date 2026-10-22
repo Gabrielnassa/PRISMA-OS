@@ -44,7 +44,7 @@ Para testar o fluxo sem credenciais, `AI_PROVIDER=demo` monta textos a partir do
 
 ## 11. Custos só com tarifa cadastrada
 
-Custo = tokens reais × tarifa vigente (`provider_prices`), com fonte registrada. Sem tarifa, custo nulo e aviso "sem tarifa" (seção 21: não inventar preços). A tarifa inicial do Claude Opus 5.5 vem da tabela pública da Anthropic.
+Custo = tokens reais × tarifa vigente (`provider_prices`), com fonte registrada. Sem tarifa, custo nulo e aviso "sem tarifa" (seção 21: não inventar preços); para o teto mensal conta uma estimativa separada (decisão 17). As tarifas iniciais (Claude Opus 5.5 e modelos de fallback) vêm da tabela pública da Anthropic.
 
 ## 12. Aprendizado controlado
 
@@ -57,3 +57,24 @@ Driver local para esta etapa; a interface `StorageDriver` permite S3/Supabase St
 ## 14. Rotas em português
 
 As URLs da interface seguem o idioma do produto (`/clientes`, `/criar`, `/conteudos`…); as rotas de API ficam em inglês.
+
+## 15. Limites de texto calibrados por layout
+
+Um único limite por campo e tipo de lâmina não serve para todas as proporções: um título que cabe em 4:5 sem foto pode não caber em 1:1 com foto. Cada template guarda um fator de capacidade por proporção, tipo de lâmina e presença de foto, obtido renderizando o próprio template com textos realistas no limite. A IA, o editor e o controle de qualidade usam o mesmo limite efetivo. Alternativa descartada: medir o texto da IA depois de gerado e pedir nova versão (mais chamadas pagas e mais lentidão).
+
+## 16. Formulários sem limpeza automática
+
+O React 19 limpa formulários com Server Actions ao final de cada envio, inclusive quando a ação devolve erro — a pessoa perderia o que digitou. `ActionForm` envia pela mesma Server Action dentro de uma transição, sem essa limpeza, mantém o estado de envio para os botões e pede confirmação quando a ação é irreversível. Formulários que devem ser limpos após sucesso declaram `resetOnSuccess`.
+
+## 17. Custo por tentativa no fallback do servidor
+
+Com o fallback do servidor ativado, uma recusa pode gerar duas cobranças (a tentativa recusada e a do modelo de fallback). O provedor lê `usage.iterations` e cada parte é cobrada pela tarifa do modelo que a executou. Quando falta tarifa, o custo oficial fica nulo (nada é inventado) e uma estimativa separada, identificada como tal, conta para o teto — preferimos bloquear cedo a deixar gastos sem controle.
+
+## 18. Chave de idempotência da IA com resumo da entrada
+
+A chave efetiva inclui skill, versão, provedor/modelo e um resumo da entrada. Assim um reprocessamento com o mesmo pedido reaproveita o resultado pago, mas um pedido diferente (outro template, versão nova da skill, saída de demonstração vs. IA real) gera uma execução nova em vez de reutilizar texto escrito para outra coisa.
+
+## 19. WebP recusado no envio
+
+O resvg (renderizador das peças finais) não decodifica WebP: a foto apareceria na pré-visualização do navegador e sumiria do PNG exportado. Até haver conversão no servidor, o envio de WebP é recusado com orientação para enviar JPEG ou PNG.
+

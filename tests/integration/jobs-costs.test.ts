@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { many, one, systemCtx, withTx } from "../../src/server/db";
 import { BudgetExceededError, IntegrationError, ProviderNotConfiguredError } from "../../src/server/errors";
 import { setProviderOverride } from "../../src/server/ai/gateway";
-import { createClient } from "../../src/server/services/clients";
+import { addMemory, createClient, getClient, updateBrandProfile } from "../../src/server/services/clients";
 import { createContent, getContent, retryGeneration } from "../../src/server/services/content";
 import { getCostSummary, setClientBudget, addPrice } from "../../src/server/services/costs";
 import { claimNextJob, completeJob, failJob } from "../../src/server/jobs/queue";
@@ -249,4 +249,34 @@ describe("fila, recuperação de falhas e custos", () => {
     expect(run.status).toBe("succeeded");
     expect(Number(run.cost_usd)).toBeCloseTo(0.0144, 6);
   });
+
+  it("a IA recebe o contexto do cliente certo: marca, fatos confirmados e briefing — sem dados de outro cliente", async () => {
+    const { owner, clientId } = await setup();
+    const other = await createClient(owner, { name: "Outro Cliente" });
+    for (const [id, company, forbidden] of [
+      [clientId, "Loja Aurora", "barato"],
+      [other.id, "Empresa Vizinha", "segredo-do-outro"],
+    ] as const) {
+      const { brand } = await getClient(owner, id);
+      brand.business.companyName = company;
+      brand.voice.forbiddenTerms = [forbidden];
+      await updateBrandProfile(owner, id, brand);
+    }
+    await addMemory(owner, clientId, { kind: "fact", content: "Entrega grátis em toda a cidade" });
+    await addMemory(owner, clientId, { kind: "suggestion", content: "Talvez usar mais emojis" });
+    await addMemory(owner, other.id, { kind: "fact", content: "Fato exclusivo do outro cliente" });
+    const fake = new FakeProvider();
+    setProviderOverride(fake);
+    await createContent(owner, request(clientId));
+    await runJobsUntilIdle();
+    const req = fake.requests.at(-1)!;
+    expect(req.context).toContain("Loja Aurora");
+    expect(req.context).toContain("barato");
+    expect(req.context).toContain("Entrega grátis em toda a cidade");
+    // Sugestões não entram no contexto até virarem fato ou preferência.
+    expect(req.context).not.toContain("Talvez usar mais emojis");
+    for (const leaked of ["Empresa Vizinha", "segredo-do-outro", "Fato exclusivo do outro cliente"]) expect(req.context + req.task).not.toContain(leaked);
+    expect(req.task).toContain("Lançamento da nova coleção de outono.");
+  });
 });
+

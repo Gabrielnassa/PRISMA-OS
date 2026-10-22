@@ -55,9 +55,12 @@ export class FakeProvider implements AiProvider {
   nextUsageByModel: UsageByModel | null = null;
   /** Atraso artificial (para testar execuções simultâneas). */
   delayMs = 0;
+  /** Pedidos recebidos (para conferir o contexto enviado à IA). */
+  requests: Array<StructuredRequest<unknown>> = [];
 
   async generateStructured<T>(req: StructuredRequest<T>): Promise<StructuredResult<T>> {
     this.calls++;
+    this.requests.push(req as StructuredRequest<unknown>);
     const failure = this.failures.shift();
     if (failure) throw failure;
     if (!req.demo) throw new Error("sem demo");

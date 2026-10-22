@@ -1,24 +1,31 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { requireAuth } from "@/server/auth/next";
-import { getDashboard } from "@/server/services/dashboard";
+import { DASHBOARD_PERIODS, DASHBOARD_PERIOD_LABELS, getDashboard, type DashboardPeriod } from "@/server/services/dashboard";
+import { CHANNELS, CHANNEL_LABELS, type Channel } from "@/lib/content/document";
 import { listClients } from "@/server/services/clients";
 import { providerStatus } from "@/server/ai/gateway";
 import { can } from "@/server/authz/permissions";
-import { STATUS_LABELS, type ContentStatus } from "@/lib/content/status";
-import { Alert, Card, CardHeader, EmptyState, LinkButton, PageHeader, Select, Stat, Table, Td, Th, formatDateTime, formatUsd } from "@/components/ui";
+import { CONTENT_STATUSES, STATUS_LABELS, type ContentStatus } from "@/lib/content/status";
+import { Alert, Card, CardHeader, EmptyState, LinkButton, PageHeader, Select, Stat, Table, Td, Th, cx, formatDateTime, formatUsd } from "@/components/ui";
 import { StatusBadge } from "@/components/status";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
 const PIPELINE: ContentStatus[] = ["generating", "in_review", "awaiting_approval", "approved", "rejected", "failed"];
 
-export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ cliente?: string }> }) {
+const oneOf = <T extends string>(list: readonly T[], v: string | undefined): T | undefined => (list as readonly string[]).includes(v ?? "") ? (v as T) : undefined;
+
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ cliente?: string; periodo?: string; canal?: string; status?: string }> }) {
   const auth = await requireAuth();
-  const { cliente } = await searchParams;
+  const sp = await searchParams;
   const clients = await listClients(auth);
-  const clientId = clients.some((c) => c.id === cliente) ? cliente : undefined;
-  const data = await getDashboard(auth, clientId);
+  const clientId = clients.some((c) => c.id === sp.cliente) ? sp.cliente : undefined;
+  const period: DashboardPeriod = oneOf(DASHBOARD_PERIODS, sp.periodo) ?? "month";
+  const channel = oneOf<Channel>(CHANNELS, sp.canal);
+  const status = oneOf<ContentStatus>(CONTENT_STATUSES, sp.status);
+  const data = await getDashboard(auth, { clientId, period, channel, status });
+  const periodLabel = DASHBOARD_PERIOD_LABELS[period].toLowerCase();
   const provider = providerStatus();
 
   return (
@@ -27,28 +34,47 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         eyebrow="Centro de operações"
         title={`Olá, ${auth.userName.split(" ")[0]}`}
         description="Indicadores calculados a partir dos registros reais da sua organização."
-        actions={
-          <>
-            <form className="flex items-center gap-2" action="/">
-              <label htmlFor="cliente" className="sr-only">
-                Filtrar por cliente
-              </label>
-              <Select id="cliente" name="cliente" defaultValue={clientId ?? ""} className="w-56">
-                <option value="">Todos os clientes</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </Select>
-              <button type="submit" className="h-10 rounded-lg border border-ink-600 px-3 text-sm text-ink-200 hover:bg-ink-800">
-                Filtrar
-              </button>
-            </form>
-            {can(auth.role, "content.create") ? <LinkButton href="/criar">Criar conteúdo</LinkButton> : null}
-          </>
-        }
+        actions={can(auth.role, "content.create") ? <LinkButton href="/criar">Criar conteúdo</LinkButton> : null}
       />
+
+      {clients.length > 0 ? (
+        <form className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_170px_185px_190px_auto]" action="/" aria-label="Filtros do dashboard">
+          <Select name="cliente" defaultValue={clientId ?? ""} aria-label="Cliente">
+            <option value="">Todos os clientes</option>
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
+          <Select name="periodo" defaultValue={period} aria-label="Período">
+            {DASHBOARD_PERIODS.map((p) => (
+              <option key={p} value={p}>
+                {DASHBOARD_PERIOD_LABELS[p]}
+              </option>
+            ))}
+          </Select>
+          <Select name="canal" defaultValue={channel ?? ""} aria-label="Canal">
+            <option value="">Todos os canais</option>
+            {CHANNELS.map((c) => (
+              <option key={c} value={c}>
+                {CHANNEL_LABELS[c]}
+              </option>
+            ))}
+          </Select>
+          <Select name="status" defaultValue={status ?? ""} aria-label="Status">
+            <option value="">Todos os status</option>
+            {CONTENT_STATUSES.map((st) => (
+              <option key={st} value={st}>
+                {STATUS_LABELS[st]}
+              </option>
+            ))}
+          </Select>
+          <button type="submit" className="h-10 rounded-lg border border-ink-600 px-4 text-sm text-ink-200 hover:bg-ink-800">
+            Filtrar
+          </button>
+        </form>
+      ) : null}
 
       {!provider.configured ? (
         <div className="mb-6">
@@ -74,12 +100,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
             <Stat label="Clientes ativos" value={data.clients.active} hint={`${data.clients.total} no total`} />
-            <Stat label="Produzidos no mês" value={data.producedThisMonth} tone="violet" />
-            <Stat label="Aprovados no mês" value={data.approvedThisMonth} tone="teal" />
+            <Stat label="Produzidos" value={data.producedInPeriod} tone="violet" hint={DASHBOARD_PERIOD_LABELS[period]} />
+            <Stat label="Aprovados" value={data.approvedInPeriod} tone="teal" hint={DASHBOARD_PERIOD_LABELS[period]} />
             <Stat label="Aguardando aprovação" value={data.pendingApprovals} tone={data.pendingApprovals > 0 ? "warning" : undefined} />
-            <Stat label="Falhas (7 dias)" value={data.failedJobs} tone={data.failedJobs > 0 ? "danger" : undefined} hint={`${data.runningJobs} tarefa(s) em andamento`} />
+            <Stat label="Falhas de geração" value={data.failedJobs} tone={data.failedJobs > 0 ? "danger" : undefined} hint={`${DASHBOARD_PERIOD_LABELS[period]} · ${data.runningJobs} em andamento`} />
             <Stat
-              label="Consumo de IA no mês"
+              label={`Consumo de IA (${periodLabel})`}
               value={formatUsd(data.ai.costUsd)}
               hint={
                 data.ai.runs === 0
@@ -123,7 +149,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                   const total = Math.max(1, ...PIPELINE.map((p) => data.contentByStatus[p] ?? 0));
                   return (
                     <li key={s}>
-                      <Link href={`/conteudos?status=${s}${clientId ? `&cliente=${clientId}` : ""}`} className="block">
+                      <Link href={`/conteudos?status=${s}${clientId ? `&cliente=${clientId}` : ""}`} className={cx("block", status && status !== s && "opacity-50")}>
                         <div className="mb-1 flex justify-between text-sm">
                           <span className="text-ink-300">{STATUS_LABELS[s]}</span>
                           <span className="font-semibold text-ink-100">{n}</span>
@@ -137,7 +163,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 })}
               </ul>
               <div className="border-t border-ink-700 px-5 py-3 text-xs text-ink-400">
-                Tempo médio do pedido à aprovação (90 dias):{" "}
+                Tempo médio do pedido à aprovação ({periodLabel}):{" "}
                 <span className="font-semibold text-ink-200">
                   {data.avgHoursToApproval === null
                     ? "sem dados"
@@ -150,7 +176,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </div>
 
           <Card className="mt-6">
-            <CardHeader title="Por cliente" description="Volume, pendências e consumo de IA no mês" />
+            <CardHeader title="Por cliente" description={`Conteúdos criados, aprovações e consumo de IA (${periodLabel}); pendências atuais`} />
             <Table>
               <thead>
                 <tr>

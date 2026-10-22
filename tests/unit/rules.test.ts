@@ -76,3 +76,25 @@ describe("validação de arquivos pelo conteúdo", () => {
     expect(imageSize(jpeg, "image/jpeg")).toEqual({ width: 200, height: 100 });
   });
 });
+
+describe("redirecionamento e IP de origem", () => {
+  it("aceita só caminhos internos após o login", async () => {
+    const { safeNextPath } = await import("@/lib/safe-redirect");
+    expect(safeNextPath("/conteudos?status=approved#x")).toBe("/conteudos?status=approved#x");
+    for (const bad of ["//evil.example", "/\\evil.example", "/\tevil", "https://evil.example", "evil", "/login", "/api/health", "/%0d%0aLocation:x"]) {
+      const out = safeNextPath(bad);
+      expect(out === "/" || !/evil/.test(out), bad).toBe(true);
+      expect(new URL(out, "http://app.test").origin).toBe("http://app.test");
+    }
+    expect(safeNextPath("/\\evil.example")).toBe("/");
+  });
+
+  it("só usa X-Forwarded-For atrás de proxy confiável (último valor)", async () => {
+    const { clientIpFrom } = await import("@/server/auth/next");
+    const h = new Headers({ "x-forwarded-for": "1.1.1.1, 203.0.113.9" });
+    expect(clientIpFrom(h, false)).toBeNull();
+    expect(clientIpFrom(h, true)).toBe("203.0.113.9");
+    expect(clientIpFrom(new Headers({ "x-forwarded-for": "<script>" }), true)).toBeNull();
+  });
+});
+

@@ -17,12 +17,13 @@ Central operacional de marketing com IA para agências que atendem vários clien
 | Pedido de conteúdo com briefing, sugestão de pautas e escolha de fotos | Central de criação |
 | Geração assíncrona (fila no PostgreSQL + worker) com direção de arte por regras e copy por IA | Conteúdos |
 | 18 templates originais (6 famílias × 3) renderizados em SVG/PNG nas proporções 1:1, 4:5 e 9:16 | Biblioteca de layouts |
-| Editor visual: textos com limite por campo, tema, alinhamento, escala, foto com foco/zoom, template, cores, fontes, logotipo | Conteúdos → editor |
+| Editor visual: textos com limite por campo ajustado ao layout, tema, alinhamento, escala, foto com foco/zoom, template, cores, fontes, logotipo | Conteúdos → editor |
 | Controle de qualidade automático (texto cortado, contraste WCAG, marca, termos proibidos, CTA, números sem fonte, ofertas não confirmadas) | Painel de qualidade |
 | Versões imutáveis, comparação e restauração | Conteúdos → Versões |
 | Aprovação vinculada ao hash da versão; alteração exige nova aprovação; reprovação vira sugestão revisável na memória | Aprovações |
 | Exportação PNG/ZIP (com legenda e textos alternativos) da versão aprovada; rascunhos identificados | Conteúdos → Exportar |
-| Auditoria de ações, custos por execução de IA, tetos mensais por cliente | Histórico, Custos e consumo |
+| Dashboard com dados reais e filtros por cliente, período, canal e status | Dashboard |
+| Auditoria de ações, custos por execução de IA (por modelo, inclusive fallback), tetos mensais por cliente | Histórico, Custos e consumo |
 | Saúde do sistema e teste real de conexão com a IA | Integrações, `GET /api/health` |
 
 ## Requisitos
@@ -64,6 +65,7 @@ Sem `ANTHROPIC_API_KEY`, defina `AI_PROVIDER=demo` para testar o fluxo completo:
 | `npm run dev:web` / `npm run worker` | Cada processo separadamente |
 | `npm run db:migrate` | Aplica migrations pendentes (usa `MIGRATION_DATABASE_URL`) |
 | `npm run admin:create -- --org … --name … --email …` | Cria organização e proprietário |
+| `npm run member:add -- --org … --email … --role …` | Operador: vincula uma conta existente a outra organização |
 | `npm run build` / `npm start` | Build e execução de produção |
 | `npm run typecheck` / `npm run lint` | TypeScript estrito e ESLint |
 | `npm test` | Testes unitários + integração (PostgreSQL real) |

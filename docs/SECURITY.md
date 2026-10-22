@@ -26,10 +26,12 @@ Testes: `tests/integration/isolation.test.ts` (organizações, membros sem atrib
 ## Autenticação e sessões
 
 - Senhas com **scrypt** (N=2¹⁵, r=8, p=1, sal aleatório) e comparação em tempo constante; e-mail inexistente consome o mesmo tempo (hash fictício).
-- Política mínima: 10 caracteres com letras e números. Usuários convidados recebem senha temporária e são obrigados a trocá-la.
+- Política mínima: 10 caracteres com letras e números. Usuários convidados recebem senha temporária que **expira em 7 dias** e cuja troca é **obrigatória**: enquanto não for trocada, todas as páginas levam a `/trocar-senha` e as rotas de API respondem 403.
 - Sessão: token de 256 bits; só o SHA-256 é guardado. Cookie `httpOnly`, `SameSite=Lax`, `Secure` em produção, expiração configurável (`SESSION_TTL_HOURS`).
-- Troca de senha e desativação revogam as outras sessões.
-- **Limite de tentativas**: 5 falhas por e-mail ou 30 por IP em 15 minutos bloqueiam novas tentativas. O IP vem de `X-Forwarded-For` somente com `TRUST_PROXY=true`.
+- Troca de senha e redefinição revogam as outras sessões. A desativação de um membro vale **só para a organização** que a fez (`memberships.deactivated_at`) e revoga apenas as sessões abertas nessa organização; um administrador não consegue bloquear a conta de alguém em outra agência.
+- Convidar um e-mail já cadastrado não vincula a conta existente nem revela se ela existe; o vínculo é feito pelo operador da plataforma (`npm run member:add`).
+- **Limite de tentativas**: 5 falhas por e-mail ou 30 por IP em 15 minutos bloqueiam novas tentativas; tentativas simultâneas para o mesmo e-mail são serializadas (não é possível contornar o limite em paralelo). O IP vem de `X-Forwarded-For` (último valor, acrescentado pelo proxy) somente com `TRUST_PROXY=true`; sem IP confiável, vale um limite global para "IP desconhecido".
+- Redirecionamento após o login só para caminhos internos da aplicação (barras invertidas, caracteres de controle e outras origens são recusados).
 
 ## Autorização
 
@@ -49,7 +51,9 @@ A organização pode exigir que o aprovador seja diferente de quem enviou (Confi
 
 - Nada é publicado, enviado ou pago automaticamente nesta fase. Publicação e anúncios (fases 4 e 6) exigirão versão aprovada e confirmação explícita.
 - Aprovação amarrada ao hash canônico da versão; qualquer edição exige nova aprovação.
-- Gerações de IA respeitam o teto mensal por cliente (interrupção configurável).
+- Gerações de IA respeitam o teto mensal por cliente (interrupção configurável); execuções atendidas por modelo sem tarifa entram no teto por estimativa.
+- Chamadas de IA repetidas com a mesma chave não são cobradas duas vezes (reaproveitamento ou "já em execução"); chamadas interativas têm limite por pessoa por minuto.
+- Exclusões e arquivamentos pedem confirmação explícita na interface.
 - Auditoria somente inserção (`audit_logs`, gatilho bloqueia UPDATE/DELETE).
 
 ## CSRF e cabeçalhos
@@ -60,14 +64,16 @@ A organização pode exigir que o aprovador seja diferente de quem enviou (Confi
 
 ## Arquivos
 
-- Tipo detectado pelos **bytes iniciais** (PNG, JPEG, WebP, GIF, SVG, PDF, MP4, MOV); extensão e Content-Type do navegador são ignorados.
+- Permissão verificada **antes** de ler o corpo do envio; `Content-Length` obrigatório e limitado.
+- Tipo detectado pelos **bytes iniciais** (PNG, JPEG, GIF, SVG, PDF, MP4, MOV); extensão e Content-Type do navegador são ignorados. WebP é recusado com mensagem clara porque o renderizador das peças não o decodifica (a foto sumiria do PNG exportado).
 - SVG com `<script>`, manipuladores `on*`, `javascript:`, `foreignObject`, `iframe`/`embed`/`object` ou referências externas é recusado; SVGs aceitos são servidos com CSP `sandbox`.
 - Limite de tamanho (`MAX_UPLOAD_MB`) e de dimensões (12.000 px).
 - Chaves de armazenamento geradas pelo servidor e validadas contra *path traversal*; download somente por rota autenticada com RLS.
 
 ## Injeção de prompt (seção 20)
 
-- Briefings, perfis, memória e documentos vão para a IA dentro de delimitadores (`<briefing>`, `<contexto_do_cliente>`, `<memoria_do_cliente>`), com instrução explícita de que são **dados** e não instruções.
+- Tudo que vem de usuários — perfil, memória, contexto global, briefing, título da pauta, títulos recentes e a peça enviada para revisão — vai para a IA dentro de blocos delimitados (`<contexto_do_cliente>`, `<memoria_do_cliente>`, `<briefing>`, `<pauta>`, `<titulos_recentes>`, `<peca_para_revisao>`…), todos declarados nas regras como **dados**, nunca instruções.
+- Sequências que pareçam marcação dentro desses dados (ex.: `</briefing>`) são neutralizadas antes do envio, para que nenhum texto feche um bloco e "fale" como instrução.
 - As skills **não têm ferramentas**: a IA só devolve dados estruturados validados por esquema. Nenhum conteúdo externo pode disparar publicação, gasto ou alteração de permissões.
 - A saída passa por validação de esquema, limites de campo e pelo controle de qualidade antes de chegar ao usuário.
 

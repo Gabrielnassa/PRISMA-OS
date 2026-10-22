@@ -91,17 +91,24 @@ Problemas críticos bloqueiam o envio para aprovação. A revisão por IA (skill
 
 ## IA: gateway, skills e orquestrador
 
-- **Gateway** (`src/server/ai/gateway.ts`): único ponto que instancia provedores. Provedores: `AnthropicProvider` (SDK oficial, `claude-opus-5-5` por padrão, esforço configurável, saída estruturada validada por Zod, fallback do servidor em caso de recusa por política) e `DemoProvider` (sem IA, bloqueado em produção).
+- **Gateway** (`src/server/ai/gateway.ts`): único ponto que instancia provedores. Provedores: `AnthropicProvider` (SDK oficial, `claude-opus-5-5` por padrão, esforço definido por skill e substituível por `ANTHROPIC_EFFORT`, saída estruturada com esquema JSON próprio que preserva `enum` — `src/server/ai/json-schema.ts` — e validação Zod da resposta, fallback do servidor em caso de recusa por política com consumo lido por tentativa em `usage.iterations`) e `DemoProvider` (sem IA, bloqueado em produção).
 - **Skills** (`src/server/skills`): módulos versionados com identificador, descrição, instruções, esquemas de entrada e saída, ferramentas autorizadas (nenhuma), critérios de qualidade, tratamento de erros e testes. Implementadas: `planner.ideas`, `copywriter.social`, `art-director.rules`, `quality.ai-review`. As demais da seção 9 estão listadas como previstas em Agentes e skills.
-- **Orquestrador** (`src/server/orchestrator`): valida a entrada, verifica acesso e teto de consumo, monta as **camadas de contexto** (global da agência, cliente, memória — hipóteses rotuladas como hipóteses), chama o provedor fora de transação, valida a saída e registra `ai_runs` com tokens, custo, duração e erro. Com chave de idempotência, uma execução já concluída é **reaproveitada sem nova cobrança**.
+- **Orquestrador** (`src/server/orchestrator`): valida a entrada, verifica acesso, teto de consumo e limite por pessoa (chamadas interativas), monta as **camadas de contexto** (global da agência, cliente, memória — hipóteses rotuladas como hipóteses), chama o provedor fora de transação, valida a saída e registra `ai_runs` com tokens, custo por modelo, duração e erro. O registro do resultado roda em contexto de sistema: se a pessoa perder o acesso durante a chamada, o consumo cobrado continua registrado.
+- **Idempotência da IA**: a chave efetiva combina a chave pedida, a skill e sua versão, o provedor/modelo (demonstração ≠ IA real) e um resumo da entrada. Execução concluída com a mesma chave é **reaproveitada sem nova cobrança**; execução ainda em andamento faz a segunda chamada falhar com "já em execução" (recuperável na fila), em vez de pagar duas vezes; execução abandonada há mais de `2 × AI_TIMEOUT_MS + 60 s` pode ser assumida.
+- **Prompts**: todo dado fornecido por usuários (perfil, memória, briefing, título, títulos recentes, peça em revisão) vai dentro de blocos declarados como dados nas regras compartilhadas, com sequências que pareçam marcação neutralizadas (`escapeData`).
 
 ## Fluxo de geração (seção 10)
 
 1. A Central de criação grava `content_items` (status *Em geração*) e enfileira `content.generate` com chave `content:<id>:generate`.
 2. O worker reserva a tarefa (`SKIP LOCKED`), registra a tentativa e reconstrói o contexto do solicitante.
-3. Diretor de arte (regras) escolhe template, proporção e estilo; copywriter (IA) escreve respeitando os limites de cada campo.
+3. Diretor de arte (regras) escolhe template, proporção e estilo; copywriter (IA) escreve respeitando os limites de cada campo **já ajustados ao layout real** (veja "Limites de texto" abaixo).
 4. O documento é composto, salvo como versão (fonte `ai` ou `demo`), renderizado e avaliado pelo controle de qualidade; status → *Em revisão*.
-5. Falhas transitórias são reagendadas com backoff exponencial (até 3 tentativas); definitivas marcam o conteúdo como *Falhou* com a mensagem, e podem ser reprocessadas manualmente.
+5. Falhas transitórias são reagendadas com backoff exponencial (até 3 tentativas); definitivas marcam o conteúdo como *Falhou* **na mesma transação** que encerra a tarefa, e podem ser reprocessadas manualmente (3 tentativas extras, numeração e histórico preservados).
+6. Enquanto trabalha, o worker renova a reserva (`locked_at`) a cada ¼ de `JOB_LOCK_TIMEOUT_MS`. Conclusão e falha só valem para o worker dono da reserva naquela tentativa; um worker que perdeu a reserva tem o resultado descartado (evento `job.lock_lost`).
+
+## Limites de texto por layout
+
+Cada template declara limites-base de caracteres por tipo de lâmina e um fator de **capacidade** por proporção, tipo de lâmina e presença de foto (`src/lib/content/limits.ts`), calibrado renderizando o template com todos os campos cheios (`npx tsx scripts/calibrate-capacity.ts`). Os limites efetivos são os mesmos no plano enviado à IA, nos contadores do editor e no controle de qualidade; `tests/unit/capacity.test.ts` garante que, em todos os templates, proporções e tipos de lâmina, textos no limite efetivo cabem sem corte.
 
 ## Estados do conteúdo (seção 14)
 
@@ -113,4 +120,6 @@ Rascunho → Em geração → Em revisão → Aguardando aprovação → Aprovad
 
 ## Custos (seção 21)
 
-Custo = tokens informados pelo provedor × tarifa vigente cadastrada (`provider_prices`). Sem tarifa, o custo fica **nulo** e a interface mostra "sem tarifa" — nada é estimado. A tarifa inicial do Claude Opus 5.5 vem da tabela pública da Anthropic, com a fonte registrada. Tetos mensais por cliente podem interromper novas gerações.
+Custo = tokens informados pelo provedor × tarifa vigente cadastrada (`provider_prices`), **por modelo que executou cada tentativa**: quando o fallback do servidor entra em ação, a tentativa recusada e a do modelo de fallback são cobradas separadamente (`usage.iterations`), com detalhamento em `ai_runs.usage_breakdown`. As tarifas iniciais do Claude Opus 5.5 e dos modelos de fallback (Claude Opus 5 e Claude Opus 4.8) vêm da tabela pública da Anthropic, com a fonte registrada.
+
+Sem tarifa para algum modelo, o custo calculado fica **nulo** e a interface mostra "sem tarifa"; uma **estimativa** pela tarifa do modelo configurado é guardada separadamente (`estimated_cost_usd`), identificada como estimativa, e conta para o teto mensal do cliente — assim um modelo sem tarifa não desliga o teto.

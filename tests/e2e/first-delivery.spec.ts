@@ -155,6 +155,12 @@ test("ciclo completo: briefing → texto → arte → revisão → aprovação �
 
   // 11. Dashboard reflete os dados reais
   await page.goto("/");
-  await expect(page.getByText("Aprovados no mês")).toBeVisible();
+  const approvedStat = page.getByText("Aprovados", { exact: true }).first().locator("..");
+  await expect(approvedStat).toContainText("1");
   await shot(page, "07-dashboard");
+  // Filtros: o carrossel é do Instagram; filtrando por LinkedIn, nada aparece como aprovado.
+  await page.getByLabel("Canal").selectOption("linkedin");
+  await page.getByRole("button", { name: "Filtrar" }).click();
+  await expect(page).toHaveURL(/canal=linkedin/);
+  await expect(page.getByText("Aprovados", { exact: true }).first().locator("..")).toContainText("0");
 });
