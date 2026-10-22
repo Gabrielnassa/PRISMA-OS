@@ -63,7 +63,7 @@ export const produtoVitrine: TemplateDef = {
         })}
         {ctx.textStack({
           key: "footer",
-          box: { x: side, y: ctx.H - ctx.safe.bottom - 40, w: ctx.W - side * 2, h: 44 },
+          box: { x: side, y: ctx.H - ctx.safe.bottom - 40, w: ctx.W - side * 2, h: 64 },
           align: "center",
           items: footerItem(ctx),
           background: { kind: "solid", color: ctx.palette.bg },
@@ -125,7 +125,7 @@ export const produtoOferta: TemplateDef = {
         ) : null}
         {ctx.textStack({
           key: "footer",
-          box: { x: textX, y: ctx.H - ctx.safe.bottom - 40, w: hasImage ? textW : textW - 180, h: 44 },
+          box: { x: textX, y: ctx.H - ctx.safe.bottom - 40, w: hasImage ? textW : textW - 180, h: 64 },
           items: footerItem(ctx),
           background: { kind: "solid", color: ctx.palette.bg },
         })}
@@ -152,8 +152,9 @@ export const produtoDividido: TemplateDef = {
     const side = ctx.safe.side;
     const half = story ? Math.round(ctx.H * 0.48) : Math.round(ctx.W / 2);
     const imgBox = story ? { x: 0, y: 0, w: ctx.W, h: half } : { x: 0, y: 0, w: half, h: ctx.H };
+    // Em Story o logotipo fica acima do painel de texto, sem sobrepor o sobretítulo.
     const panel = story
-      ? { x: side, y: half + 64, w: ctx.W - side * 2, h: ctx.H - half - 64 - ctx.safe.bottom - 70 }
+      ? { x: side, y: half + 100, w: ctx.W - side * 2, h: ctx.H - half - 100 - ctx.safe.bottom - 70 }
       : { x: half + 64, y: ctx.safe.top + 100, w: ctx.W - half - 64 - side, h: ctx.H - ctx.safe.top - 100 - ctx.safe.bottom - 70 };
     return (
       <Root ctx={ctx}>
@@ -169,7 +170,7 @@ export const produtoDividido: TemplateDef = {
         })}
         {ctx.textStack({
           key: "footer",
-          box: { x: panel.x, y: ctx.H - ctx.safe.bottom - 40, w: panel.w, h: 44 },
+          box: { x: panel.x, y: ctx.H - ctx.safe.bottom - 40, w: panel.w, h: 64 },
           items: footerItem(ctx),
           background: { kind: "solid", color: ctx.palette.bg },
         })}

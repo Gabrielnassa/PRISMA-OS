@@ -3,7 +3,7 @@ import { Resvg } from "@resvg/resvg-js";
 import type { ContentDocument } from "@/lib/content/document";
 import { ASPECTS } from "@/lib/content/document";
 import { satoriFonts } from "./fonts";
-import { SlideCtx, type LoadedImage, type TextReport } from "./kit";
+import { SlideCtx, type LoadedImage, type PhotoUsage, type TextReport } from "./kit";
 import { getTemplate } from "./templates";
 
 export interface RenderAssets {
@@ -17,8 +17,10 @@ export interface RenderedSlide {
   height: number;
   svg: string;
   texts: TextReport[];
-  /** Ocorrências detectadas na composição (ex.: missing_image, missing_logo, unknown_template). */
+  /** Ocorrências detectadas na composição (ex.: missing_image, logo_unavailable, handle_truncated). */
   issues: string[];
+  /** Fotos desenhadas, com a área ocupada e o zoom (para avaliar ampliação). */
+  photos: PhotoUsage[];
 }
 
 interface DetectedNode {
@@ -66,7 +68,7 @@ export async function renderSlide(doc: ContentDocument, index: number, assets: R
     if (overflowY || overflowX) report.fits = false;
   }
 
-  return { slideId: slide.id, index, width, height, svg, texts: ctx.reports, issues: ctx.issues };
+  return { slideId: slide.id, index, width, height, svg, texts: ctx.reports, issues: ctx.issues, photos: ctx.photos };
 }
 
 export async function renderDocument(doc: ContentDocument, assets: RenderAssets): Promise<RenderedSlide[]> {

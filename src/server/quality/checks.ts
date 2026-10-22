@@ -9,6 +9,7 @@ import {
 } from "@/lib/content/document";
 import type { RenderedSlide } from "../render/engine";
 import { getTemplate } from "../render/templates";
+import { effectiveLimits } from "@/lib/content/limits";
 import type { TextReport } from "../render/kit";
 
 /**
@@ -64,8 +65,13 @@ function containsTerm(haystack: string, term: string): boolean {
   return new RegExp(`(^|[^\\p{L}\\p{N}])${escaped}($|[^\\p{L}\\p{N}])`, "u").test(normalize(haystack));
 }
 
-const COMMERCIAL_RE = /(r\$\s?\d|\d+\s?%\s?(de\s)?(off|desconto)|desconto|gr[aá]tis|frete gr[aá]tis|parcel|promo[cç][aã]o|cupom|[uú]ltimas unidades)/i;
+/** Linguagem de condição comercial (aplicada ao texto sem acentos). */
+const COMMERCIAL_RE =
+  /(r\$\s?\d|\d+\s?%\s?(de\s)?(off|desconto)|\bdesconto|\bgratis\b|\bparcel|\bpromo(cao|cional)|\bcupom|ultimas unidades|\d+\s?x\s?(sem juros|de\b|r\$)|\bsem juros\b|\breais\b|\boferta|\bprecos?\b|leve\s+\d+\s+pague|black\s?friday|\bliquidacao|por apenas|\bcashback|\bbrinde)/;
 const NUMBER_RE = /\d/;
+/** Dados que parecem estatística: percentuais, milhares, "x mais", "mil/milhões" (anos não contam). */
+const STAT_RE = /(\d+([.,]\d+)?\s?%)|(\b\d{1,3}(\.\d{3})+\b)|(\b\d+([.,]\d+)?\s?(mil|milhoes|milhao|bilhoes|bilhao)\b)|(\b\d+([.,]\d+)?\s?x\s?mais\b)|(\b(?!19\d\d\b|20\d\d\b)\d{4,}\b)/;
+const SOURCE_RE = /\b(fonte|segundo|conforme|dados|pesquisa|levantamento|relatorio|estudo|ibge|censo)\b/;
 
 export function runQualityChecks(input: QualityInput): QualityReport {
   const { doc, rendered, brand } = input;
@@ -89,8 +95,12 @@ export function runQualityChecks(input: QualityInput): QualityReport {
   }
 
   // ---- Texto: obrigatórios, limites, campos não exibidos, repetição
+  const limitsFor = (i: number) => {
+    const slide = doc.slides[i]!;
+    return effectiveLimits(template.fieldLimits[slide.kind], template.capacity, doc.aspect, Boolean(slide.imageAssetId) && template.image !== "none");
+  };
   doc.slides.forEach((slide, i) => {
-    const limits = template.fieldLimits[slide.kind];
+    const limits = limitsFor(i);
     if (!slide.fields.title.trim()) {
       add({ id: "title_required", severity: "critical", category: "texto", slideIndex: i, field: "title", message: `A ${slideNo(i)} está sem título.` });
     }
@@ -114,7 +124,7 @@ export function runQualityChecks(input: QualityInput): QualityReport {
       if (/\s{2,}/.test(value.replace(/\n/g, " "))) {
         add({ id: "double_space", severity: "info", category: "texto", slideIndex: i, field: key, message: `Espaços duplos em "${FIELD_LABELS[key]}" da ${slideNo(i)}.` });
       }
-      const repeated = /\b([\p{L}]{2,})\s+\1\b/iu.exec(value);
+      const repeated = /(?<![\p{L}\p{N}])(\p{L}{2,})\s+\1(?![\p{L}\p{N}])/iu.exec(value);
       if (repeated) {
         add({ id: "repeated_word", severity: "warning", category: "texto", slideIndex: i, field: key, message: `Palavra repetida ("${repeated[1]} ${repeated[1]}") em "${FIELD_LABELS[key]}" da ${slideNo(i)}.` });
       }
@@ -162,6 +172,20 @@ export function runQualityChecks(input: QualityInput): QualityReport {
       if (t.size < 22) {
         add({ id: "small_text", severity: "warning", category: "legibilidade", slideIndex: r.index, field: t.field, message: `Texto muito pequeno (${t.size}px) em "${FIELD_LABELS[t.field]}" da ${slideNo(r.index)}: pode ficar ilegível no celular.` });
       }
+      if (t.unsupported.length) {
+        add({
+          id: "unsupported_chars",
+          severity: "critical",
+          category: "legibilidade",
+          slideIndex: r.index,
+          field: t.field,
+          message: `"${FIELD_LABELS[t.field]}" da ${slideNo(r.index)} tem caracteres que a fonte não desenha (${t.unsupported.join(" ")}): sairiam como caixas na peça.`,
+          suggestion: "Remova emojis e símbolos especiais do texto da arte (na legenda eles podem ser usados).",
+        });
+      }
+    }
+    if (r.issues.includes("handle_truncated")) {
+      add({ id: "handle_truncated", severity: "warning", category: "marca", slideIndex: r.index, message: `A assinatura da marca foi abreviada na ${slideNo(r.index)} por falta de espaço.`, suggestion: "Use o logotipo ou uma assinatura mais curta." });
     }
   }
 
@@ -175,9 +199,18 @@ export function runQualityChecks(input: QualityInput): QualityReport {
       add({ id: "image_unavailable", severity: "critical", category: "imagem", slideIndex: r.index, message: `A imagem da ${slideNo(r.index)} não está disponível no armazenamento.` });
     }
     if (slide.imageAssetId) {
-      const meta = input.images.get(slide.imageAssetId);
-      if (meta && Math.max(meta.width, meta.height) < 1080) {
-        add({ id: "image_resolution", severity: "warning", category: "imagem", slideIndex: r.index, message: `Imagem da ${slideNo(r.index)} com baixa resolução (${meta.width}×${meta.height}).`, suggestion: "Use imagens com pelo menos 1080 px no maior lado." });
+      // Ampliação efetiva: área ocupada × zoom em relação ao tamanho real da foto.
+      const upscale = Math.max(0, ...r.photos.map((p) => Math.max((p.boxW * p.zoom) / p.imgW, (p.boxH * p.zoom) / p.imgH)));
+      if (upscale > 1.3) {
+        const meta = input.images.get(slide.imageAssetId);
+        add({
+          id: "image_resolution",
+          severity: "warning",
+          category: "imagem",
+          slideIndex: r.index,
+          message: `A foto da ${slideNo(r.index)} está ampliada ${upscale.toFixed(1).replace(".", ",")}× (${meta ? `${meta.width}×${meta.height} px` : "resolução original"}) e pode ficar sem nitidez.`,
+          suggestion: "Use uma foto de maior resolução ou reduza o zoom.",
+        });
       }
       if (!slide.alt.trim()) {
         add({ id: "image_alt", severity: "info", category: "imagem", slideIndex: r.index, message: `Descreva a imagem da ${slideNo(r.index)} (texto alternativo) para acessibilidade.` });
@@ -204,6 +237,7 @@ export function runQualityChecks(input: QualityInput): QualityReport {
     add({ id: "brand_logo", severity: "warning", category: "marca", message: "O logotipo da marca não está aplicado nesta peça." });
   }
   const allText = [...doc.slides.flatMap((s) => FIELD_KEYS.map((k) => s.fields[k])), doc.caption, doc.cta, doc.hashtags.join(" ")].join("\n");
+  const normalizedAll = normalize(allText);
   for (const term of brand.voice.forbiddenTerms) {
     if (containsTerm(allText, term)) {
       add({ id: "forbidden_term", severity: "critical", category: "marca", message: `Termo proibido pela marca encontrado: "${term}".`, suggestion: "Substitua por um termo aprovado." });
@@ -227,12 +261,29 @@ export function runQualityChecks(input: QualityInput): QualityReport {
 
   // ---- Veracidade: números sem fonte, condições comerciais não confirmadas, depoimentos
   doc.slides.forEach((slide, i) => {
-    const limits = template.fieldLimits[slide.kind];
-    if (limits.highlight !== undefined && NUMBER_RE.test(slide.fields.highlight) && !slide.fields.footer.trim() && !COMMERCIAL_RE.test(slide.fields.highlight)) {
-      add({ id: "number_source", severity: "warning", category: "veracidade", slideIndex: i, field: "highlight", message: `Número em destaque na ${slideNo(i)} sem fonte identificada no rodapé.`, suggestion: "Informe a fonte e o período do dado ou remova o número." });
+    const limits = limitsFor(i);
+    const shown = (k: FieldKey) => (limits[k] !== undefined ? slide.fields[k] : "");
+    const footer = normalize(shown("footer"));
+    const hasSource = SOURCE_RE.test(footer);
+    const highlight = normalize(shown("highlight"));
+    const flagged =
+      (NUMBER_RE.test(highlight) && !COMMERCIAL_RE.test(highlight)) ||
+      (["kicker", "title", "body"] as const).some((k) => {
+        const v = normalize(shown(k));
+        return STAT_RE.test(v) && !COMMERCIAL_RE.test(v);
+      });
+    if (flagged && !hasSource && slide.kind !== "cta") {
+      add({
+        id: "number_source",
+        severity: "warning",
+        category: "veracidade",
+        slideIndex: i,
+        message: `A ${slideNo(i)} apresenta dado numérico sem fonte identificada no rodapé.`,
+        suggestion: 'Informe a fonte e o período (ex.: "Fonte: IBGE, 2024") ou remova o número.',
+      });
     }
   });
-  if (COMMERCIAL_RE.test(allText) && !brand.channels.confirmedOffers.trim() && !input.briefing.offer?.trim()) {
+  if (COMMERCIAL_RE.test(normalizedAll) && !brand.channels.confirmedOffers.trim() && !input.briefing.offer?.trim()) {
     add({ id: "offer_unconfirmed", severity: "warning", category: "veracidade", message: "A peça menciona preço/condição comercial, mas não há oferta confirmada no briefing nem no perfil da marca.", suggestion: "Confirme a condição com o cliente antes de aprovar." });
   }
   if (template.id === "video-depoimento") {

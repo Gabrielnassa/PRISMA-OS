@@ -9,6 +9,7 @@ import type { AuthContext } from "./auth/types";
 export async function apiAuth(): Promise<AuthContext> {
   const auth = await getAuth();
   if (!auth) throw new UnauthenticatedError();
+  if (auth.mustChangePassword) throw new ForbiddenError("Defina uma nova senha antes de continuar.");
   return auth;
 }
 

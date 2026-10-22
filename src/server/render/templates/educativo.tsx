@@ -65,7 +65,7 @@ export const educativoLista: TemplateDef = {
         })}
         {ctx.textStack({
           key: "footer",
-          box: { x: side, y: ctx.H - ctx.safe.bottom - 40, w: ctx.W - side * 2 - 220, h: 44 },
+          box: { x: side, y: ctx.H - ctx.safe.bottom - 40, w: ctx.W - side * 2 - 220, h: 64 },
           items: footerItem(ctx),
           background: { kind: "solid", color: ctx.palette.bg },
         })}
@@ -114,7 +114,7 @@ export const educativoNumero: TemplateDef = {
         <Rect box={{ x: side, y: ctx.H - ctx.safe.bottom - 64, w: ctx.W - side * 2, h: 2 }} color={ctx.palette.line} />
         {ctx.textStack({
           key: "footer",
-          box: { x: side, y: ctx.H - ctx.safe.bottom - 44, w: ctx.W - side * 2, h: 44 },
+          box: { x: side, y: ctx.H - ctx.safe.bottom - 44, w: ctx.W - side * 2, h: 64 },
           items: footerItem(ctx),
           background: { kind: "solid", color: ctx.palette.bg },
         })}
@@ -163,7 +163,7 @@ export const educativoPassos: TemplateDef = {
         })}
         {ctx.textStack({
           key: "footer",
-          box: { x: side, y: ctx.H - ctx.safe.bottom - 40, w: ctx.W - side * 2 - 220, h: 44 },
+          box: { x: side, y: ctx.H - ctx.safe.bottom - 40, w: ctx.W - side * 2 - 220, h: 64 },
           items: footerItem(ctx),
           background: { kind: "solid", color: ctx.palette.bg },
         })}

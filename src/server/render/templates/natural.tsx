@@ -41,7 +41,14 @@ export const naturalFotoCheia: TemplateDef = {
     return (
       <Root ctx={ctx}>
         <Photo ctx={ctx} box={{ x: 0, y: 0, w: ctx.W, h: ctx.H }} fallback={ctx.palette.bg} />
-        {hasImage ? <Overlay box={{ x: 0, y: Math.round(ctx.H * 0.3), w: ctx.W, h: Math.round(ctx.H * 0.7) }} color="#000000" alpha={0.72} gradient="to-bottom" /> : null}
+        {hasImage ? (
+          <>
+            {/* Película sólida em toda a área de texto, com transição acima dela. */}
+            <Overlay box={{ x: 0, y: textTop - 240, w: ctx.W, h: ctx.H - textTop + 240 }} color="#000000" alpha={0.72} solidFrom="bottom" solidFraction={(ctx.H - textTop) / (ctx.H - textTop + 240)} />
+            {/* Faixa superior para logotipo e numeração legíveis sobre qualquer foto. */}
+            <Overlay box={{ x: 0, y: 0, w: ctx.W, h: ctx.safe.top + 170 }} color="#000000" alpha={0.55} solidFrom="top" solidFraction={0.7} />
+          </>
+        ) : null}
         <Brandmark ctx={ctx} x={side} y={ctx.safe.top - 10} maxW={220} maxH={64} color={fg} />
         <Counter ctx={ctx} x={ctx.W - side - 200} y={ctx.safe.top} color={fg} />
         {ctx.textStack({
@@ -53,7 +60,7 @@ export const naturalFotoCheia: TemplateDef = {
         })}
         {ctx.textStack({
           key: "footer",
-          box: { x: side, y: ctx.H - ctx.safe.bottom - 40, w: ctx.W - side * 2 - 220, h: 44 },
+          box: { x: side, y: ctx.H - ctx.safe.bottom - 40, w: ctx.W - side * 2 - 220, h: 64 },
           items: footerItem(ctx, fg),
           background,
         })}
@@ -96,7 +103,7 @@ export const naturalCartao: TemplateDef = {
         })}
         {ctx.textStack({
           key: "footer",
-          box: { x: side, y: ctx.H - ctx.safe.bottom - 40, w: ctx.W - side * 2 - 220, h: 44 },
+          box: { x: side, y: ctx.H - ctx.safe.bottom - 40, w: ctx.W - side * 2 - 220, h: 64 },
           items: footerItem(ctx),
           background: { kind: "solid", color: bg },
         })}
@@ -159,7 +166,7 @@ export const naturalConversa: TemplateDef = {
         })}
         {ctx.textStack({
           key: "footer",
-          box: { x: side + 160, y: ctx.H - ctx.safe.bottom - 50, w: ctx.W - side * 2 - 160, h: 44 },
+          box: { x: side + 160, y: ctx.H - ctx.safe.bottom - 50, w: ctx.W - side * 2 - 160, h: 64 },
           items: footerItem(ctx),
           background: { kind: "solid", color: ctx.palette.bg },
         })}

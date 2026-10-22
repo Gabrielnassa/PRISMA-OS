@@ -50,7 +50,7 @@ export const editorialAssimetrico: TemplateDef = {
         })}
         {ctx.textStack({
           key: "footer",
-          box: { x: side, y: ctx.H - ctx.safe.bottom - 40, w: ctx.W - side * 2 - 220, h: 44 },
+          box: { x: side, y: ctx.H - ctx.safe.bottom - 40, w: ctx.W - side * 2 - 220, h: 64 },
           items: footerItem(ctx),
           background: { kind: "solid", color: ctx.palette.bg },
         })}
@@ -116,7 +116,7 @@ export const editorialFoto: TemplateDef = {
         })}
         {ctx.textStack({
           key: "footer",
-          box: { x: side, y: ctx.H - ctx.safe.bottom - 40, w: ctx.W - side * 2 - 260, h: 44 },
+          box: { x: side, y: ctx.H - ctx.safe.bottom - 40, w: ctx.W - side * 2 - 260, h: 64 },
           items: footerItem(ctx),
           background: { kind: "solid", color: ctx.palette.bg },
         })}
@@ -180,7 +180,7 @@ export const editorialCitacao: TemplateDef = {
         })}
         {ctx.textStack({
           key: "footer",
-          box: { x: side + 44, y: bottom + 30, w: ctx.W - side * 2 - 60, h: 50 },
+          box: { x: side + 44, y: bottom + 30, w: ctx.W - side * 2 - 60, h: 70 },
           items: [{ field: "footer", font: "body", weight: 600, maxSize: 32, minSize: 22, lineHeight: 1.3, color: ctx.palette.fg, text: ctx.field("footer") ? `— ${ctx.field("footer")}` : "" }],
           background: { kind: "solid", color: ctx.palette.bg },
         })}

@@ -25,11 +25,21 @@ function fontsDir(id: FontId): string {
   return path.join(process.cwd(), "node_modules", "@fontsource", id, "files");
 }
 
+/**
+ * Peso efetivamente usado, seguindo a regra de fallback do CSS (a mesma do
+ * Satori): acima de 500 prefere o mais pesado mais próximo; abaixo de 400 o mais
+ * leve; entre 400 e 500, primeiro até 500, depois mais leve, depois mais pesado.
+ */
 export function resolveWeight(id: FontId, wanted: number): Weight {
-  const available = FONT_CATALOG[id].weights;
-  let best = available[0]!;
-  for (const w of available) if (Math.abs(w - wanted) < Math.abs(best - wanted)) best = w;
-  return best as Weight;
+  const available = [...FONT_CATALOG[id].weights].sort((a, b) => a - b);
+  if (available.includes(wanted)) return wanted as Weight;
+  const lighter = available.filter((w) => w < wanted).reverse();
+  const heavier = available.filter((w) => w > wanted);
+  let pick: number | undefined;
+  if (wanted >= 400 && wanted <= 500) pick = heavier.find((w) => w <= 500) ?? lighter[0] ?? heavier[0];
+  else if (wanted < 400) pick = lighter[0] ?? heavier[0];
+  else pick = heavier[0] ?? lighter[0];
+  return (pick ?? available[0]!) as Weight;
 }
 
 function readFont(id: FontId, weight: Weight, subset: (typeof SUBSETS)[number]): Buffer {
@@ -61,15 +71,27 @@ export function satoriFonts(ids: FontId[]): SatoriFont[] {
   return out;
 }
 
-function otFont(id: FontId, weight: Weight): OtFont {
-  const key = `${id}-${weight}`;
+function otFont(id: FontId, weight: Weight, subset: (typeof SUBSETS)[number] = "latin"): OtFont {
+  const key = `${id}-${weight}-${subset}`;
   let f = otCache.get(key);
   if (!f) {
-    const buf = readFont(id, weight, "latin");
+    const buf = readFont(id, weight, subset);
     f = parse(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer);
     otCache.set(key, f);
   }
   return f;
+}
+
+/** Caracteres visíveis que nenhum subconjunto empacotado da fonte desenha. */
+export function unsupportedChars(text: string, id: FontId): string[] {
+  const weight = resolveWeight(id, 400);
+  const fonts = SUBSETS.map((s) => otFont(id, weight, s));
+  const missing = new Set<string>();
+  for (const ch of text) {
+    if (/\s/.test(ch)) continue;
+    if (!fonts.some((f) => f.charToGlyphIndex(ch) > 0)) missing.add(ch);
+  }
+  return [...missing];
 }
 
 export interface MeasureOptions {

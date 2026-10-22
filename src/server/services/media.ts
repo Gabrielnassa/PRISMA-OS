@@ -6,7 +6,7 @@ import type { AuthContext } from "../auth/types";
 import { ConflictError, NotFoundError, ValidationError } from "../errors";
 import { env } from "../env";
 import { storage } from "../storage";
-import { imageSize, isUnsafeSvg, sniffType } from "../media/sniff";
+import { imageSize, isUnsafeSvg, jpegOrientation, sniffType } from "../media/sniff";
 import { audit, userActor } from "./audit";
 import { requireClient } from "./clients";
 
@@ -61,7 +61,9 @@ export async function uploadMedia(
   if (file.data.length === 0) throw new ValidationError("O arquivo está vazio.");
   if (file.data.length > maxBytes) throw new ValidationError(`O arquivo excede o limite de ${env().MAX_UPLOAD_MB} MB.`);
   const type = sniffType(file.data);
-  if (!type) throw new ValidationError("Formato não suportado. Envie PNG, JPEG, WebP, GIF, SVG, PDF, MP4 ou MOV.");
+  if (!type) throw new ValidationError("Formato não suportado. Envie PNG, JPEG, GIF, SVG, PDF, MP4 ou MOV.");
+  // O renderizador final (resvg) não decodifica WebP: a foto sumiria da peça exportada.
+  if (type.mime === "image/webp") throw new ValidationError("WebP ainda não é suportado nas peças exportadas. Converta para JPEG ou PNG e envie novamente.");
   if (type.mime === "image/svg+xml" && isUnsafeSvg(file.data)) {
     throw new ValidationError("SVG recusado: contém scripts, eventos ou referências externas.");
   }
@@ -69,6 +71,7 @@ export async function uploadMedia(
   if (kind === "logo" && type.category !== "image") throw new ValidationError("O logotipo precisa ser uma imagem.");
   if ((kind === "image" || kind === "logo") && type.category !== "image") kind = type.category;
   const size = type.category === "image" ? imageSize(file.data, type.mime) : null;
+  const orientation = type.mime === "image/jpeg" ? jpegOrientation(file.data) : 1;
   if (type.category === "image" && !size) throw new ValidationError("Não foi possível ler as dimensões da imagem. O arquivo pode estar corrompido.");
   if (size && (size.width > 12000 || size.height > 12000)) throw new ValidationError("Imagem grande demais (máximo 12.000 px por lado).");
   const sha256 = crypto.createHash("sha256").update(file.data).digest("hex");
@@ -87,8 +90,8 @@ export async function uploadMedia(
     try {
       await tx.query(
         `INSERT INTO media_assets (id, organization_id, client_id, kind, filename, mime_type, size_bytes, sha256, storage_key,
-           width, height, alt_text, tags, license_note, uploaded_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+           width, height, alt_text, tags, license_note, uploaded_by, orientation)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
         [
           id,
           auth.organizationId,
@@ -105,6 +108,7 @@ export async function uploadMedia(
           opts.tags,
           opts.licenseNote,
           auth.userId,
+          orientation,
         ],
       );
       await audit(tx, userActor(auth), {
@@ -238,13 +242,19 @@ export async function deleteMedia(auth: AuthContext, mediaId: string): Promise<v
  * Carrega imagens (inclusive excluídas logicamente, para reproduzir versões
  * antigas) de um cliente como data URIs para o motor de renderização.
  */
-export async function loadImagesForRender(tx: Queryable, clientId: string, ids: string[]): Promise<Map<string, { dataUri: string; width: number; height: number }>> {
+export async function loadImagesForRender(
+  tx: Queryable,
+  clientId: string,
+  ids: string[],
+): Promise<Map<string, { dataUri: string; width: number; height: number; orientation: number }>> {
   const unique = [...new Set(ids.filter((id) => z.string().uuid().safeParse(id).success))];
-  const out = new Map<string, { dataUri: string; width: number; height: number }>();
+  const out = new Map<string, { dataUri: string; width: number; height: number; orientation: number }>();
   if (unique.length === 0) return out;
-  const rows = await many<{ id: string; storage_key: string; mime_type: string; width: number | null; height: number | null }>(
+  // Somente formatos que o renderizador final decodifica (resvg: PNG, JPEG, GIF e SVG).
+  const rows = await many<{ id: string; storage_key: string; mime_type: string; width: number | null; height: number | null; orientation: number }>(
     tx,
-    "SELECT id, storage_key, mime_type, width, height FROM media_assets WHERE client_id = $1 AND id = ANY($2::uuid[]) AND mime_type LIKE 'image/%'",
+    `SELECT id, storage_key, mime_type, width, height, orientation FROM media_assets
+     WHERE client_id = $1 AND id = ANY($2::uuid[]) AND mime_type IN ('image/png', 'image/jpeg', 'image/gif', 'image/svg+xml')`,
     [clientId, unique],
   );
   for (const r of rows) {
@@ -254,6 +264,7 @@ export async function loadImagesForRender(tx: Queryable, clientId: string, ids: 
         dataUri: `data:${r.mime_type};base64,${data.toString("base64")}`,
         width: r.width ?? 1000,
         height: r.height ?? 1000,
+        orientation: r.orientation,
       });
     } catch {
       // Arquivo ausente no armazenamento: a peça é renderizada sem a imagem e o controle de qualidade acusa.

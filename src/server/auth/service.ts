@@ -10,7 +10,10 @@ import type { AuthContext } from "./types";
 export const SESSION_COOKIE = "prisma_session";
 const FAILED_LOGIN_LIMIT = 5;
 const IP_LOGIN_LIMIT = 30;
+/** Requisições sem IP confiável compartilham um único balde, com limite maior. */
+const UNKNOWN_IP_LOGIN_LIMIT = 100;
 const LOGIN_WINDOW_MINUTES = 15;
+const TEMP_PASSWORD_DAYS = 7;
 const TOUCH_INTERVAL_MS = 5 * 60 * 1000;
 
 export function hashToken(token: string): string {
@@ -43,39 +46,46 @@ export async function login(input: LoginInput): Promise<LoginResult> {
   if (!email || !input.password) throw new ValidationError("Informe e-mail e senha.");
   const emailHash = hashEmail(email);
 
-  return withTx(systemCtx("auth.login"), async (tx) => {
+  type Outcome = { ok: true; result: LoginResult } | { ok: false; message?: string };
+  return withTx(systemCtx("auth.login"), async (tx): Promise<Outcome> => {
+    // Serializa tentativas do mesmo e-mail: requisições paralelas não escapam do limite.
+    await tx.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`login:${emailHash}`]);
     const limits = await one<{ by_email: number; by_ip: number }>(
       tx,
       `SELECT
          count(*) FILTER (WHERE email_hash = $1 AND NOT success)::int AS by_email,
-         count(*) FILTER (WHERE $2::text IS NOT NULL AND ip = $2 AND NOT success)::int AS by_ip
+         count(*) FILTER (WHERE ip IS NOT DISTINCT FROM $2::text AND NOT success)::int AS by_ip
        FROM login_attempts
        WHERE created_at > now() - make_interval(mins => $3)`,
       [emailHash, input.ip ?? null, LOGIN_WINDOW_MINUTES],
     );
-    if (limits.by_email >= FAILED_LOGIN_LIMIT || limits.by_ip >= IP_LOGIN_LIMIT) {
+    const ipLimit = input.ip ? IP_LOGIN_LIMIT : UNKNOWN_IP_LOGIN_LIMIT;
+    if (limits.by_email >= FAILED_LOGIN_LIMIT || limits.by_ip >= ipLimit) {
       throw new RateLimitError();
     }
 
-    const user = await maybeOne<{ id: string; password_hash: string; is_active: boolean }>(
+    const user = await maybeOne<{ id: string; password_hash: string; is_active: boolean; temp_expired: boolean }>(
       tx,
-      "SELECT id, password_hash, is_active FROM users WHERE email = $1",
-      [email],
+      `SELECT id, password_hash, is_active,
+              (must_change_password AND password_set_at < now() - make_interval(days => $2)) AS temp_expired
+       FROM users WHERE email = $1`,
+      [email, TEMP_PASSWORD_DAYS],
     );
     const ok = await verifyPassword(input.password, user?.password_hash ?? (await getDummyHash()));
-    const success = Boolean(user && user.is_active && ok);
+    const membership =
+      user && ok
+        ? await maybeOne<{ organization_id: string }>(
+            tx,
+            `SELECT organization_id FROM memberships WHERE user_id = $1 AND deactivated_at IS NULL ORDER BY created_at LIMIT 1`,
+            [user.id],
+          )
+        : null;
+    const success = Boolean(user && user.is_active && ok && membership && !user.temp_expired);
+    // A tentativa é registrada mesmo quando falha: não lançamos dentro da transação para o commit acontecer.
     await tx.query("INSERT INTO login_attempts (email_hash, ip, success) VALUES ($1, $2, $3)", [emailHash, input.ip ?? null, success]);
-    if (!success || !user) {
-      // A tentativa falha precisa persistir mesmo com o erro: o commit acontece porque não lançamos dentro da transação.
-      return null;
+    if (!success || !user || !membership) {
+      return user?.temp_expired && ok ? { ok: false, message: "Senha temporária expirada. Peça ao administrador um novo acesso." } : { ok: false };
     }
-
-    const membership = await maybeOne<{ organization_id: string }>(
-      tx,
-      `SELECT organization_id FROM memberships WHERE user_id = $1 ORDER BY created_at LIMIT 1`,
-      [user.id],
-    );
-    if (!membership) return null;
 
     const token = crypto.randomBytes(32).toString("base64url");
     const expiresAt = new Date(Date.now() + env().SESSION_TTL_HOURS * 3600 * 1000);
@@ -86,6 +96,7 @@ export async function login(input: LoginInput): Promise<LoginResult> {
       [user.id, membership.organization_id, hashToken(token), input.ip ?? null, (input.userAgent ?? "").slice(0, 400), expiresAt],
     );
     await tx.query("UPDATE users SET last_login_at = now() WHERE id = $1", [user.id]);
+    await tx.query("UPDATE memberships SET last_access_at = now() WHERE user_id = $1 AND organization_id = $2", [user.id, membership.organization_id]);
     await audit(tx, { type: "system", userId: user.id }, {
       organizationId: membership.organization_id,
       action: "auth.login",
@@ -93,10 +104,10 @@ export async function login(input: LoginInput): Promise<LoginResult> {
       entityId: session.id,
       ip: input.ip ?? null,
     });
-    return { token, expiresAt, userId: user.id };
+    return { ok: true, result: { token, expiresAt, userId: user.id } };
   }).then((res) => {
-    if (!res) throw new UnauthenticatedError("E-mail ou senha inválidos.");
-    return res;
+    if (!res.ok) throw new UnauthenticatedError(res.message ?? "E-mail ou senha inválidos.");
+    return res.result;
   });
 }
 
@@ -121,7 +132,7 @@ export async function resolveSession(token: string | undefined | null): Promise<
        FROM sessions s
        JOIN users u ON u.id = s.user_id AND u.is_active
        JOIN organizations o ON o.id = s.organization_id
-       JOIN memberships m ON m.organization_id = s.organization_id AND m.user_id = s.user_id
+       JOIN memberships m ON m.organization_id = s.organization_id AND m.user_id = s.user_id AND m.deactivated_at IS NULL
        WHERE s.token_hash = $1 AND s.revoked_at IS NULL AND s.expires_at > now()`,
       [hashToken(token)],
     );
@@ -148,11 +159,12 @@ export async function revokeSession(token: string): Promise<void> {
   });
 }
 
-export async function revokeAllSessions(userId: string, exceptSessionId?: string): Promise<void> {
+export async function revokeAllSessions(userId: string, opts: { exceptSessionId?: string; organizationId?: string } = {}): Promise<void> {
   await withTx(systemCtx("auth.revoke_all"), async (tx) => {
     await tx.query(
-      "UPDATE sessions SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL AND ($2::uuid IS NULL OR id <> $2)",
-      [userId, exceptSessionId ?? null],
+      `UPDATE sessions SET revoked_at = now()
+       WHERE user_id = $1 AND revoked_at IS NULL AND ($2::uuid IS NULL OR id <> $2) AND ($3::uuid IS NULL OR organization_id = $3)`,
+      [userId, opts.exceptSessionId ?? null, opts.organizationId ?? null],
     );
   });
 }

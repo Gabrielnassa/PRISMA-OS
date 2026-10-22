@@ -12,7 +12,8 @@ import {
   type Slide,
   type SlideKind,
 } from "@/lib/content/document";
-import { familyName, fitText } from "./fonts";
+import { familyName, fitText, measureWidth, unsupportedChars } from "./fonts";
+import type { Capacity } from "@/lib/content/limits";
 
 // ---------------------------------------------------------------------------
 // Tipos públicos dos templates
@@ -34,6 +35,11 @@ export interface TemplateDef {
   defaultAlign: "left" | "center";
   /** Limite de caracteres por campo e tipo de lâmina. Campos ausentes não são exibidos. */
   fieldLimits: Record<SlideKind, Partial<Record<FieldKey, number>>>;
+  /**
+   * Fração dos limites de caracteres que cabe com todos os campos cheios, por
+   * proporção e presença de foto (calibrada por renderização; ver tests/unit).
+   */
+  capacity?: Capacity;
   compositionRules: string[];
   qualityCriteria: string[];
   origin: string;
@@ -42,8 +48,19 @@ export interface TemplateDef {
 
 export interface LoadedImage {
   dataUri: string;
+  /** Dimensões exibidas (já considerando a orientação EXIF). */
   width: number;
   height: number;
+  /** Orientação EXIF do arquivo (1 normal; 3, 6 e 8 são rotações). */
+  orientation?: number;
+}
+
+export interface PhotoUsage {
+  boxW: number;
+  boxH: number;
+  zoom: number;
+  imgW: number;
+  imgH: number;
 }
 
 export type TextBackground = { kind: "solid"; color: string } | { kind: "overlay"; color: string; alpha: number };
@@ -60,6 +77,8 @@ export interface TextReport {
   fits: boolean;
   color: string;
   background: TextBackground;
+  /** Caracteres que as fontes empacotadas não desenham (emoji, símbolos). */
+  unsupported: string[];
 }
 
 export interface Palette {
@@ -154,6 +173,7 @@ export class SlideCtx {
   readonly H: number;
   readonly reports: TextReport[] = [];
   readonly issues: string[] = [];
+  readonly photos: PhotoUsage[] = [];
   readonly palette: Palette;
   readonly theme: ThemeName;
   readonly align: "left" | "center";
@@ -258,6 +278,7 @@ export class SlideCtx {
         fits: stackFits && m.fits,
         color,
         background: o.background,
+        unsupported: unsupportedChars(m.item.text, font),
       });
       const style: CSSProperties = {
         display: "flex",
@@ -360,53 +381,83 @@ export function Photo({ ctx, box, radius = 0, fallback }: { ctx: SlideCtx; box: 
     return <Rect box={box} color={fallback ?? ctx.palette.surface} radius={radius} />;
   }
   const zoom = ctx.slide.imageZoom;
-  const w = box.w * zoom;
-  const h = box.h * zoom;
+  ctx.photos.push({ boxW: box.w, boxH: box.h, zoom, imgW: img.width, imgH: img.height });
   const fx = ctx.slide.imageFocus.x / 100;
   const fy = ctx.slide.imageFocus.y / 100;
+  const frame = { position: "absolute" as const, left: box.x, top: box.y, width: box.w, height: box.h, overflow: "hidden" as const, borderRadius: radius, display: "flex" };
+  const orientation = img.orientation ?? 1;
+  const rotation = orientation === 3 || orientation === 4 ? 180 : orientation === 5 || orientation === 6 ? 90 : orientation === 7 || orientation === 8 ? -90 : 0;
+
+  if (rotation === 0) {
+    const w = box.w * zoom;
+    const h = box.h * zoom;
+    return (
+      <div style={frame}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={img.dataUri}
+          alt=""
+          width={w}
+          height={h}
+          style={{
+            position: "absolute",
+            left: -(w - box.w) * fx,
+            top: -(h - box.h) * fy,
+            width: w,
+            height: h,
+            objectFit: "cover",
+            objectPosition: `${ctx.slide.imageFocus.x}% ${ctx.slide.imageFocus.y}%`,
+          }}
+        />
+      </div>
+    );
+  }
+
+  // Fotos de celular com orientação EXIF: o recorte é calculado sobre a imagem
+  // já girada e o arquivo original é desenhado rotacionado em torno do centro.
+  const scale = Math.max((box.w * zoom) / img.width, (box.h * zoom) / img.height);
+  const shownW = img.width * scale;
+  const shownH = img.height * scale;
+  const left = -(shownW - box.w) * fx;
+  const top = -(shownH - box.h) * fy;
+  const rawW = Math.abs(rotation) === 90 ? shownH : shownW;
+  const rawH = Math.abs(rotation) === 90 ? shownW : shownH;
   return (
-    <div
-      style={{
-        position: "absolute",
-        left: box.x,
-        top: box.y,
-        width: box.w,
-        height: box.h,
-        overflow: "hidden",
-        borderRadius: radius,
-        display: "flex",
-      }}
-    >
+    <div style={frame}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={img.dataUri}
         alt=""
-        width={w}
-        height={h}
+        width={rawW}
+        height={rawH}
         style={{
           position: "absolute",
-          left: -(w - box.w) * fx,
-          top: -(h - box.h) * fy,
-          width: w,
-          height: h,
-          objectFit: "cover",
-          objectPosition: `${ctx.slide.imageFocus.x}% ${ctx.slide.imageFocus.y}%`,
+          left: left + shownW / 2 - rawW / 2,
+          top: top + shownH / 2 - rawH / 2,
+          width: rawW,
+          height: rawH,
+          transform: `rotate(${rotation}deg)`,
         }}
       />
     </div>
   );
 }
 
-/** Película sobre foto. O controle de qualidade calcula o contraste no pior caso. */
-export function Overlay({ box, color, alpha, gradient }: { box: Box; color: string; alpha: number; gradient?: "to-bottom" | "to-top" }) {
+/**
+ * Película sobre foto. Com `solidFrom`, a película é sólida (opacidade `alpha`)
+ * a partir daquela borda por `solidFraction` da altura e some no restante.
+ * O controle de qualidade calcula o contraste no pior caso sobre a parte sólida.
+ */
+export function Overlay({ box, color, alpha, solidFrom, solidFraction = 1 }: { box: Box; color: string; alpha: number; solidFrom?: "top" | "bottom"; solidFraction?: number }) {
   const rgba = (a: number) => {
     const r = parseInt(color.slice(1, 3), 16);
     const g = parseInt(color.slice(3, 5), 16);
     const b = parseInt(color.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${a})`;
   };
-  const fill = gradient
-    ? { backgroundImage: `linear-gradient(${gradient === "to-bottom" ? "180deg" : "0deg"}, ${rgba(0)} 0%, ${rgba(alpha)} 55%, ${rgba(alpha)} 100%)` }
+  const fadeEnd = Math.round((1 - Math.min(1, Math.max(0, solidFraction))) * 100);
+  const fill = solidFrom
+    ? { backgroundImage: `linear-gradient(${solidFrom === "bottom" ? "180deg" : "0deg"}, ${rgba(0)} 0%, ${rgba(alpha)} ${fadeEnd}%, ${rgba(alpha)} 100%)` }
     : { backgroundColor: rgba(alpha) };
   return <div style={{ position: "absolute", left: box.x, top: box.y, width: box.w, height: box.h, display: "flex", ...fill }} />;
 }
@@ -427,8 +478,18 @@ export function Brandmark({ ctx, x, y, maxW, maxH, color, align = "left" }: { ct
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={logo.dataUri} alt="" width={w} height={h} style={{ position: "absolute", left, top: y, width: w, height: h, objectFit: "contain" }} />;
   }
-  const handle = ctx.doc.style.handle.trim();
-  if (!handle) return null;
+  const raw = ctx.doc.style.handle.trim();
+  if (!raw) return null;
+  // A assinatura é medida: diminui até 20px e, se ainda não couber, é abreviada (e o controle de qualidade avisa).
+  const font = ctx.font("body");
+  let size = 30;
+  while (size > 20 && measureWidth(raw, { font, weight: 600, size }) > maxW) size -= 2;
+  let handle = raw;
+  if (measureWidth(handle, { font, weight: 600, size }) > maxW) {
+    while (handle.length > 4 && measureWidth(`${handle}…`, { font, weight: 600, size }) > maxW) handle = handle.slice(0, -1);
+    handle = `${handle}…`;
+    ctx.issues.push("handle_truncated");
+  }
   return (
     <div
       style={{
@@ -438,10 +499,11 @@ export function Brandmark({ ctx, x, y, maxW, maxH, color, align = "left" }: { ct
         width: maxW,
         display: "flex",
         justifyContent: align === "right" ? "flex-end" : "flex-start",
-        fontFamily: familyName(ctx.font("body")),
+        fontFamily: familyName(font),
         fontWeight: 600,
-        fontSize: 30,
+        fontSize: size,
         color: color ?? ctx.palette.fg,
+        whiteSpace: "nowrap",
       }}
     >
       {handle}

@@ -13,7 +13,7 @@ export async function workerAuth(organizationId: string, userId: string | null):
       tx,
       `SELECT u.name, u.email, m.role, o.name AS org_name
        FROM memberships m JOIN users u ON u.id = m.user_id AND u.is_active JOIN organizations o ON o.id = m.organization_id
-       WHERE m.organization_id = $1 AND m.user_id = $2`,
+       WHERE m.organization_id = $1 AND m.user_id = $2 AND m.deactivated_at IS NULL`,
       [organizationId, userId],
     );
     if (!row || !isRole(row.role)) return null;

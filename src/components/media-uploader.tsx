@@ -41,14 +41,14 @@ export function MediaUploader({ clientId, defaultKind = "image" }: { clientId: s
   return (
     <form onSubmit={onSubmit} className="grid gap-4 p-5 md:grid-cols-[2fr_1fr_1fr_auto] md:items-end">
       <input type="hidden" name="clientId" value={clientId} />
-      <Field label="Arquivos" htmlFor="files" hint="PNG, JPEG, WebP, GIF, SVG, PDF, MP4 ou MOV. O tipo real é verificado no servidor.">
+      <Field label="Arquivos" htmlFor="files" hint="PNG, JPEG, GIF, SVG, PDF, MP4 ou MOV. O tipo real é verificado no servidor.">
         <input
           ref={inputRef}
           id="files"
           name="files"
           type="file"
           multiple
-          accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,application/pdf,video/mp4,video/quicktime"
+          accept="image/png,image/jpeg,image/gif,image/svg+xml,application/pdf,video/mp4,video/quicktime"
           className="block w-full text-sm text-ink-300 file:mr-3 file:rounded-lg file:border-0 file:bg-ink-700 file:px-3 file:py-2 file:text-sm file:text-ink-100 hover:file:bg-ink-600"
         />
       </Field>

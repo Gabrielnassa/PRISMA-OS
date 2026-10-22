@@ -68,7 +68,7 @@ export const techGrade: TemplateDef = {
         <GradientBar ctx={ctx} x={side} y={ctx.safe.top + 70} w={160} h={8} />
         {ctx.textStack({
           key: "footer",
-          box: { x: side, y: ctx.H - ctx.safe.bottom - 40, w: ctx.W - side * 2 - 220, h: 44 },
+          box: { x: side, y: ctx.H - ctx.safe.bottom - 40, w: ctx.W - side * 2 - 220, h: 64 },
           items: footerItem(ctx),
           background: { kind: "solid", color: ctx.palette.bg },
         })}
@@ -119,7 +119,7 @@ export const techMetrica: TemplateDef = {
         <Rect box={{ x: side, y: ctx.H - ctx.safe.bottom - 70, w: ctx.W - side * 2, h: 2 }} color={ctx.palette.line} />
         {ctx.textStack({
           key: "footer",
-          box: { x: side, y: ctx.H - ctx.safe.bottom - 48, w: ctx.W - side * 2, h: 48 },
+          box: { x: side, y: ctx.H - ctx.safe.bottom - 48, w: ctx.W - side * 2, h: 68 },
           items: footerItem(ctx),
           background: { kind: "solid", color: ctx.palette.bg },
         })}
@@ -163,7 +163,7 @@ export const techPainel: TemplateDef = {
         })}
         {ctx.textStack({
           key: "footer",
-          box: { x: side, y: ctx.H - ctx.safe.bottom - 40, w: ctx.W - side * 2 - 220, h: 44 },
+          box: { x: side, y: ctx.H - ctx.safe.bottom - 40, w: ctx.W - side * 2 - 220, h: 64 },
           items: footerItem(ctx),
           background: { kind: "solid", color: ctx.palette.bg },
         })}

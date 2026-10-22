@@ -47,6 +47,7 @@ export interface ImageSize {
   height: number;
 }
 
+/** Dimensões como a imagem é EXIBIDA (JPEG com orientação EXIF 5–8 tem largura e altura trocadas). */
 export function imageSize(buf: Buffer, mime: string): ImageSize | null {
   try {
     switch (mime) {
@@ -54,8 +55,11 @@ export function imageSize(buf: Buffer, mime: string): ImageSize | null {
         return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
       case "image/gif":
         return { width: buf.readUInt16LE(6), height: buf.readUInt16LE(8) };
-      case "image/jpeg":
-        return jpegSize(buf);
+      case "image/jpeg": {
+        const size = jpegSize(buf);
+        if (size && jpegOrientation(buf) >= 5) return { width: size.height, height: size.width };
+        return size;
+      }
       case "image/webp":
         return webpSize(buf);
       case "image/svg+xml":
@@ -86,6 +90,38 @@ function jpegSize(buf: Buffer): ImageSize | null {
     offset += 2 + length;
   }
   return null;
+}
+
+/** Orientação EXIF (tag 0x0112) de um JPEG; 1 quando ausente ou inválida. */
+export function jpegOrientation(buf: Buffer): number {
+  try {
+    let offset = 2;
+    while (offset + 4 < buf.length && buf[offset] === 0xff) {
+      const marker = buf[offset + 1]!;
+      if (marker === 0xda || marker === 0xd9) break;
+      const length = buf.readUInt16BE(offset + 2);
+      if (marker === 0xe1 && buf.toString("ascii", offset + 4, offset + 10) === "Exif\0\0") {
+        const tiff = offset + 10;
+        const little = buf.toString("ascii", tiff, tiff + 2) === "II";
+        const u16 = (o: number) => (little ? buf.readUInt16LE(o) : buf.readUInt16BE(o));
+        const u32 = (o: number) => (little ? buf.readUInt32LE(o) : buf.readUInt32BE(o));
+        const ifd = tiff + u32(tiff + 4);
+        const entries = u16(ifd);
+        for (let i = 0; i < entries; i++) {
+          const entry = ifd + 2 + i * 12;
+          if (u16(entry) === 0x0112) {
+            const value = u16(entry + 8);
+            return value >= 1 && value <= 8 ? value : 1;
+          }
+        }
+        return 1;
+      }
+      offset += 2 + length;
+    }
+  } catch {
+    // EXIF malformado: trata como orientação normal.
+  }
+  return 1;
 }
 
 function webpSize(buf: Buffer): ImageSize | null {

@@ -38,10 +38,11 @@ export function OrgSettingsForm({ org, canEdit }: { org: { name: string; globalC
   );
 }
 
-export function PasswordForm() {
+export function PasswordForm({ redirectTo }: { redirectTo?: string }) {
   const [state, action] = useActionState(passwordAction, { status: "idle" });
   return (
     <form action={action} className="grid gap-4 p-5 md:grid-cols-3">
+      {redirectTo ? <input type="hidden" name="redirectTo" value={redirectTo} /> : null}
       <Field label="Senha atual" htmlFor="pw-current">
         <Input id="pw-current" name="current" type="password" autoComplete="current-password" required />
       </Field>

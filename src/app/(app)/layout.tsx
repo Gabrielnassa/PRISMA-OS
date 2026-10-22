@@ -39,11 +39,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </button>
           </form>
         </header>
-        {auth.mustChangePassword ? (
-          <div className="border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-100 md:px-6">
-            Você está usando uma senha temporária. <Link className="font-semibold underline" href="/configuracoes#senha">Defina uma nova senha</Link>.
-          </div>
-        ) : null}
         <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 md:px-6 md:py-8">{children}</main>
       </div>
     </div>

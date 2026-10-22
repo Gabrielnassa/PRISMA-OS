@@ -61,7 +61,7 @@ export const videoCapaImpacto: TemplateDef = {
         })}
         {ctx.textStack({
           key: "footer",
-          box: { x: side, y: ctx.H - ctx.safe.bottom - 50, w: ctx.W - side * 2, h: 44 },
+          box: { x: side, y: ctx.H - ctx.safe.bottom - 50, w: ctx.W - side * 2, h: 64 },
           align: "center",
           items: footerItem(ctx, fg),
           background,
@@ -132,7 +132,7 @@ export const videoDepoimento: TemplateDef = {
         <Rect box={{ x: (ctx.W - 80) / 2, y: bottom + 30, w: 80, h: 4 }} color={ctx.palette.accent} />
         {ctx.textStack({
           key: "footer",
-          box: { x: side, y: bottom + 56, w: ctx.W - side * 2, h: 50 },
+          box: { x: side, y: bottom + 56, w: ctx.W - side * 2, h: 70 },
           align: "center",
           items: [{ field: "footer", font: "body", weight: 700, maxSize: 32, minSize: 22, lineHeight: 1.3, color: ctx.palette.fg, gapAfter: 0 }],
           background: { kind: "solid", color: ctx.palette.bg },
@@ -167,6 +167,7 @@ export const videoLegenda: TemplateDef = {
     return (
       <Root ctx={ctx}>
         <Photo ctx={ctx} box={{ x: 0, y: 0, w: ctx.W, h: ctx.H }} />
+        <Overlay box={{ x: 0, y: 0, w: ctx.W, h: ctx.safe.top + 170 }} color="#000000" alpha={0.55} solidFrom="top" solidFraction={0.7} />
         <Brandmark ctx={ctx} x={side} y={ctx.safe.top - 10} maxW={220} maxH={64} color="#ffffff" />
         <Counter ctx={ctx} x={ctx.W - side - 200} y={ctx.safe.top} color="#ffffff" />
         <Rect box={{ x: 0, y: bandY, w: ctx.W, h: bandH }} color={ctx.palette.bg} />
