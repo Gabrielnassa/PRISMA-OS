@@ -21,6 +21,10 @@ const EnvSchema = z.object({
   GENERATION_RATE_PER_MINUTE: z.coerce.number().int().min(1).max(600).default(10),
   WORKER_POLL_MS: z.coerce.number().int().min(100).max(60_000).default(1_000),
   JOB_LOCK_TIMEOUT_MS: z.coerce.number().int().min(10_000).max(3_600_000).default(600_000),
+  TRUST_PROXY: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((v) => v === "true"),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

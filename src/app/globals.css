@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+/* Tokens do PRISMA OS: base grafite, acentos violeta e verde-água. */
+@theme {
+  --color-ink-950: #0b0c0f;
+  --color-ink-900: #101217;
+  --color-ink-850: #14171d;
+  --color-ink-800: #191c23;
+  --color-ink-700: #232733;
+  --color-ink-600: #2e3340;
+  --color-ink-500: #4a5060;
+  --color-ink-400: #7a8191;
+  --color-ink-300: #a3a9b6;
+  --color-ink-200: #c9cdd6;
+  --color-ink-100: #e6e8ee;
+  --color-ink-50: #f4f5f8;
+
+  --color-violet-400: #a78bfa;
+  --color-violet-500: #8b5cf6;
+  --color-violet-600: #7c3aed;
+  --color-teal-300: #5eead4;
+  --color-teal-400: #2dd4bf;
+  --color-teal-500: #14b8a6;
+
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-danger: #f87171;
+  --color-info: #60a5fa;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 14px;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: var(--color-ink-950);
+  color: var(--color-ink-100);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-violet-500) 45%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-violet-400);
+  outline-offset: 2px;
+}
+
+.prisma-gradient {
+  background-image: linear-gradient(120deg, var(--color-violet-500), var(--color-teal-400));
+}
+
+.prisma-gradient-text {
+  background-image: linear-gradient(120deg, var(--color-violet-400), var(--color-teal-300));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+input[type="range"] {
+  accent-color: var(--color-violet-500);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
