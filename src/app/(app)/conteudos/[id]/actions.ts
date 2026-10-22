@@ -64,16 +64,20 @@ export async function commentAction(_prev: ActionState, form: FormData): Promise
   });
 }
 
-export async function restoreVersionAction(form: FormData): Promise<void> {
+export async function restoreVersionAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const auth = await requireAuth();
-  await restoreVersion(auth, str(form, "contentId"), str(form, "versionId"), str(form, "baseVersionId") || null);
-  refresh();
+  return runAction(async () => {
+    await restoreVersion(auth, str(form, "contentId"), str(form, "versionId"), str(form, "baseVersionId") || null);
+    refresh();
+  });
 }
 
-export async function archiveAction(form: FormData): Promise<void> {
+export async function archiveAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const auth = await requireAuth();
-  await archiveContent(auth, str(form, "contentId"));
-  refresh();
+  return runAction(async () => {
+    await archiveContent(auth, str(form, "contentId"));
+    refresh();
+  });
 }
 
 export async function retryGenerationAction(_prev: ActionState, form: FormData): Promise<ActionState> {

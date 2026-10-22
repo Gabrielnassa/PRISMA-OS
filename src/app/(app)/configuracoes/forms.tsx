@@ -2,13 +2,13 @@
 
 import { useActionState } from "react";
 import { Field, Input, Textarea } from "@/components/ui";
-import { FormMessage, SubmitButton } from "@/components/form";
+import { ActionForm, FormMessage, SubmitButton } from "@/components/form";
 import { orgSettingsAction, passwordAction } from "./actions";
 
 export function OrgSettingsForm({ org, canEdit }: { org: { name: string; globalContext: string; requireDistinctApprover: boolean }; canEdit: boolean }) {
   const [state, action] = useActionState(orgSettingsAction, { status: "idle" });
   return (
-    <form action={action} className="grid gap-4 p-5">
+    <ActionForm action={action} state={state} className="grid gap-4 p-5">
       <fieldset disabled={!canEdit} className="grid gap-4">
         <Field label="Nome da agência" htmlFor="o-name">
           <Input id="o-name" name="name" defaultValue={org.name} required minLength={2} maxLength={120} />
@@ -34,14 +34,14 @@ export function OrgSettingsForm({ org, canEdit }: { org: { name: string; globalC
           <SubmitButton>Salvar configurações</SubmitButton>
         </div>
       ) : null}
-    </form>
+    </ActionForm>
   );
 }
 
 export function PasswordForm({ redirectTo }: { redirectTo?: string }) {
   const [state, action] = useActionState(passwordAction, { status: "idle" });
   return (
-    <form action={action} className="grid gap-4 p-5 md:grid-cols-3">
+    <ActionForm action={action} state={state} resetOnSuccess className="grid gap-4 p-5 md:grid-cols-3">
       {redirectTo ? <input type="hidden" name="redirectTo" value={redirectTo} /> : null}
       <Field label="Senha atual" htmlFor="pw-current">
         <Input id="pw-current" name="current" type="password" autoComplete="current-password" required />
@@ -58,6 +58,6 @@ export function PasswordForm({ redirectTo }: { redirectTo?: string }) {
       <div>
         <SubmitButton variant="secondary">Alterar senha</SubmitButton>
       </div>
-    </form>
+    </ActionForm>
   );
 }

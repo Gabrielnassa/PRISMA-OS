@@ -15,7 +15,7 @@ import {
   type Objective,
 } from "@/lib/content/document";
 import { Alert, Badge, Button, Card, CardHeader, Field, Input, Select, Textarea, cx } from "@/components/ui";
-import { FormMessage, SubmitButton } from "@/components/form";
+import { ActionForm, FormMessage, SubmitButton } from "@/components/form";
 import { createContentAction, suggestIdeasAction } from "./actions";
 
 type TemplateOption = { id: string; name: string; familyLabel: string; formats: string[]; aspects: string[]; image: string };
@@ -71,7 +71,7 @@ export function CreateForm({
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
-      <form action={action} className="flex flex-col gap-6">
+      <ActionForm action={action} state={state} className="flex flex-col gap-6">
         <input type="hidden" name="requestId" value={requestId} />
         <Card>
           <CardHeader title="1. Cliente, canal e formato" />
@@ -180,7 +180,13 @@ export function CreateForm({
                   {images.map((img) => {
                     const on = selected.includes(img.id);
                     return (
-                      <label key={img.id} className={cx("relative cursor-pointer overflow-hidden rounded-lg border-2", on ? "border-violet-500" : "border-transparent")}>
+                      <label
+                        key={img.id}
+                        className={cx(
+                          "relative cursor-pointer overflow-hidden rounded-lg border-2 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-violet-400 has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-ink-900",
+                          on ? "border-violet-500" : "border-transparent",
+                        )}
+                      >
                         <input
                           type="checkbox"
                           name="imageAssetIds"
@@ -211,12 +217,12 @@ export function CreateForm({
           </SubmitButton>
         </div>
         {!providerReady ? <Alert tone="warning">Nenhum provedor de IA configurado. Você ainda pode começar pelo template e escrever os textos no editor.</Alert> : null}
-      </form>
+      </ActionForm>
 
       <aside className="flex flex-col gap-6">
         <Card>
           <CardHeader title="Precisa de ideias?" description="O gerador de pautas usa o perfil da marca e evita repetir títulos recentes." />
-          <form action={ideasAction} className="flex flex-col gap-3 p-5">
+          <ActionForm action={ideasAction} state={ideasState} className="flex flex-col gap-3 p-5">
             <input type="hidden" name="clientId" value={clientId} />
             <input type="hidden" name="objective" value={objective} />
             <input type="hidden" name="format" value={format} />
@@ -225,7 +231,7 @@ export function CreateForm({
               {ideasPending ? "Gerando pautas..." : "Sugerir 5 pautas"}
             </Button>
             <FormMessage state={ideasState} />
-          </form>
+          </ActionForm>
           {ideasState.status === "ok" && ideasState.data ? (
             <ul className="divide-y divide-ink-800 border-t border-ink-700">
               {ideasState.data.ideas.map((idea, i) => (

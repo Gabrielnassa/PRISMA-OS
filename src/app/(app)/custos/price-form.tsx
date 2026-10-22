@@ -2,13 +2,13 @@
 
 import { useActionState } from "react";
 import { Field, Input } from "@/components/ui";
-import { FormMessage, SubmitButton } from "@/components/form";
+import { ActionForm, FormMessage, SubmitButton } from "@/components/form";
 import { addPriceAction } from "./actions";
 
 export function PriceForm() {
   const [state, action] = useActionState(addPriceAction, { status: "idle" });
   return (
-    <form action={action} className="grid gap-4 p-5 md:grid-cols-3">
+    <ActionForm action={action} state={state} resetOnSuccess className="grid gap-4 p-5 md:grid-cols-3">
       <Field label="Provedor" htmlFor="p-provider">
         <Input id="p-provider" name="provider" defaultValue="anthropic" required />
       </Field>
@@ -36,6 +36,6 @@ export function PriceForm() {
       <div>
         <SubmitButton variant="secondary">Cadastrar tarifa</SubmitButton>
       </div>
-    </form>
+    </ActionForm>
   );
 }

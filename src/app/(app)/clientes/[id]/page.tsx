@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { InlineAction } from "@/components/inline-action";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireAuth } from "@/server/auth/next";
@@ -173,22 +174,18 @@ async function MemoryTab({ auth, clientId }: { auth: Auth; clientId: string }) {
                 </div>
                 {canManage ? (
                   <div className="flex gap-2">
-                    <form action={memoryStatusAction}>
-                      <input type="hidden" name="clientId" value={clientId} />
-                      <input type="hidden" name="memoryId" value={m.id} />
-                      <input type="hidden" name="op" value={m.status === "active" ? "archive" : "restore"} />
-                      <button className="text-xs text-ink-300 hover:text-ink-50" type="submit">
-                        {m.status === "active" ? "Arquivar" : "Restaurar"}
-                      </button>
-                    </form>
-                    <form action={memoryStatusAction}>
-                      <input type="hidden" name="clientId" value={clientId} />
-                      <input type="hidden" name="memoryId" value={m.id} />
-                      <input type="hidden" name="op" value="delete" />
-                      <button className="text-xs text-red-300 hover:underline" type="submit">
-                        Excluir
-                      </button>
-                    </form>
+                    <InlineAction
+                      action={memoryStatusAction}
+                      fields={{ clientId, memoryId: m.id, op: m.status === "active" ? "archive" : "restore" }}
+                      label={m.status === "active" ? "Arquivar" : "Restaurar"}
+                    />
+                    <InlineAction
+                      action={memoryStatusAction}
+                      fields={{ clientId, memoryId: m.id, op: "delete" }}
+                      label="Excluir"
+                      tone="danger"
+                      confirmMessage="Excluir esta informação da memória do cliente? A exclusão é definitiva; para apenas tirá-la do contexto da IA, use Arquivar."
+                    />
                   </div>
                 ) : null}
               </li>

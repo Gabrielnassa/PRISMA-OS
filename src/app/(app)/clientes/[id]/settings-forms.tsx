@@ -2,13 +2,13 @@
 
 import { useActionState } from "react";
 import { Field, Input, Select } from "@/components/ui";
-import { FormMessage, SubmitButton } from "@/components/form";
+import { ActionForm, FormMessage, SubmitButton } from "@/components/form";
 import { budgetAction, updateClientAction } from "../actions";
 
 export function ClientSettingsForm({ client, canArchive }: { client: { id: string; name: string; segment: string; status: string }; canArchive: boolean }) {
   const [state, action] = useActionState(updateClientAction, { status: "idle" });
   return (
-    <form action={action} className="grid gap-4 p-5">
+    <ActionForm action={action} state={state} className="grid gap-4 p-5">
       <input type="hidden" name="clientId" value={client.id} />
       <Field label="Nome" htmlFor="c-name">
         <Input id="c-name" name="name" defaultValue={client.name} required minLength={2} maxLength={120} />
@@ -27,14 +27,14 @@ export function ClientSettingsForm({ client, canArchive }: { client: { id: strin
       <div>
         <SubmitButton variant="secondary">Salvar dados</SubmitButton>
       </div>
-    </form>
+    </ActionForm>
   );
 }
 
 export function BudgetForm({ clientId, budget }: { clientId: string; budget: { limitUsd: number | null; alertPct: number | null; hardStop: boolean | null } }) {
   const [state, action] = useActionState(budgetAction, { status: "idle" });
   return (
-    <form action={action} className="grid gap-4 p-5">
+    <ActionForm action={action} state={state} className="grid gap-4 p-5">
       <input type="hidden" name="clientId" value={clientId} />
       <Field label="Teto mensal de IA (US$)" htmlFor="b-limit" hint="Deixe vazio para não limitar.">
         <Input id="b-limit" name="monthlyLimitUsd" inputMode="decimal" defaultValue={budget.limitUsd ?? ""} placeholder="Ex.: 25" />
@@ -50,6 +50,6 @@ export function BudgetForm({ clientId, budget }: { clientId: string; budget: { l
       <div>
         <SubmitButton variant="secondary">Salvar limite</SubmitButton>
       </div>
-    </form>
+    </ActionForm>
   );
 }

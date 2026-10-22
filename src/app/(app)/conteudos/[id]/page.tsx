@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { InlineAction } from "@/components/inline-action";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireAuth } from "@/server/auth/next";
@@ -110,7 +111,7 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
       ) : null}
       {detail.status === "failed" && !current ? (
         <div className="mb-6">
-          <RetryPanel contentId={id} error={detail.lastError} />
+          <RetryPanel contentId={id} error={detail.lastError} canRetry={can(auth.role, "content.create")} />
         </div>
       ) : null}
       {current?.source === "demo" ? (
@@ -131,7 +132,6 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
       {current ? (
         canEdit ? (
           <ContentEditor
-            key={current.id}
             contentId={id}
             baseVersionId={current.id}
             initialDocument={current.document}
@@ -199,14 +199,13 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
                     </Link>
                   ) : null}
                   {canEdit && current && v.id !== current.id ? (
-                    <form action={restoreVersionAction}>
-                      <input type="hidden" name="contentId" value={id} />
-                      <input type="hidden" name="versionId" value={v.id} />
-                      <input type="hidden" name="baseVersionId" value={current.id} />
-                      <button type="submit" className="text-xs text-ink-300 hover:text-ink-50">
-                        Restaurar
-                      </button>
-                    </form>
+                    <InlineAction
+                      action={restoreVersionAction}
+                      fields={{ contentId: id, versionId: v.id, baseVersionId: current.id }}
+                      label="Restaurar"
+                      pendingText="Restaurando..."
+                      confirmMessage={`Criar uma nova versão com o conteúdo da versão ${v.number}? A versão atual continua no histórico.`}
+                    />
                   ) : null}
                 </li>
               ))}
@@ -283,12 +282,14 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
           ) : null}
 
           {can(auth.role, "content.archive") && detail.status !== "archived" && detail.status !== "generating" ? (
-            <form action={archiveAction} className="text-right">
-              <input type="hidden" name="contentId" value={id} />
-              <button type="submit" className="text-xs text-ink-400 hover:text-red-300">
-                Arquivar conteúdo
-              </button>
-            </form>
+            <InlineAction
+              action={archiveAction}
+              fields={{ contentId: id }}
+              label="Arquivar conteúdo"
+              tone="danger"
+              className="text-right"
+              confirmMessage="Arquivar este conteúdo? Ele sai das listas de trabalho e aprovações pendentes são canceladas."
+            />
           ) : null}
         </div>
       </div>

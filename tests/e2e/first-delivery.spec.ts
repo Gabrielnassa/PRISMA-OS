@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import JSZip from "jszip";
-import { login, png, shot } from "./helpers";
+import { ADMIN, login, png, shot } from "./helpers";
 
 /**
  * Teste de aceitação da primeira entrega (seções 27 e 30): cadastrar cliente,
@@ -8,6 +8,14 @@ import { login, png, shot } from "./helpers";
  * verificar qualidade, aprovar a versão exata, exportar e consultar o histórico.
  */
 test("ciclo completo: briefing → texto → arte → revisão → aprovação → exportação", async ({ page }) => {
+  // Erro devolvido pelo servidor não apaga o que foi digitado.
+  await page.goto("/login");
+  await page.getByLabel("E-mail").fill(ADMIN.email);
+  await page.getByLabel("Senha").fill("senha-incorreta-123");
+  await page.getByRole("button", { name: "Entrar" }).click();
+  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(page.getByLabel("E-mail")).toHaveValue(ADMIN.email);
+
   await login(page);
   await shot(page, "01-dashboard-vazio");
 
@@ -96,6 +104,22 @@ test("ciclo completo: briefing → texto → arte → revisão → aprovação �
   await page.getByRole("button", { name: "Salvar nova versão" }).click();
   await expect(page.getByText("Versão 2 salva.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Salvar nova versão" })).toBeDisabled();
+
+  // Descartar depois de adicionar uma lâmina mantém o editor utilizável.
+  await page.getByRole("tab").last().click();
+  await page.getByRole("button", { name: "+ Lâmina" }).click();
+  await expect(page.getByRole("tab")).toHaveCount(5);
+  await page.getByRole("button", { name: "Descartar alterações" }).click();
+  await expect(page.getByRole("tab")).toHaveCount(4);
+  await expect(page.getByRole("tab").last()).toHaveAttribute("aria-selected", "true");
+  await page.locator("#f-title").fill("Agende pelo WhatsApp hoje");
+  await expect(page.locator("#f-title")).toHaveValue("Agende pelo WhatsApp hoje");
+  // Sair pelo menu com alterações não salvas pede confirmação.
+  page.once("dialog", (d) => void d.dismiss());
+  await page.getByRole("navigation", { name: "Navegação principal" }).getByRole("link", { name: "Conteúdos" }).click();
+  await expect(page).toHaveURL(contentUrl);
+  await page.getByRole("button", { name: "Descartar alterações" }).click();
+  await page.getByRole("tab").first().click();
 
   // 7. Controle de qualidade sem críticos e envio para aprovação
   await expect(page.getByText("Sem críticos").first()).toBeVisible();

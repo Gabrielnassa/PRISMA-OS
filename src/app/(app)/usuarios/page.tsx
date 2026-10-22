@@ -4,7 +4,7 @@ import { listMembers } from "@/server/services/users";
 import { listClients } from "@/server/services/clients";
 import { can, permissionsFor, ROLE_DESCRIPTIONS, ROLE_LABELS, ROLES } from "@/server/authz/permissions";
 import { Badge, Card, CardHeader, EmptyState, PageHeader, formatDateTime } from "@/components/ui";
-import { InviteForm, MemberForm } from "./forms";
+import { InviteForm, MemberForm, ResetPasswordForm } from "./forms";
 
 export const metadata: Metadata = { title: "Usuários e permissões" };
 
@@ -35,6 +35,7 @@ export default async function UsersPage() {
                   {!m.isActive ? <Badge tone="danger">Inativo</Badge> : null}
                 </div>
                 <div className="mt-1 text-[11px] text-ink-500">Último acesso: {formatDateTime(m.lastLoginAt)}</div>
+                {m.userId !== auth.userId && (m.role !== "owner" || auth.role === "owner") ? <ResetPasswordForm userId={m.userId} email={m.email} /> : null}
               </div>
               {m.role === "owner" && auth.role !== "owner" ? (
                 <p className="text-xs text-ink-500">Somente proprietários alteram proprietários.</p>

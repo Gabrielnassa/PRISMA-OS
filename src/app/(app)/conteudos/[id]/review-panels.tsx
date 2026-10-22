@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { Badge, Button, Card, CardHeader, Field, Textarea, formatDateTime } from "@/components/ui";
-import { FormMessage, SubmitButton } from "@/components/form";
+import { ActionForm, FormMessage, SubmitButton } from "@/components/form";
 import type { ApprovalRecord } from "@/server/services/content";
 import type { ReviewOutput } from "@/server/skills/reviewer";
 import { aiReviewAction, commentAction, decideApprovalAction, retryGenerationAction, submitApprovalAction } from "./actions";
@@ -51,7 +51,7 @@ export function ApprovalPanel({
               {pending.requestNote ? ` · “${pending.requestNote}”` : ""}
             </div>
             {canApprove ? (
-              <form action={decide} className="mt-4 flex flex-col gap-3">
+              <ActionForm action={decide} state={decideState} className="mt-4 flex flex-col gap-3">
                 <input type="hidden" name="approvalId" value={pending.id} />
                 <Field label="Comentário da decisão" htmlFor="decision-note" hint="Obrigatório ao reprovar: explique o ajuste necessário.">
                   <Textarea id="decision-note" name="note" maxLength={2000} className="min-h-20" />
@@ -65,13 +65,13 @@ export function ApprovalPanel({
                     Reprovar
                   </SubmitButton>
                 </div>
-              </form>
+              </ActionForm>
             ) : (
               <p className="mt-3 text-xs text-ink-400">Seu papel não permite decidir aprovações.</p>
             )}
           </div>
         ) : submittable ? (
-          <form action={submit} className="flex flex-col gap-3">
+          <ActionForm action={submit} state={submitState} resetOnSuccess className="flex flex-col gap-3">
             <input type="hidden" name="contentId" value={contentId} />
             <input type="hidden" name="versionId" value={currentVersionId ?? ""} />
             <Field label={`Enviar a versão ${currentVersionNumber} para aprovação`} htmlFor="request-note">
@@ -84,7 +84,7 @@ export function ApprovalPanel({
                 Solicitar aprovação
               </SubmitButton>
             </div>
-          </form>
+          </ActionForm>
         ) : status === "approved" ? (
           <p className="text-sm text-emerald-300">Versão aprovada. Exportação liberada.</p>
         ) : null}
@@ -134,7 +134,7 @@ export function CommentsPanel({ contentId, comments, canComment }: { contentId: 
         <p className="px-5 py-3 text-sm text-ink-400">Nenhum comentário.</p>
       )}
       {canComment ? (
-        <form action={action} className="flex flex-col gap-3 border-t border-ink-700 p-5">
+        <ActionForm action={action} state={state} resetOnSuccess className="flex flex-col gap-3 border-t border-ink-700 p-5">
           <input type="hidden" name="contentId" value={contentId} />
           <label htmlFor="comment" className="sr-only">
             Novo comentário
@@ -146,25 +146,29 @@ export function CommentsPanel({ contentId, comments, canComment }: { contentId: 
               Comentar
             </SubmitButton>
           </div>
-        </form>
+        </ActionForm>
       ) : null}
     </Card>
   );
 }
 
-export function RetryPanel({ contentId, error }: { contentId: string; error: string | null }) {
+export function RetryPanel({ contentId, error, canRetry }: { contentId: string; error: string | null; canRetry: boolean }) {
   const [state, action] = useActionState(retryGenerationAction, { status: "idle" });
   return (
     <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-5">
       <div className="text-sm font-semibold text-red-100">A geração falhou</div>
       <p className="mt-1 text-sm text-red-100/80">{error ?? "Erro não informado."}</p>
-      <form action={action} className="mt-4 flex flex-wrap items-center gap-3">
-        <input type="hidden" name="contentId" value={contentId} />
-        <SubmitButton variant="secondary" pendingText="Reenviando...">
-          Tentar novamente
-        </SubmitButton>
-        <FormMessage state={state} />
-      </form>
+      {canRetry ? (
+        <ActionForm action={action} state={state} className="mt-4 flex flex-wrap items-center gap-3">
+          <input type="hidden" name="contentId" value={contentId} />
+          <SubmitButton variant="secondary" pendingText="Reenviando...">
+            Tentar novamente
+          </SubmitButton>
+          <FormMessage state={state} />
+        </ActionForm>
+      ) : (
+        <p className="mt-3 text-xs text-red-100/70">Peça a alguém com permissão de criação para reprocessar.</p>
+      )}
     </div>
   );
 }
@@ -174,7 +178,7 @@ export function AiReviewPanel({ contentId, enabled }: { contentId: string; enabl
   return (
     <Card>
       <CardHeader title="Revisão por IA" description="Consultiva: ortografia, aderência ao briefing e afirmações sem base. Não substitui a aprovação humana." />
-      <form action={action} className="flex flex-col gap-3 p-5">
+      <ActionForm action={action} state={state} className="flex flex-col gap-3 p-5">
         <input type="hidden" name="contentId" value={contentId} />
         <div>
           <Button type="submit" variant="secondary" size="sm" disabled={!enabled || pending}>
@@ -199,7 +203,7 @@ export function AiReviewPanel({ contentId, enabled }: { contentId: string; enabl
             ) : null}
           </div>
         ) : null}
-      </form>
+      </ActionForm>
     </Card>
   );
 }

@@ -1,8 +1,18 @@
 import type { MediaAsset } from "@/server/services/media";
 import { MEDIA_KIND_LABELS } from "@/server/services/media";
+import type { ActionState } from "@/server/actions";
 import { Badge, EmptyState, formatBytes, formatDateTime } from "./ui";
+import { InlineAction } from "./inline-action";
 
-export function MediaGrid({ items, showClient = false, deleteAction }: { items: MediaAsset[]; showClient?: boolean; deleteAction?: (form: FormData) => Promise<void> }) {
+export function MediaGrid({
+  items,
+  showClient = false,
+  deleteAction,
+}: {
+  items: MediaAsset[];
+  showClient?: boolean;
+  deleteAction?: (prev: ActionState, form: FormData) => Promise<ActionState>;
+}) {
   if (items.length === 0) return <EmptyState title="Nenhum arquivo" description="Envie fotos reais, logotipos e documentos do cliente." />;
   return (
     <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
@@ -30,12 +40,14 @@ export function MediaGrid({ items, showClient = false, deleteAction }: { items: 
             </div>
             {m.licenseNote ? <div className="truncate text-[11px] text-ink-400" title={m.licenseNote}>Origem: {m.licenseNote}</div> : null}
             {deleteAction ? (
-              <form action={deleteAction}>
-                <input type="hidden" name="mediaId" value={m.id} />
-                <button type="submit" className="text-[11px] text-red-300 hover:underline">
-                  Remover
-                </button>
-              </form>
+              <InlineAction
+                action={deleteAction}
+                fields={{ mediaId: m.id }}
+                label="Remover"
+                pendingText="Removendo..."
+                tone="danger"
+                confirmMessage={`Remover "${m.filename}" da biblioteca? Versões que já usam o arquivo continuam com ele.`}
+              />
             ) : null}
           </div>
         </li>

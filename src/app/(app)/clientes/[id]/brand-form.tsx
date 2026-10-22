@@ -6,7 +6,7 @@ import { FAMILY_LABELS, TEMPLATE_FAMILIES } from "@/lib/brand";
 import { FONT_CATALOG, FONT_IDS } from "@/lib/fonts";
 import { contrastRatio } from "@/lib/color";
 import { Card, CardHeader, Field, Input, Select, Textarea, cx } from "@/components/ui";
-import { FormMessage, SubmitButton } from "@/components/form";
+import { ActionForm, FormMessage, SubmitButton } from "@/components/form";
 import { saveBrandAction } from "../actions";
 
 type LogoOption = { id: string; filename: string };
@@ -36,7 +36,7 @@ export function BrandForm({ clientId, brand, revision, logos, canEdit }: { clien
   const textContrast = contrastRatio(colors.text, colors.background);
 
   return (
-    <form action={action} className="flex flex-col gap-6">
+    <ActionForm action={action} state={state} className="flex flex-col gap-6">
       <input type="hidden" name="clientId" value={clientId} />
       <input type="hidden" name="revision" value={revision} />
       <fieldset disabled={!canEdit} className="flex flex-col gap-6">
@@ -95,7 +95,7 @@ export function BrandForm({ clientId, brand, revision, logos, canEdit }: { clien
           <CardHeader title="Identidade visual" description="Cores, fontes e logotipo aplicados às peças. A paleta do PRISMA OS não é imposta aos clientes." />
           <div className="grid gap-6 p-5 lg:grid-cols-[1fr_320px]">
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="grid grid-cols-2 gap-3 md:col-span-2 md:grid-cols-5">
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3 md:col-span-2">
                 {COLOR_FIELDS.map(([key, label]) => (
                   <Field key={key} label={label} htmlFor={`c-${key}`} error={err(`visual.colors.${key}`)}>
                     <div className="flex items-center gap-2">
@@ -265,6 +265,6 @@ export function BrandForm({ clientId, brand, revision, logos, canEdit }: { clien
       ) : (
         <p className="text-sm text-ink-400">Seu papel permite apenas consultar o perfil.</p>
       )}
-    </form>
+    </ActionForm>
   );
 }

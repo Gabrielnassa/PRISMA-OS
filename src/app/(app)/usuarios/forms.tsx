@@ -2,15 +2,15 @@
 
 import { useActionState } from "react";
 import { Field, Input, Select } from "@/components/ui";
-import { FormMessage, SubmitButton } from "@/components/form";
-import { inviteAction, updateMemberAction } from "./actions";
+import { ActionForm, FormMessage, SubmitButton } from "@/components/form";
+import { inviteAction, resetPasswordAction, updateMemberAction } from "./actions";
 
 type RoleOption = { id: string; label: string; description: string };
 
 export function InviteForm({ roles }: { roles: RoleOption[] }) {
   const [state, action] = useActionState(inviteAction, { status: "idle" });
   return (
-    <form action={action} className="grid gap-4 p-5 md:grid-cols-[1fr_1fr_200px_auto] md:items-end">
+    <ActionForm action={action} state={state} resetOnSuccess className="grid gap-4 p-5 md:grid-cols-[1fr_1fr_200px_auto] md:items-end">
       <Field label="Nome" htmlFor="i-name">
         <Input id="i-name" name="name" required minLength={2} maxLength={120} />
       </Field>
@@ -36,7 +36,7 @@ export function InviteForm({ roles }: { roles: RoleOption[] }) {
           </div>
         ) : null}
       </div>
-    </form>
+    </ActionForm>
   );
 }
 
@@ -53,7 +53,7 @@ export function MemberForm({
 }) {
   const [state, action] = useActionState(updateMemberAction, { status: "idle" });
   return (
-    <form action={action} className="flex flex-col gap-3">
+    <ActionForm action={action} state={state} className="flex flex-col gap-3">
       <input type="hidden" name="userId" value={member.userId} />
       <div className="flex flex-wrap items-center gap-3">
         <Select name="role" defaultValue={member.role} disabled={isSelf} aria-label="Papel" className="w-44">
@@ -92,6 +92,34 @@ export function MemberForm({
         </SubmitButton>
         <FormMessage state={state} />
       </div>
-    </form>
+    </ActionForm>
+  );
+}
+
+/** Gera nova senha temporária (troca obrigatória no próximo acesso; sessões atuais são encerradas). */
+export function ResetPasswordForm({ userId, email }: { userId: string; email: string }) {
+  const [state, action] = useActionState(resetPasswordAction, { status: "idle" });
+  return (
+    <ActionForm
+      action={action}
+      state={state}
+      confirmMessage={`Gerar uma nova senha temporária para ${email}? A senha atual deixa de funcionar e as sessões abertas são encerradas.`}
+      className="mt-2 flex flex-col gap-2"
+    >
+      <input type="hidden" name="userId" value={userId} />
+      <input type="hidden" name="email" value={email} />
+      <div>
+        <SubmitButton variant="ghost" size="sm" pendingText="Gerando...">
+          Gerar nova senha temporária
+        </SubmitButton>
+      </div>
+      <FormMessage state={state} />
+      {state.status === "ok" && state.data?.temporaryPassword ? (
+        <div className="rounded-lg border border-violet-500/30 bg-violet-500/10 p-3 text-sm">
+          Nova senha temporária: <code className="select-all rounded bg-ink-900 px-2 py-0.5 font-mono text-violet-200">{state.data.temporaryPassword}</code>
+          <p className="mt-1 text-xs text-ink-400">Exibida uma única vez. Envie por um canal seguro; ela expira em 7 dias e deve ser trocada no primeiro acesso.</p>
+        </div>
+      ) : null}
+    </ActionForm>
   );
 }

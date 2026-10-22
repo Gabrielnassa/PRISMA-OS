@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   ASPECTS,
@@ -70,9 +69,10 @@ export function ContentEditor({
   brandStyle: DocumentStyle;
   canEdit: boolean;
 }) {
-  const router = useRouter();
   const [doc, setDoc] = useState<ContentDocument>(initialDocument);
-  const [selected, setSelected] = useState(0);
+  const [selectedState, setSelected] = useState(0);
+  // Sempre dentro do intervalo (ex.: após descartar lâminas adicionadas).
+  const selected = Math.min(selectedState, doc.slides.length - 1);
   const [urls, setUrls] = useState<string[]>([]);
   const urlsRef = useRef<string[]>([]);
   const [quality, setQuality] = useState<QualityReport | null>(initialQuality);
@@ -82,6 +82,15 @@ export function ContentEditor({
   const [saveMessage, setSaveMessage] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
   const [saving, startSaving] = useTransition();
   const [hashtagText, setHashtagText] = useState(initialDocument.hashtags.join(" "));
+  // Nova versão salva (ou restaurada): recomeça a partir dela sem desmontar o
+  // editor, preservando a mensagem de confirmação.
+  const [syncedVersionId, setSyncedVersionId] = useState(baseVersionId);
+  if (syncedVersionId !== baseVersionId) {
+    setSyncedVersionId(baseVersionId);
+    setDoc(initialDocument);
+    setHashtagText(initialDocument.hashtags.join(" "));
+    setQuality(initialQuality);
+  }
   const dirty = useMemo(() => JSON.stringify(doc) !== JSON.stringify(initialDocument), [doc, initialDocument]);
   const template = templates.find((t) => t.id === doc.templateId) ?? templates[0]!;
   const slide = doc.slides[Math.min(selected, doc.slides.length - 1)]!;
@@ -91,6 +100,9 @@ export function ContentEditor({
   // Pré-visualização com atraso para não renderizar a cada tecla.
   useEffect(() => {
     const seq = ++requestSeq.current;
+    // Cancela a requisição anterior (e a desta rodada, ao desmontar): respostas
+    // atrasadas não criam URLs de imagem que nunca seriam liberadas.
+    const controller = new AbortController();
     const timer = setTimeout(async () => {
       setRendering(true);
       try {
@@ -98,9 +110,10 @@ export function ContentEditor({
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ document: doc }),
+          signal: controller.signal,
         });
         const json = await res.json();
-        if (seq !== requestSeq.current) return;
+        if (seq !== requestSeq.current || controller.signal.aborted) return;
         if (!res.ok) {
           setPreviewError(json?.error?.message ?? "Falha na pré-visualização");
           return;
@@ -112,12 +125,15 @@ export function ContentEditor({
         setUrls(next);
         setQuality(json.quality);
       } catch {
-        if (seq === requestSeq.current) setPreviewError("Sem conexão com o servidor de renderização.");
+        if (seq === requestSeq.current && !controller.signal.aborted) setPreviewError("Sem conexão com o servidor de renderização.");
       } finally {
         if (seq === requestSeq.current) setRendering(false);
       }
     }, 450);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [doc, contentId]);
 
   useEffect(() => () => urlsRef.current.forEach((u) => URL.revokeObjectURL(u)), []);
@@ -127,8 +143,25 @@ export function ContentEditor({
     const warn = (e: BeforeUnloadEvent) => {
       e.preventDefault();
     };
+    // Navegação interna (links do menu e da página) não dispara beforeunload:
+    // confirma antes de sair com alterações não salvas.
+    const guardLinks = (e: MouseEvent) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const link = (e.target as Element | null)?.closest?.("a[href]");
+      if (!(link instanceof HTMLAnchorElement) || link.target === "_blank" || link.hasAttribute("download")) return;
+      const url = new URL(link.href, window.location.href);
+      if (url.origin !== window.location.origin || (url.pathname === window.location.pathname && url.search === window.location.search)) return;
+      if (!window.confirm("Há alterações não salvas no editor. Sair mesmo assim?")) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
     window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
+    document.addEventListener("click", guardLinks, true);
+    return () => {
+      window.removeEventListener("beforeunload", warn);
+      document.removeEventListener("click", guardLinks, true);
+    };
   }, [dirty]);
 
   const updateSlide = useCallback(
@@ -162,7 +195,7 @@ export function ContentEditor({
       slides.splice(selected + 1, 0, blank);
       return { ...d, slides };
     });
-    setSelected((s) => s + 1);
+    setSelected(selected + 1);
   }
   function duplicateSlide() {
     if (doc.slides.length >= slideLimits.max) return;
@@ -171,12 +204,12 @@ export function ContentEditor({
       slides.splice(selected + 1, 0, { ...structuredClone(slide), id: newSlideId(slides.length) });
       return { ...d, slides };
     });
-    setSelected((s) => s + 1);
+    setSelected(selected + 1);
   }
   function removeSlide() {
     if (doc.slides.length <= slideLimits.min) return;
     setDoc((d) => ({ ...d, slides: d.slides.filter((_, i) => i !== selected) }));
-    setSelected((s) => Math.max(0, s - 1));
+    setSelected(Math.max(0, selected - 1));
   }
   function moveSlide(dir: -1 | 1) {
     const to = selected + dir;
@@ -197,9 +230,9 @@ export function ContentEditor({
         setSaveMessage({ tone: "error", text: res.message });
         return;
       }
+      // A ação já atualiza a página (nova versão chega por baseVersionId).
       setSaveMessage({ tone: "ok", text: res.status === "ok" ? (res.message ?? "Salvo.") : "Salvo." });
       setChangeNote("");
-      router.refresh();
     });
   }
 
@@ -402,7 +435,11 @@ export function ContentEditor({
                 <Button type="button" onClick={save} disabled={!dirty || saving}>
                   {saving ? "Salvando..." : "Salvar nova versão"}
                 </Button>
-                <Button type="button" variant="ghost" disabled={!dirty || saving} onClick={() => { setDoc(initialDocument); setHashtagText(initialDocument.hashtags.join(" ")); }}>
+                <Button type="button" variant="ghost" disabled={!dirty || saving} onClick={() => {
+                    setDoc(initialDocument);
+                    setHashtagText(initialDocument.hashtags.join(" "));
+                    setSelected((i) => Math.min(i, initialDocument.slides.length - 1));
+                  }}>
                   Descartar alterações
                 </Button>
               </div>

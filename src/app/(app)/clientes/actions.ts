@@ -122,12 +122,14 @@ export async function addMemoryAction(_prev: ActionState, form: FormData): Promi
   });
 }
 
-export async function memoryStatusAction(form: FormData): Promise<void> {
+export async function memoryStatusAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const auth = await requireAuth();
-  const op = str(form, "op");
-  if (op === "delete") await deleteMemory(auth, str(form, "clientId"), str(form, "memoryId"));
-  else await setMemoryStatus(auth, str(form, "clientId"), str(form, "memoryId"), op === "archive" ? "archived" : "active");
-  refresh();
+  return runAction(async () => {
+    const op = str(form, "op");
+    if (op === "delete") await deleteMemory(auth, str(form, "clientId"), str(form, "memoryId"));
+    else await setMemoryStatus(auth, str(form, "clientId"), str(form, "memoryId"), op === "archive" ? "archived" : "active");
+    refresh();
+  });
 }
 
 export async function budgetAction(_prev: ActionState, form: FormData): Promise<ActionState> {

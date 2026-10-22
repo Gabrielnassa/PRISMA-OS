@@ -2,13 +2,13 @@
 
 import { useActionState } from "react";
 import { Field, Select, Textarea } from "@/components/ui";
-import { FormMessage, SubmitButton } from "@/components/form";
+import { ActionForm, FormMessage, SubmitButton } from "@/components/form";
 import { addMemoryAction } from "../actions";
 
 export function AddMemoryForm({ clientId }: { clientId: string }) {
   const [state, action] = useActionState(addMemoryAction, { status: "idle" });
   return (
-    <form action={action} className="grid gap-4 p-5 md:grid-cols-[200px_1fr_auto] md:items-end">
+    <ActionForm action={action} state={state} resetOnSuccess className="grid gap-4 p-5 md:grid-cols-[200px_1fr_auto] md:items-end">
       <input type="hidden" name="clientId" value={clientId} />
       <Field label="Tipo" htmlFor="m-kind">
         <Select id="m-kind" name="kind" defaultValue="fact">
@@ -25,6 +25,6 @@ export function AddMemoryForm({ clientId }: { clientId: string }) {
       <div className="md:col-span-3">
         <FormMessage state={state} />
       </div>
-    </form>
+    </ActionForm>
   );
 }
