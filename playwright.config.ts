@@ -27,8 +27,9 @@ export default defineConfig({
     screenshot: "only-on-failure",
     ...(process.env.PLAYWRIGHT_CHROMIUM_PATH ? { launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH } } : {}),
   },
+  // E2E_PROD=1 testa o build de produção (rode `npm run build` antes).
   webServer: {
-    command: `npx next dev -p ${PORT}`,
+    command: process.env.E2E_PROD === "1" ? `npx next start -p ${PORT}` : `npx next dev -p ${PORT}`,
     url: `http://localhost:${PORT}/login`,
     env: E2E_ENV,
     reuseExistingServer: false,

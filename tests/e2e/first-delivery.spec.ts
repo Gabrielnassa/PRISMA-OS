@@ -60,15 +60,33 @@ test("ciclo completo: briefing → texto → arte → revisão → aprovação �
   await page.getByLabel("CTA desejado").fill("Agende pelo WhatsApp");
   await page.getByRole("checkbox", { name: /Equipe da clínica/ }).check({ force: true });
   await shot(page, "04-central-de-criacao");
-  await page.getByRole("button", { name: "Gerar (modo demonstração)" }).click();
+  // Em produção o provedor de demonstração é bloqueado: o fluxo segue pelo template, sem IA.
+  const prod = process.env.E2E_PROD === "1";
+  if (prod) {
+    await expect(page.getByRole("button", { name: "Gerar com IA" })).toBeDisabled();
+    await page.getByRole("button", { name: "Começar pelo template (sem IA)" }).click();
+  } else {
+    await page.getByRole("button", { name: "Gerar (modo demonstração)" }).click();
+  }
   await expect(page).toHaveURL(/\/conteudos\/[0-9a-f-]+$/);
   const contentUrl = page.url();
 
-  // 5. Geração assíncrona pelo worker → Em revisão
-  await expect(page.getByText("Em revisão").first()).toBeVisible({ timeout: 90_000 });
+  // 5. Geração assíncrona pelo worker → Em revisão (ou rascunho manual)
+  if (!prod) {
+    await expect(page.getByText("Em revisão").first()).toBeVisible({ timeout: 90_000 });
+    await expect(page.getByText("Versão gerada em modo demonstração")).toBeVisible();
+  }
   await expect(page.getByAltText("Pré-visualização da lâmina 1")).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText("Versão gerada em modo demonstração")).toBeVisible();
   await shot(page, "05-editor");
+  if (prod) {
+    const texts = ["Hidratação também importa no frio", "Vacinação em dia protege todos", "Agende pelo WhatsApp"];
+    for (let i = 0; i < texts.length; i++) {
+      await page.getByRole("tab").nth(i + 1).click();
+      await page.locator("#f-title").fill(texts[i]!);
+    }
+    await page.getByRole("tab").first().click();
+    await page.locator("#caption").fill("Cuidados simples para a família atravessar o inverno com saúde. Agende pelo WhatsApp.");
+  }
 
   // 6. Edição manual → nova versão
   const title = page.locator("#f-title");

@@ -21,7 +21,8 @@
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
     "test:e2e": "playwright test",
-    "render:samples": "tsx scripts/render-samples.ts"
+    "render:samples": "tsx scripts/render-samples.ts",
+    "test:e2e:prod": "E2E_PROD=1 playwright test"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.1.0",
