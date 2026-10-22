@@ -40,7 +40,7 @@ export function standardItems(
       lineHeight: 1.25,
       uppercase: true,
       letterSpacingEm: 0.12,
-      color: o.kickerColor ?? ctx.palette.accent,
+      color: o.kickerColor ?? ctx.palette.accentText,
       gapAfter: 28,
     },
   ];

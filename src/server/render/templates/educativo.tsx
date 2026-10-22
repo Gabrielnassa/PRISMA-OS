@@ -104,7 +104,7 @@ export const educativoNumero: TemplateDef = {
           box: { x: side, y: top, w: ctx.W - side * 2, h: bottom - top },
           justify: "center",
           items: [
-            { field: "kicker", font: "body", weight: 600, maxSize: 30, minSize: 22, lineHeight: 1.25, uppercase: true, letterSpacingEm: 0.12, color: ctx.palette.accent, gapAfter: 20 },
+            { field: "kicker", font: "body", weight: 600, maxSize: 30, minSize: 22, lineHeight: 1.25, uppercase: true, letterSpacingEm: 0.12, color: ctx.palette.accentText, gapAfter: 20 },
             { field: "highlight", font: "heading", weight: 800, maxSize: Math.round(260 * s), minSize: 90, lineHeight: 1, color: ctx.palette.accent, gapAfter: 36 },
             { field: "title", font: "heading", weight: 800, maxSize: Math.round((ctx.kind === "cta" ? 84 : 60) * s), minSize: 38, lineHeight: 1.12, gapAfter: 28 },
             { field: "body", font: "body", weight: 400, maxSize: Math.round(36 * s), minSize: 26, lineHeight: 1.4, gapAfter: 0 },

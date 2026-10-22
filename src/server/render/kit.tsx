@@ -67,6 +67,8 @@ export interface Palette {
   fg: string;
   muted: string;
   accent: string;
+  /** Cor de destaque garantidamente legível como texto pequeno (AA 4,5:1). */
+  accentText: string;
   accentFg: string;
   surface: string;
   line: string;
@@ -103,11 +105,14 @@ export function resolvePalette(style: DocumentStyle, theme: ThemeName): Palette 
   else bg = c.primary;
   const fg = pickText(bg, theme === "light" ? [c.text, c.primary] : [c.background, "#ffffff"]);
   const accent = pickAccent(bg, [c.accent, c.secondary, theme === "light" ? c.primary : c.background], fg);
+  // Texto secundário só é atenuado se continuar legível (AA) sobre o fundo.
+  const softened = mix(fg, bg, 0.28);
   return {
     bg,
     fg,
-    muted: mix(fg, bg, 0.28),
+    muted: contrastRatio(softened, bg) >= 4.5 ? softened : fg,
     accent,
+    accentText: [c.accent, c.secondary, theme === "light" ? c.primary : c.background].find((x) => contrastRatio(x, bg) >= 4.5) ?? fg,
     accentFg: readableOn(accent, "#ffffff", "#111111"),
     surface: mix(bg, fg, 0.06),
     line: mix(bg, fg, 0.16),

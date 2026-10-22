@@ -150,7 +150,7 @@ export const naturalConversa: TemplateDef = {
           box: { x: bubble.x + pad, y: bubble.y + pad, w: bubble.w - pad * 2, h: bubble.h - pad * 2 },
           justify: "center",
           items: [
-            { field: "kicker", font: "body", weight: 600, maxSize: 30, minSize: 22, lineHeight: 1.25, uppercase: true, letterSpacingEm: 0.1, color: ctx.palette.accent, gapAfter: 24 },
+            { field: "kicker", font: "body", weight: 600, maxSize: 30, minSize: 22, lineHeight: 1.25, uppercase: true, letterSpacingEm: 0.1, color: ctx.palette.accentText, gapAfter: 24 },
             { field: "title", font: "body", weight: 800, maxSize: ctx.kind === "content" ? 60 : 72, minSize: 38, lineHeight: 1.15, gapAfter: 28 },
             { field: "body", font: "body", weight: 400, maxSize: 40, minSize: 26, lineHeight: 1.4, gapAfter: 0 },
           ],

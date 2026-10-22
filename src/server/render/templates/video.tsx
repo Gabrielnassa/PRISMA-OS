@@ -123,7 +123,7 @@ export const videoDepoimento: TemplateDef = {
           justify: "start",
           align: "center",
           items: [
-            { field: "kicker", font: "body", weight: 600, maxSize: 30, minSize: 22, lineHeight: 1.25, uppercase: true, letterSpacingEm: 0.12, color: ctx.palette.accent, gapAfter: 24 },
+            { field: "kicker", font: "body", weight: 600, maxSize: 30, minSize: 22, lineHeight: 1.25, uppercase: true, letterSpacingEm: 0.12, color: ctx.palette.accentText, gapAfter: 24 },
             { field: "title", font: "heading", weight: 600, maxSize: Math.round((ctx.kind === "cta" ? 84 : 64) * s), minSize: 36, lineHeight: 1.2, gapAfter: 28 },
             { field: "body", font: "body", weight: 400, maxSize: Math.round(36 * s), minSize: 26, lineHeight: 1.4, gapAfter: 0 },
           ],

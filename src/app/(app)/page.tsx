@@ -139,7 +139,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               <div className="border-t border-ink-700 px-5 py-3 text-xs text-ink-400">
                 Tempo médio do pedido à aprovação (90 dias):{" "}
                 <span className="font-semibold text-ink-200">
-                  {data.avgHoursToApproval === null ? "sem dados" : data.avgHoursToApproval < 48 ? `${data.avgHoursToApproval.toFixed(1)} h` : `${(data.avgHoursToApproval / 24).toFixed(1)} dias`}
+                  {data.avgHoursToApproval === null
+                    ? "sem dados"
+                    : data.avgHoursToApproval < 48
+                      ? `${data.avgHoursToApproval.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} h`
+                      : `${(data.avgHoursToApproval / 24).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} dias`}
                 </span>
               </div>
             </Card>

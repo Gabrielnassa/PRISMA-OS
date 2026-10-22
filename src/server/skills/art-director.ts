@@ -78,27 +78,35 @@ export const artDirectorSkill: RulesSkill<ArtDirectionInput, ArtDirection> = {
         OBJECTIVE_FAMILY[input.objective],
         "editorial",
       ];
-      for (const family of families) {
-        const candidates = TEMPLATES.filter((t) => t.family === family && supports(t, input.format, aspect));
-        const usable = candidates.filter((t) => (input.hasImages ? true : t.image !== "required"));
-        const ranked = [...usable].sort((a, b) => {
-          const score = (t: TemplateDef) =>
-            (input.hasImages && t.image !== "none" ? 2 : 0) + (!input.hasImages && t.image === "none" ? 1 : 0) - (input.recentTemplateIds[0] === t.id ? 3 : 0);
-          return score(b) - score(a);
-        });
-        if (ranked[0]) {
-          template = ranked[0];
-          rationale.push(
-            input.visual.preferredFamilies.includes(family)
-              ? `Família preferida da marca: ${family}.`
-              : family === "tech"
-                ? "Segmento de tecnologia: família Tech."
-                : `Família indicada para o objetivo: ${family}.`,
-          );
-          rationale.push(input.hasImages ? "Há fotos reais selecionadas: priorizado layout com foto." : "Sem fotos selecionadas: priorizado layout tipográfico.");
-          break;
+      // Com fotos selecionadas, a primeira passada só aceita layouts que exibem foto:
+      // a escolha do usuário prevalece sobre a família sugerida pelo objetivo.
+      const passes = input.hasImages ? [true, false] : [false];
+      outer: for (const requireImage of passes) {
+        for (const family of families) {
+          const candidates = TEMPLATES.filter((t) => t.family === family && supports(t, input.format, aspect));
+          const usable = candidates.filter((t) => (requireImage ? t.image !== "none" : input.hasImages || t.image !== "required"));
+          const ranked = [...usable].sort((a, b) => {
+            const score = (t: TemplateDef) =>
+              (input.hasImages && t.image !== "none" ? 2 : 0) + (!input.hasImages && t.image === "none" ? 1 : 0) - (input.recentTemplateIds[0] === t.id ? 3 : 0);
+            return score(b) - score(a);
+          });
+          if (ranked[0]) {
+            template = ranked[0];
+            rationale.push(
+              input.visual.preferredFamilies.includes(family)
+                ? `Família preferida da marca: ${family}.`
+                : family === "tech"
+                  ? "Segmento de tecnologia: família Tech."
+                  : family === OBJECTIVE_FAMILY[input.objective]
+                    ? `Família indicada para o objetivo: ${family}.`
+                    : `Família ${family} escolhida para aproveitar as fotos selecionadas.`,
+            );
+            rationale.push(input.hasImages ? "Há fotos reais selecionadas: priorizado layout com foto." : "Sem fotos selecionadas: priorizado layout tipográfico.");
+            break outer;
+          }
         }
       }
+      if (!template) rationale.push("Nenhum template preferido compatível; usado o padrão editorial.");
     }
     template ??= getTemplate("editorial-assimetrico").template;
 

@@ -12,3 +12,6 @@ next-env.d.ts
 /playwright-report/
 /blob-report/
 .DS_Store
+/.e2e-storage/
+/.e2e-worker.pid
+/test-results-worker.log

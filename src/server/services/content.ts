@@ -753,3 +753,23 @@ export async function recordExport(auth: AuthContext, contentId: string, clientI
 export async function markGenerationFailed(tx: Queryable, contentItemId: string, message: string): Promise<void> {
   await tx.query("UPDATE content_items SET status = 'failed', last_error = $2 WHERE id = $1 AND status = 'generating'", [contentItemId, message.slice(0, 1000)]);
 }
+
+/** Reprocessamento manual de uma geração que falhou (Workflow E). */
+export async function retryGeneration(auth: AuthContext, contentId: string): Promise<void> {
+  assertCan(auth.role, "content.create");
+  if (!getProvider()) throw new ProviderNotConfiguredError();
+  await withTx(userCtx(auth.userId), async (tx) => {
+    const item = await lockItem(tx, auth, contentId);
+    if (item.status !== "failed") throw new ConflictError("Só é possível reprocessar gerações que falharam.");
+    await assertWithinBudget(tx, item.client_id);
+    const job = await maybeOne<{ id: string }>(tx, "SELECT id FROM jobs WHERE organization_id = $1 AND idempotency_key = $2", [auth.organizationId, `content:${contentId}:generate`]);
+    if (!job) throw new NotFoundError("Tarefa de geração não encontrada.");
+    const res = await tx.query(
+      "UPDATE jobs SET status = 'queued', attempts = 0, run_after = now(), finished_at = NULL, last_error = NULL, created_by = $2 WHERE id = $1 AND status = 'failed'",
+      [job.id, auth.userId],
+    );
+    if ((res.rowCount ?? 0) === 0) throw new ConflictError("A tarefa não está em estado de falha.");
+    await tx.query("UPDATE content_items SET status = 'generating', last_error = NULL WHERE id = $1", [contentId]);
+    await audit(tx, userActor(auth), { organizationId: auth.organizationId, clientId: item.client_id, action: "content.generation_retried", entityType: "content_item", entityId: contentId, metadata: { jobId: job.id } });
+  });
+}
