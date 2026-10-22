@@ -1,0 +1,45 @@
+import { z } from "zod";
+
+/**
+ * Configuração lida exclusivamente de variáveis de ambiente.
+ * Segredos nunca são versionados: veja `.env.example`.
+ */
+const EnvSchema = z.object({
+  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  DATABASE_URL: z.string().url(),
+  APP_URL: z.string().url().optional(),
+  SESSION_TTL_HOURS: z.coerce.number().int().min(1).max(24 * 30).default(72),
+  STORAGE_DRIVER: z.enum(["local"]).default("local"),
+  STORAGE_LOCAL_DIR: z.string().default("./storage"),
+  MAX_UPLOAD_MB: z.coerce.number().min(1).max(200).default(15),
+  AI_PROVIDER: z.enum(["anthropic", "demo", "none"]).optional(),
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
+  ANTHROPIC_MODEL: z.string().min(1).default("claude-opus-5-5"),
+  ANTHROPIC_EFFORT: z.enum(["low", "medium", "high", "xhigh", "max"]).default("medium"),
+  ANTHROPIC_FALLBACKS: z.enum(["default", "off"]).default("default"),
+  AI_TIMEOUT_MS: z.coerce.number().int().min(5_000).max(600_000).default(180_000),
+  GENERATION_RATE_PER_MINUTE: z.coerce.number().int().min(1).max(600).default(10),
+  WORKER_POLL_MS: z.coerce.number().int().min(100).max(60_000).default(1_000),
+  JOB_LOCK_TIMEOUT_MS: z.coerce.number().int().min(10_000).max(3_600_000).default(600_000),
+});
+
+export type Env = z.infer<typeof EnvSchema>;
+
+let cached: Env | undefined;
+
+export function env(): Env {
+  if (!cached) {
+    const parsed = EnvSchema.safeParse(process.env);
+    if (!parsed.success) {
+      const issues = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
+      throw new Error(`Configuração inválida: ${issues}`);
+    }
+    cached = parsed.data;
+  }
+  return cached;
+}
+
+/** Usado pelos testes para recarregar a configuração após alterar process.env. */
+export function resetEnvCache(): void {
+  cached = undefined;
+}
