@@ -20,6 +20,11 @@ export const editorialAssimetrico: TemplateDef = {
   defaultTheme: { cover: "light", content: "light", cta: "brand" },
   defaultAlign: "left",
   fieldLimits: LIMITS_STANDARD,
+  capacity: {
+    "1:1": { content: { plain: 1, photo: 0.5 }, cta: { plain: 1, photo: 0.8 } },
+    "4:5": { content: { plain: 1, photo: 0.85 } },
+    "9:16": { content: { plain: 1, photo: 0.75 }, cta: { plain: 1, photo: 0.85 } },
+  },
   compositionRules: [
     "Texto alinhado à esquerda e ancorado na parte inferior.",
     "Coluna de texto ocupa 86% da largura útil (assimetria intencional).",
@@ -31,7 +36,7 @@ export const editorialAssimetrico: TemplateDef = {
     const side = ctx.safe.side;
     const top = ctx.safe.top;
     const hasImage = ctx.image !== null;
-    const imageBox = { x: side, y: top + 80, w: ctx.W - side * 2, h: Math.round(ctx.H * 0.36) };
+    const imageBox = { x: side, y: top + 80, w: ctx.W - side * 2, h: Math.round(ctx.H * (ctx.doc.aspect === "1:1" ? 0.28 : 0.36)) };
     const textTop = hasImage ? imageBox.y + imageBox.h + 64 : Math.round(ctx.H * 0.28);
     const bottom = ctx.H - ctx.safe.bottom - 70;
     const colW = Math.round((ctx.W - side * 2) * 0.86);
@@ -73,6 +78,10 @@ export const editorialFoto: TemplateDef = {
     cover: { kicker: 40, title: 80, body: 120, footer: 70 },
     content: { kicker: 40, title: 70, body: 300, footer: 90 },
     cta: { kicker: 40, title: 70, body: 160, footer: 90 },
+  },
+  capacity: {
+    "1:1": { cover: { plain: 0.85, photo: 0.85 }, content: { plain: 0.55, photo: 0.55 }, cta: { plain: 0.85, photo: 0.85 } },
+    "4:5": { content: { plain: 0.95, photo: 0.95 } },
   },
   compositionRules: [
     "Foto sangrada ocupando 55% da altura (50% em Story).",

@@ -222,6 +222,8 @@ export async function updateBrandProfile(
       );
       if (!logo) throw new ValidationError("O logotipo selecionado não é uma imagem deste cliente.");
     }
+    // Serializa salvamentos simultâneos do mesmo perfil: a checagem de revisão vale de fato.
+    await tx.query("SELECT pg_advisory_xact_lock(hashtext('brand_profile:' || $1::text))", [clientId]);
     const previous = await loadBrandProfile(tx, clientId);
     if (expectedRevision !== undefined && previous.brandRevision !== expectedRevision) {
       throw new ConflictError("O perfil foi alterado por outra pessoa. Recarregue a página antes de salvar.");

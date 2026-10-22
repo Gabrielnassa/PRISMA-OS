@@ -21,7 +21,7 @@ import { artDirectorSkill } from "../skills/art-director";
 import { composeDocument, diffDocuments, productionNotes, slideKinds } from "../content/compose";
 import { renderDocument } from "../render/engine";
 import { runQualityChecks, type QualityReport } from "../quality/checks";
-import { enqueueJob } from "../jobs/queue";
+import { MANUAL_RETRY_ATTEMPTS, enqueueJob } from "../jobs/queue";
 import { audit, userActor } from "./audit";
 import { loadBrandProfile, requireClient } from "./clients";
 import { loadImagesForRender } from "./media";
@@ -215,12 +215,19 @@ export async function createContent(auth: AuthContext, raw: CreateContentInput):
       await assertWithinBudget(tx, input.clientId);
     }
 
-    const item = await one<{ id: string }>(
+    // Envio repetido em paralelo (mesmo requestId): o segundo espera o primeiro e reaproveita o conteúdo criado.
+    const item = await maybeOne<{ id: string }>(
       tx,
       `INSERT INTO content_items (organization_id, client_id, title, channel, format, objective, briefing, status, request_id, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       ON CONFLICT (organization_id, request_id) DO NOTHING RETURNING id`,
       [auth.organizationId, input.clientId, input.title, input.channel, input.format, input.objective, JSON.stringify(input.briefing), input.mode === "ai" ? "generating" : "draft", input.requestId, auth.userId],
     );
+    if (!item) {
+      const created = await one<{ id: string }>(tx, "SELECT id FROM content_items WHERE organization_id = $1 AND request_id = $2", [auth.organizationId, input.requestId]);
+      const job = await maybeOne<{ id: string }>(tx, "SELECT id FROM jobs WHERE organization_id = $1 AND idempotency_key = $2", [auth.organizationId, `content:${created.id}:generate`]);
+      return { contentId: created.id, jobId: job?.id ?? null, reused: true };
+    }
     await audit(tx, userActor(auth), {
       organizationId: auth.organizationId,
       clientId: input.clientId,
@@ -299,7 +306,7 @@ export async function listContents(auth: AuthContext, f: ContentFilter = {}): Pr
        LEFT JOIN users u ON u.id = ci.created_by
        WHERE ${where}
        ORDER BY ci.updated_at DESC LIMIT $5 OFFSET $6`,
-      [...params, Math.min(f.limit ?? 30, 100), f.offset ?? 0],
+      [...params, Math.min(f.limit ?? 30, 100), Math.max(0, Math.floor(f.offset ?? 0))],
     );
     return {
       total: total.n,
@@ -584,14 +591,16 @@ export async function decideApproval(
   const note = (input.note ?? "").trim();
   if (input.decision === "rejected" && note.length < 3) throw new ValidationError("Explique o motivo da reprovação para orientar o ajuste.");
   return withTx(userCtx(auth.userId), async (tx) => {
-    const approval = await maybeOne<{ id: string; content_item_id: string; content_version_id: string; document_hash: string; status: string; requested_by: string | null; client_id: string }>(
+    const target = await maybeOne<{ content_item_id: string }>(tx, "SELECT content_item_id FROM approvals WHERE id = $1 AND organization_id = $2", [approvalId, auth.organizationId]);
+    if (!target) throw new NotFoundError("Solicitação de aprovação não encontrada.");
+    // Mesma ordem de bloqueio de saveVersion/archiveContent (conteúdo, depois aprovação): evita deadlock.
+    const item = await lockItem(tx, auth, target.content_item_id);
+    const approval = await one<{ id: string; content_item_id: string; content_version_id: string; document_hash: string; status: string; requested_by: string | null; client_id: string }>(
       tx,
-      "SELECT id, content_item_id, content_version_id, document_hash, status, requested_by, client_id FROM approvals WHERE id = $1 AND organization_id = $2 FOR UPDATE",
-      [approvalId, auth.organizationId],
+      "SELECT id, content_item_id, content_version_id, document_hash, status, requested_by, client_id FROM approvals WHERE id = $1 FOR UPDATE",
+      [approvalId],
     );
-    if (!approval) throw new NotFoundError("Solicitação de aprovação não encontrada.");
     if (approval.status !== "pending") throw new ConflictError("Esta solicitação já foi decidida ou substituída.");
-    const item = await lockItem(tx, auth, approval.content_item_id);
     if (item.current_version_id !== approval.content_version_id) {
       await tx.query("UPDATE approvals SET status = 'superseded' WHERE id = $1", [approvalId]);
       throw new ConflictError("A peça foi alterada depois do pedido de aprovação. Uma nova aprovação é necessária.");
@@ -764,11 +773,13 @@ export async function retryGeneration(auth: AuthContext, contentId: string): Pro
     await assertWithinBudget(tx, item.client_id);
     const job = await maybeOne<{ id: string }>(tx, "SELECT id FROM jobs WHERE organization_id = $1 AND idempotency_key = $2", [auth.organizationId, `content:${contentId}:generate`]);
     if (!job) throw new NotFoundError("Tarefa de geração não encontrada.");
+    // As tentativas continuam numeradas: o histórico das anteriores é preservado.
     const res = await tx.query(
-      "UPDATE jobs SET status = 'queued', attempts = 0, run_after = now(), finished_at = NULL, last_error = NULL, created_by = $2 WHERE id = $1 AND status = 'failed'",
-      [job.id, auth.userId],
+      `UPDATE jobs SET status = 'queued', max_attempts = attempts + $3, run_after = now(), finished_at = NULL, last_error = NULL, created_by = $2
+       WHERE id = $1 AND status = 'failed' AND attempts + $3 <= 100`,
+      [job.id, auth.userId, MANUAL_RETRY_ATTEMPTS],
     );
-    if ((res.rowCount ?? 0) === 0) throw new ConflictError("A tarefa não está em estado de falha.");
+    if ((res.rowCount ?? 0) === 0) throw new ConflictError("A tarefa não está em estado de falha ou atingiu o limite de reprocessamentos.");
     await tx.query("UPDATE content_items SET status = 'generating', last_error = NULL WHERE id = $1", [contentId]);
     await audit(tx, userActor(auth), { organizationId: auth.organizationId, clientId: item.client_id, action: "content.generation_retried", entityType: "content_item", entityId: contentId, metadata: { jobId: job.id } });
   });

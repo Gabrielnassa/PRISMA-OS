@@ -1,13 +1,15 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
+import type { BetaUsage } from "@anthropic-ai/sdk/resources/beta/messages/messages";
 import { z } from "zod";
 import { IntegrationError } from "../../errors";
-import type { AiProvider, Effort, StructuredRequest, StructuredResult, TokenUsage } from "../types";
+import { toOutputJsonSchema } from "../json-schema";
+import type { AiProvider, Effort, StructuredRequest, StructuredResult, TokenUsage, UsageByModel } from "../types";
 
 export interface AnthropicProviderOptions {
   apiKey: string;
   model: string;
-  effort: Effort;
+  /** Quando definido (ANTHROPIC_EFFORT), substitui o esforço de cada skill. */
+  effort?: Effort;
   fallbacks: boolean;
   timeoutMs: number;
   /** Injetável nos testes para simular a API sem rede. */
@@ -23,6 +25,36 @@ function usageFrom(u: { input_tokens: number; output_tokens: number; cache_read_
     cacheReadTokens: u.cache_read_input_tokens ?? 0,
     cacheWriteTokens: u.cache_creation_input_tokens ?? 0,
   };
+}
+
+function addUsage(a: TokenUsage, b: TokenUsage): TokenUsage {
+  return {
+    inputTokens: a.inputTokens + b.inputTokens,
+    outputTokens: a.outputTokens + b.outputTokens,
+    cacheReadTokens: a.cacheReadTokens + b.cacheReadTokens,
+    cacheWriteTokens: a.cacheWriteTokens + b.cacheWriteTokens,
+  };
+}
+
+/**
+ * Consumo cobrado por modelo. Com o fallback do servidor, `usage` cobre só a
+ * tentativa que produziu a resposta; `usage.iterations` traz cada tentativa
+ * (inclusive a recusada no meio da resposta, que também é cobrada).
+ */
+export function billedUsage(usage: BetaUsage, requestModel: string, responseModel: string): { total: TokenUsage; byModel: UsageByModel } {
+  const iterations = usage.iterations ?? [];
+  if (iterations.length === 0) {
+    const total = usageFrom(usage);
+    return { total, byModel: [{ model: responseModel, usage: total }] };
+  }
+  const byModel = new Map<string, TokenUsage>();
+  for (const it of iterations) {
+    const model = ("model" in it && it.model ? String(it.model) : null) ?? requestModel;
+    const u = usageFrom(it);
+    byModel.set(model, addUsage(byModel.get(model) ?? { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 }, u));
+  }
+  const list = [...byModel.entries()].map(([model, u]) => ({ model, usage: u }));
+  return { total: list.reduce((acc, x) => addUsage(acc, x.usage), { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 }), byModel: list };
 }
 
 /** Converte erros do SDK em erros de integração com indicação de nova tentativa. */
@@ -97,24 +129,22 @@ export class AnthropicProvider implements AiProvider {
             },
           ],
           output_config: {
-            format: betaZodOutputFormat(req.schema as unknown as z.ZodType<T>),
-            effort: req.effort ?? this.opts.effort,
+            format: { type: "json_schema", schema: toOutputJsonSchema(req.schema) },
+            effort: this.opts.effort ?? req.effort ?? "medium",
           },
         },
         { signal: opts?.signal },
       );
-      const usage = usageFrom(response.usage);
+      const { total: usage, byModel: usageByModel } = billedUsage(response.usage, this.model, response.model);
+      const billing = { usage, usageByModel, model: response.model };
       if (response.stop_reason === "refusal") {
         throw Object.assign(
           new IntegrationError("O modelo recusou a solicitação por política de uso. Revise o briefing.", false, { providerCode: "refused" }),
-          { usage, model: response.model },
+          billing,
         );
       }
       if (response.stop_reason === "max_tokens") {
-        throw Object.assign(new IntegrationError("A resposta da IA foi interrompida pelo limite de tokens.", false, { providerCode: "max_tokens" }), {
-          usage,
-          model: response.model,
-        });
+        throw Object.assign(new IntegrationError("A resposta da IA foi interrompida pelo limite de tokens.", false, { providerCode: "max_tokens" }), billing);
       }
       const text = response.content.find((b) => b.type === "text");
       let parsed: unknown = null;
@@ -125,14 +155,12 @@ export class AnthropicProvider implements AiProvider {
       }
       const validated = parsed === null ? null : req.schema.safeParse(parsed);
       if (!validated || !validated.success) {
-        throw Object.assign(new IntegrationError("A IA retornou um formato inválido para esta tarefa.", true, { providerCode: "invalid_output" }), {
-          usage,
-          model: response.model,
-        });
+        throw Object.assign(new IntegrationError("A IA retornou um formato inválido para esta tarefa.", true, { providerCode: "invalid_output" }), billing);
       }
       return {
         data: validated.data,
         usage,
+        usageByModel,
         model: response.model,
         provider: this.id,
         isDemo: false,

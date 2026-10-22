@@ -2,6 +2,7 @@ import { many, one, type Queryable } from "../db";
 import { FONT_CATALOG } from "@/lib/fonts";
 import type { BrandProfile } from "@/lib/brand";
 import { loadBrandProfile } from "../services/clients";
+import { escapeData } from "../skills/common";
 
 export interface ClientContext {
   clientName: string;
@@ -14,7 +15,7 @@ export interface ClientContext {
 
 const line = (label: string, value: string | string[]) => {
   const v = Array.isArray(value) ? value.join(", ") : value.trim();
-  return v ? `${label}: ${v}` : "";
+  return v ? `${label}: ${escapeData(v)}` : "";
 };
 
 /**
@@ -36,7 +37,7 @@ export async function buildClientContext(tx: Queryable, organizationId: string, 
   const kindLabel: Record<string, string> = { fact: "Fato confirmado", preference: "Preferência confirmada", hypothesis: "Hipótese (não afirmar como fato)" };
   const b = brand;
   const sections = [
-    org.global_context.trim() ? `<contexto_global_da_agencia>\n${org.global_context.trim()}\n</contexto_global_da_agencia>` : "",
+    org.global_context.trim() ? `<contexto_global_da_agencia>\n${escapeData(org.global_context.trim())}\n</contexto_global_da_agencia>` : "",
     `<contexto_do_cliente>
 ${[
   line("Cliente", client.name),
@@ -66,7 +67,7 @@ ${[
   .join("\n")}
 </contexto_do_cliente>`,
     memories.length
-      ? `<memoria_do_cliente>\n${memories.map((m) => `- [${kindLabel[m.kind] ?? m.kind}] ${m.content}`).join("\n")}\n</memoria_do_cliente>`
+      ? `<memoria_do_cliente>\n${memories.map((m) => `- [${kindLabel[m.kind] ?? m.kind}] ${escapeData(m.content)}`).join("\n")}\n</memoria_do_cliente>`
       : "",
   ].filter(Boolean);
   return { clientName: client.name, segment: b.business.segment || client.segment, brand, text: sections.join("\n\n"), memoryCount: memories.length };

@@ -80,13 +80,18 @@ export const naturalCartao: TemplateDef = {
   defaultTheme: { cover: "light", content: "light", cta: "brand" },
   defaultAlign: "left",
   fieldLimits: LIMITS_STANDARD,
+  capacity: {
+    "1:1": { content: { plain: 1, photo: 0.8 }, cta: { plain: 1, photo: 0.95 } },
+    "4:5": { content: { plain: 1, photo: 0.85 } },
+    "9:16": { content: { plain: 1, photo: 0.6 }, cta: { plain: 1, photo: 0.65 } },
+  },
   compositionRules: ["Fundo levemente tingido pela cor de destaque", "Foto em cartão com raio de 36 px", "Texto em linguagem conversacional"],
   qualityCriteria: ["Tom de voz próximo e claro", "Foto humana e autêntica", "Contraste AA"],
   render(ctx) {
     const side = ctx.safe.side;
     const bg = ctx.theme === "light" ? mix(ctx.palette.bg, ctx.palette.accent, 0.06) : ctx.palette.bg;
     const hasImage = ctx.image !== null;
-    const card = { x: side, y: ctx.safe.top + 80, w: ctx.W - side * 2, h: Math.round(ctx.H * (ctx.doc.aspect === "1:1" ? 0.38 : 0.42)) };
+    const card = { x: side, y: ctx.safe.top + 80, w: ctx.W - side * 2, h: Math.round(ctx.H * (ctx.doc.aspect === "1:1" ? 0.3 : 0.42)) };
     const textTop = hasImage ? card.y + card.h + 56 : Math.round(ctx.H * 0.3);
     const bottom = ctx.H - ctx.safe.bottom - 64;
     return (

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { pageParam } from "@/lib/page-param";
 import type { Metadata } from "next";
 import { requireAuth } from "@/server/auth/next";
 import { listContents } from "@/server/services/content";
@@ -18,7 +19,7 @@ export default async function ContentsPage({ searchParams }: { searchParams: Pro
   const clients = await listClients(auth, { includeArchived: true });
   const clientId = clients.some((c) => c.id === sp.cliente) ? sp.cliente : undefined;
   const status = (CONTENT_STATUSES as readonly string[]).includes(sp.status ?? "") ? (sp.status as ContentStatus) : undefined;
-  const page = Math.max(1, Number(sp.pagina) || 1);
+  const page = pageParam(sp.pagina);
   const { items, total } = await listContents(auth, { clientId, status, search: sp.q, limit: PAGE, offset: (page - 1) * PAGE });
   const qs = (p: number) => {
     const u = new URLSearchParams();

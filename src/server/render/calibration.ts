@@ -1,5 +1,5 @@
 import { ContentDocumentSchema, FIELD_KEYS, type Aspect, type ContentDocument, type FieldKey, type SlideKind } from "@/lib/content/document";
-import { effectiveLimits } from "@/lib/content/limits";
+import { effectiveLimits, scaleLimits } from "@/lib/content/limits";
 import type { TemplateDef } from "./kit";
 import { renderSlide } from "./engine";
 import { SAMPLE_IMAGE_ID, sampleImage } from "./samples";
@@ -32,7 +32,7 @@ export function capacityDoc(t: TemplateDef, aspect: Aspect, kind: SlideKind, pho
   const kinds: SlideKind[] = format === "carousel" ? ["cover", "content", "cta"] : [kind];
   const slides = kinds.map((k, i) => {
     const base = t.fieldLimits[k];
-    const limits = factor === undefined ? effectiveLimits(base, t.capacity, aspect, photo && t.image !== "none") : scaled(base, factor);
+    const limits = factor === undefined ? effectiveLimits(base, t.capacity, aspect, k, photo && t.image !== "none") : scaleLimits(base, factor);
     const fields = Object.fromEntries(FIELD_KEYS.map((f) => [f, limits[f] !== undefined ? fillToLength(limits[f]!, i * 3 + FIELD_KEYS.indexOf(f)) : ""])) as Record<FieldKey, string>;
     if (fields.highlight) fields.highlight = fillToLength(limits.highlight!, 7);
     return { id: `s${i + 1}-cal`, kind: k, fields, imageAssetId: photo && t.image !== "none" ? SAMPLE_IMAGE_ID : null };
@@ -56,12 +56,6 @@ export function capacityDoc(t: TemplateDef, aspect: Aspect, kind: SlideKind, pho
     cta: "",
     notes: "",
   });
-}
-
-function scaled(base: Partial<Record<FieldKey, number>>, f: number): Partial<Record<FieldKey, number>> {
-  const out: Partial<Record<FieldKey, number>> = {};
-  for (const [k, v] of Object.entries(base) as Array<[FieldKey, number]>) out[k] = Math.max(8, Math.floor(v * f));
-  return out;
 }
 
 export async function slideFits(doc: ContentDocument, kind: SlideKind): Promise<{ fits: boolean; failing: string[] }> {

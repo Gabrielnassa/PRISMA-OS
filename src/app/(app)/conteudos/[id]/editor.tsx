@@ -22,6 +22,7 @@ import {
   type Slide,
   type SlideKind,
 } from "@/lib/content/document";
+import { effectiveLimits, type Capacity } from "@/lib/content/limits";
 import { FONT_CATALOG, FONT_IDS, type FontId } from "@/lib/fonts";
 import type { QualityReport } from "@/server/quality/checks";
 import { Button, Card, CardHeader, Field, Input, Select, Textarea, cx } from "@/components/ui";
@@ -36,6 +37,7 @@ export type EditorTemplate = {
   aspects: string[];
   image: "required" | "optional" | "none";
   fieldLimits: Record<SlideKind, Partial<Record<FieldKey, number>>>;
+  capacity?: Capacity;
 };
 
 type PreviewSlide = { index: number; slideId: string; svg: string };
@@ -83,7 +85,7 @@ export function ContentEditor({
   const dirty = useMemo(() => JSON.stringify(doc) !== JSON.stringify(initialDocument), [doc, initialDocument]);
   const template = templates.find((t) => t.id === doc.templateId) ?? templates[0]!;
   const slide = doc.slides[Math.min(selected, doc.slides.length - 1)]!;
-  const limits = template.fieldLimits[slide.kind];
+  const limits = effectiveLimits(template.fieldLimits[slide.kind], template.capacity, doc.aspect, slide.kind, Boolean(slide.imageAssetId) && template.image !== "none");
   const requestSeq = useRef(0);
 
   // Pré-visualização com atraso para não renderizar a cada tecla.

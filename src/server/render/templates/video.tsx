@@ -85,6 +85,9 @@ export const videoDepoimento: TemplateDef = {
     content: { kicker: 30, title: 140, body: 160, footer: 70 },
     cta: { kicker: 30, title: 60, body: 120, footer: 70 },
   },
+  capacity: {
+    "1:1": { content: { plain: 1, photo: 0.9 } },
+  },
   compositionRules: ["Foto circular da pessoa (opcional)", "Aspas na cor de destaque", "Nome e contexto no rodapé"],
   qualityCriteria: ["Depoimento real, literal e autorizado", "Nome/identificação com consentimento", "Sem edição que altere o sentido"],
   render(ctx) {
@@ -155,6 +158,9 @@ export const videoLegenda: TemplateDef = {
     cover: { kicker: 30, title: 60, body: 90 },
     content: { kicker: 30, title: 60, body: 160 },
     cta: { kicker: 30, title: 60, body: 120 },
+  },
+  capacity: {
+    "1:1": { content: { plain: 0.9, photo: 0.9 } },
   },
   compositionRules: ["Frame em tela cheia", "Faixa sólida na cor da marca no terço inferior", "Sobretítulo em etiqueta acima da faixa"],
   qualityCriteria: ["Rosto/assunto fora da faixa", "Texto curto na faixa", "Contraste AA na faixa"],

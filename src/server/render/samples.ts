@@ -1,4 +1,5 @@
 import { ContentDocumentSchema, type Aspect, type ContentDocument, type ContentFormat, type SlideKind } from "@/lib/content/document";
+import { effectiveLimits } from "@/lib/content/limits";
 import type { LoadedImage, TemplateDef } from "./kit";
 import { svgToPng } from "./engine";
 
@@ -61,7 +62,7 @@ export function sampleDocumentFor(t: TemplateDef, format: ContentFormat, aspect:
       handle: "@marcaexemplo",
     },
     slides: kinds.map((kind, i) => {
-      const limits = t.fieldLimits[kind];
+      const limits = effectiveLimits(t.fieldLimits[kind], t.capacity, aspect, kind, t.image !== "none");
       const fields: Record<string, string> = {};
       for (const [k, max] of Object.entries(limits)) fields[k] = (SAMPLE_FIELDS[kind][k] ?? "").slice(0, max);
       return { id: `s${i + 1}-exemplo`, kind, fields, imageAssetId: t.image === "none" ? null : SAMPLE_IMAGE_ID };

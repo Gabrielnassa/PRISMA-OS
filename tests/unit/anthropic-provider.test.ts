@@ -68,4 +68,53 @@ describe("provedor Anthropic (API simulada)", () => {
     expect(err.code).toBe("refused");
     expect(err.retryable).toBe(false);
   });
+
+  it("mantém enum no esquema enviado e remove restrições não suportadas", async () => {
+    const captured: Captured[] = [];
+    const p = provider(mockFetch([{ status: 200, body: message('{"kind":"cta","title":"Ok","items":["a"]}') }], captured));
+    const enumSchema = z.object({ kind: z.enum(["cover", "content", "cta"]), title: z.string().max(80), items: z.array(z.string()).min(1).max(5) });
+    await p.generateStructured({ ...req, schema: enumSchema });
+    type Node = { enum?: string[]; additionalProperties?: boolean; minItems?: number; properties: Record<string, Node> };
+    const sent = (captured[0]!.body.output_config as { format: { schema: Node } }).format.schema;
+    expect(sent.properties.kind!.enum).toEqual(["cover", "content", "cta"]);
+    expect(sent.additionalProperties).toBe(false);
+    expect(sent.properties.title).not.toHaveProperty("maxLength");
+    expect(sent.properties.items).not.toHaveProperty("maxItems");
+    expect(sent.properties.items!.minItems).toBe(1);
+    expect(sent).not.toHaveProperty("$schema");
+  });
+
+  it("ANTHROPIC_EFFORT, quando definido, substitui o esforço da skill", async () => {
+    const captured: Captured[] = [];
+    const forced = new AnthropicProvider({ apiKey: "sk-test", model: "claude-opus-5-5", effort: "high", fallbacks: true, timeoutMs: 10_000, fetch: mockFetch([{ status: 200, body: message('{"title":"x"}') }], captured) });
+    await forced.generateStructured({ ...req, effort: "low" });
+    expect((captured[0]!.body.output_config as { effort: string }).effort).toBe("high");
+    const perSkill = new AnthropicProvider({ apiKey: "sk-test", model: "claude-opus-5-5", fallbacks: true, timeoutMs: 10_000, fetch: mockFetch([{ status: 200, body: message('{"title":"x"}') }], captured) });
+    await perSkill.generateStructured({ ...req, effort: "low" });
+    expect((captured[1]!.body.output_config as { effort: string }).effort).toBe("low");
+  });
+
+  it("fallback do servidor: soma todas as tentativas cobradas, separadas por modelo", async () => {
+    const body = {
+      ...message('{"title":"Resgatado"}'),
+      model: "claude-opus-5",
+      usage: {
+        input_tokens: 900,
+        output_tokens: 300,
+        cache_read_input_tokens: 0,
+        cache_creation_input_tokens: 0,
+        iterations: [
+          { type: "message", model: "claude-opus-5-5", input_tokens: 900, output_tokens: 40, cache_read_input_tokens: 0, cache_creation_input_tokens: 0, cache_creation: null },
+          { type: "fallback_message", model: "claude-opus-5", input_tokens: 900, output_tokens: 300, cache_read_input_tokens: 0, cache_creation_input_tokens: 0, cache_creation: null },
+        ],
+      },
+    };
+    const res = await provider(mockFetch([{ status: 200, body }], [])).generateStructured(req);
+    expect(res.model).toBe("claude-opus-5");
+    expect(res.usage).toEqual({ inputTokens: 1800, outputTokens: 340, cacheReadTokens: 0, cacheWriteTokens: 0 });
+    expect(res.usageByModel.map((u) => [u.model, u.usage.outputTokens])).toEqual([
+      ["claude-opus-5-5", 40],
+      ["claude-opus-5", 300],
+    ]);
+  });
 });

@@ -81,7 +81,7 @@ export async function handleGenerateContent(job: Job, auth: AuthContext): Promis
       briefing: item.briefing,
       templateName: art.template.name,
       templateDescription: art.template.description,
-      slidePlan: slidePlan(art.template, kinds),
+      slidePlan: slidePlan(art.template, kinds, art.aspect, payload.imageAssetIds),
       companyName: brand.business.companyName,
       handle: brand.channels.instagram,
     },

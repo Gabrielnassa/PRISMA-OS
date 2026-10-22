@@ -41,10 +41,11 @@ export function computeCostUsd(usage: TokenUsage, price: PriceRow): number {
   return Math.round(usd * 1_000_000) / 1_000_000;
 }
 
+/** Gasto do mês para o teto: custo calculado ou, sem tarifa, a estimativa registrada. */
 export async function monthToDateSpend(tx: Queryable, clientId: string): Promise<number> {
   const row = await one<{ total: string | null }>(
     tx,
-    `SELECT coalesce(sum(cost_usd), 0)::text AS total FROM ai_runs
+    `SELECT coalesce(sum(coalesce(cost_usd, estimated_cost_usd)), 0)::text AS total FROM ai_runs
      WHERE client_id = $1 AND created_at >= date_trunc('month', now())`,
     [clientId],
   );
@@ -71,10 +72,10 @@ export async function assertWithinBudget(tx: Queryable, clientId: string): Promi
 
 export interface CostSummary {
   month: string;
-  totals: { runs: number; failed: number; costUsd: number; unpricedRuns: number; inputTokens: number; outputTokens: number; demoRuns: number };
-  byClient: Array<{ clientId: string | null; clientName: string; runs: number; costUsd: number; limitUsd: number | null; alertPct: number | null; hardStop: boolean | null }>;
+  totals: { runs: number; failed: number; costUsd: number; unpricedRuns: number; unpricedEstimateUsd: number; inputTokens: number; outputTokens: number; demoRuns: number };
+  byClient: Array<{ clientId: string | null; clientName: string; runs: number; costUsd: number; budgetSpendUsd: number; limitUsd: number | null; alertPct: number | null; hardStop: boolean | null }>;
   bySkill: Array<{ skillId: string; runs: number; costUsd: number; avgDurationMs: number | null }>;
-  recent: Array<{ id: string; createdAt: string; clientName: string | null; skillId: string; model: string; status: string; isDemo: boolean; inputTokens: number; outputTokens: number; costUsd: number | null; durationMs: number | null; errorMessage: string | null }>;
+  recent: Array<{ id: string; createdAt: string; clientName: string | null; skillId: string; model: string; status: string; isDemo: boolean; inputTokens: number; outputTokens: number; costUsd: number | null; estimatedCostUsd: number | null; durationMs: number | null; errorMessage: string | null }>;
   prices: Array<{ id: string; provider: string; model: string; input: string; output: string; cacheRead: string | null; cacheWrite: string | null; source: string; effectiveFrom: string }>;
 }
 
@@ -82,20 +83,22 @@ export async function getCostSummary(auth: AuthContext): Promise<CostSummary> {
   assertCan(auth.role, "costs.view");
   return withTx(userCtx(auth.userId), async (tx) => {
     const org = auth.organizationId;
-    const totals = await one<{ runs: number; failed: number; cost: string; unpriced: number; input: string; output: string; demo: number }>(
+    const totals = await one<{ runs: number; failed: number; cost: string; unpriced: number; unpriced_est: string; input: string; output: string; demo: number }>(
       tx,
       `SELECT count(*)::int AS runs, count(*) FILTER (WHERE status <> 'succeeded')::int AS failed,
               coalesce(sum(cost_usd), 0)::text AS cost,
               count(*) FILTER (WHERE cost_usd IS NULL AND NOT is_demo AND (input_tokens + output_tokens) > 0)::int AS unpriced,
+              coalesce(sum(estimated_cost_usd) FILTER (WHERE cost_usd IS NULL), 0)::text AS unpriced_est,
               coalesce(sum(input_tokens + cache_read_tokens + cache_write_tokens), 0)::text AS input,
               coalesce(sum(output_tokens), 0)::text AS output,
               count(*) FILTER (WHERE is_demo)::int AS demo
        FROM ai_runs WHERE organization_id = $1 AND created_at >= date_trunc('month', now())`,
       [org],
     );
-    const byClient = await many<{ client_id: string | null; name: string | null; runs: number; cost: string; limit_usd: string | null; alert: number | null; hard_stop: boolean | null }>(
+    const byClient = await many<{ client_id: string | null; name: string | null; runs: number; cost: string; spend: string; limit_usd: string | null; alert: number | null; hard_stop: boolean | null }>(
       tx,
       `SELECT c.id AS client_id, c.name, count(r.id)::int AS runs, coalesce(sum(r.cost_usd), 0)::text AS cost,
+              coalesce(sum(coalesce(r.cost_usd, r.estimated_cost_usd)), 0)::text AS spend,
               b.monthly_limit_usd::text AS limit_usd, b.alert_threshold_pct AS alert, b.hard_stop
        FROM clients c
        LEFT JOIN ai_runs r ON r.client_id = c.id AND r.created_at >= date_trunc('month', now())
@@ -114,11 +117,11 @@ export async function getCostSummary(auth: AuthContext): Promise<CostSummary> {
     );
     const recent = await many<{
       id: string; created_at: Date; client_name: string | null; skill_id: string; model: string; status: string; is_demo: boolean;
-      input_tokens: number; output_tokens: number; cost_usd: string | null; duration_ms: number | null; error_message: string | null;
+      input_tokens: number; output_tokens: number; cost_usd: string | null; estimated_cost_usd: string | null; duration_ms: number | null; error_message: string | null;
     }>(
       tx,
       `SELECT r.id, r.created_at, c.name AS client_name, r.skill_id, r.model, r.status, r.is_demo, r.input_tokens, r.output_tokens,
-              r.cost_usd::text, r.duration_ms, r.error_message
+              r.cost_usd::text, r.estimated_cost_usd::text, r.duration_ms, r.error_message
        FROM ai_runs r LEFT JOIN clients c ON c.id = r.client_id
        WHERE r.organization_id = $1 ORDER BY r.created_at DESC LIMIT 50`,
       [org],
@@ -136,6 +139,7 @@ export async function getCostSummary(auth: AuthContext): Promise<CostSummary> {
         failed: totals.failed,
         costUsd: Number(totals.cost),
         unpricedRuns: totals.unpriced,
+        unpricedEstimateUsd: Number(totals.unpriced_est),
         inputTokens: Number(totals.input),
         outputTokens: Number(totals.output),
         demoRuns: totals.demo,
@@ -145,6 +149,7 @@ export async function getCostSummary(auth: AuthContext): Promise<CostSummary> {
         clientName: r.name ?? "—",
         runs: r.runs,
         costUsd: Number(r.cost),
+        budgetSpendUsd: Number(r.spend),
         limitUsd: r.limit_usd === null ? null : Number(r.limit_usd),
         alertPct: r.alert,
         hardStop: r.hard_stop,
@@ -161,6 +166,7 @@ export async function getCostSummary(auth: AuthContext): Promise<CostSummary> {
         inputTokens: r.input_tokens,
         outputTokens: r.output_tokens,
         costUsd: r.cost_usd === null ? null : Number(r.cost_usd),
+        estimatedCostUsd: r.estimated_cost_usd === null ? null : Number(r.estimated_cost_usd),
         durationMs: r.duration_ms,
         errorMessage: r.error_message,
       })),

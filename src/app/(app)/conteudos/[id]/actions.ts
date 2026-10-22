@@ -100,7 +100,7 @@ export async function aiReviewAction(_prev: ActionState<ReviewOutput>, form: For
       idempotencyKey: `review:${detail.current.id}`,
       input: {
         objective: detail.objective,
-        briefing: [detail.briefing.text, detail.briefing.cta ? `CTA: ${detail.briefing.cta}` : ""].filter(Boolean).join("\n"),
+        briefing: detail.briefing,
         slides: doc.slides.map((s) => ({ kind: s.kind, ...s.fields, alt: s.alt })),
         caption: doc.caption,
         hashtags: doc.hashtags,

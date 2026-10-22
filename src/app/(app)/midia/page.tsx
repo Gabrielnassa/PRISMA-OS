@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { pageParam } from "@/lib/page-param";
 import { requireAuth } from "@/server/auth/next";
 import { listMedia, MEDIA_KINDS, MEDIA_KIND_LABELS, type MediaKind } from "@/server/services/media";
 import { listClients } from "@/server/services/clients";
@@ -18,8 +19,11 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
   const clients = await listClients(auth);
   const clientId = clients.some((c) => c.id === sp.cliente) ? sp.cliente : undefined;
   const kind = (MEDIA_KINDS as readonly string[]).includes(sp.tipo ?? "") ? (sp.tipo as MediaKind) : undefined;
-  const page = Math.max(1, Number(sp.pagina) || 1);
+  const page = pageParam(sp.pagina);
   const { items, total } = await listMedia(auth, { clientId, kind, search: sp.q, limit: PAGE, offset: (page - 1) * PAGE });
+  // A paginação mantém os filtros e a busca.
+  const pageHref = (p: number) =>
+    `/midia?${new URLSearchParams({ ...(clientId ? { cliente: clientId } : {}), ...(kind ? { tipo: kind } : {}), ...(sp.q ? { q: sp.q } : {}), pagina: String(p) })}`;
   return (
     <>
       <PageHeader title="Biblioteca de mídia" description="Arquivos de todos os clientes que você acessa. Cada arquivo pertence a um único cliente." />
@@ -57,8 +61,8 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
       <div className="mt-4 flex justify-between text-sm text-ink-400">
         <span>{total} arquivo(s)</span>
         <span className="flex gap-3">
-          {page > 1 ? <Link href={`/midia?${new URLSearchParams({ ...(clientId ? { cliente: clientId } : {}), ...(kind ? { tipo: kind } : {}), pagina: String(page - 1) })}`}>← Anterior</Link> : null}
-          {page * PAGE < total ? <Link href={`/midia?${new URLSearchParams({ ...(clientId ? { cliente: clientId } : {}), ...(kind ? { tipo: kind } : {}), pagina: String(page + 1) })}`}>Próxima →</Link> : null}
+          {page > 1 ? <Link href={pageHref(page - 1)}>← Anterior</Link> : null}
+          {page * PAGE < total ? <Link href={pageHref(page + 1)}>Próxima →</Link> : null}
         </span>
       </div>
     </>

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { CONTENT_FORMATS, FORMAT_LABELS, OBJECTIVE_LABELS, OBJECTIVES, type ContentFormat, type Objective } from "@/lib/content/document";
-import { SHARED_RULES, clipWords, splitMessages } from "./common";
+import { SHARED_RULES, clipWords, escapeData, splitMessages } from "./common";
 import type { AiSkill } from "./types";
 
 export const IdeasInputSchema = z.object({
@@ -28,7 +28,7 @@ export type IdeasOutput = z.infer<typeof IdeasOutputSchema>;
 
 export const ideasSkill: AiSkill<IdeasInput, IdeasOutput, z.input<typeof IdeasInputSchema>> = {
   id: "planner.ideas",
-  version: "1.0.0",
+  version: "1.1.0",
   name: "Gerador de pautas",
   specSection: "9.2 (planejador editorial) e 10 (passo 2)",
   description: "Sugere pautas alinhadas à marca e ao objetivo, evitando repetir títulos recentes do cliente.",
@@ -49,10 +49,12 @@ ${SHARED_RULES}
   buildTask(input) {
     return `Sugira ${input.quantity} pautas. Objetivo principal: ${OBJECTIVE_LABELS[input.objective]}. Formato preferido: ${FORMAT_LABELS[input.format]}.
 <briefing>
-${input.theme || "Sem tema específico: use o perfil da marca."}
+${input.theme ? escapeData(input.theme) : "Sem tema específico: use o perfil da marca."}
 </briefing>
 Títulos recentes (não repetir):
-${input.recentTitles.length ? input.recentTitles.map((t) => `- ${t}`).join("\n") : "- nenhum"}`;
+<titulos_recentes>
+${input.recentTitles.length ? input.recentTitles.map((t) => `- ${escapeData(t)}`).join("\n") : "- nenhum"}
+</titulos_recentes>`;
   },
   demo(input) {
     const seeds = splitMessages(input.theme || "Apresente a marca. Mostre os bastidores. Responda uma dúvida frequente.");

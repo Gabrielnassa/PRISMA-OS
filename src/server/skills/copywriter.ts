@@ -12,7 +12,7 @@ import {
   SLIDE_KINDS,
   normalizeHashtag,
 } from "@/lib/content/document";
-import { SHARED_RULES, clipWords, firstSentence, splitMessages } from "./common";
+import { SHARED_RULES, briefingBlock, clipWords, escapeData, firstSentence, splitMessages } from "./common";
 import type { AiSkill } from "./types";
 
 const LimitsSchema = z.object({
@@ -79,7 +79,7 @@ function describePlan(input: CopyInput): string {
 
 export const copywriterSkill: AiSkill<CopyInput, CopyOutput, z.input<typeof CopyInputSchema>> = {
   id: "copywriter.social",
-  version: "1.0.0",
+  version: "1.1.0",
   name: "Copywriter e criador de posts/carrosséis",
   specSection: "9.3 e 9.5",
   description: "Cria o conceito, os textos de cada lâmina, a legenda, as hashtags e o CTA respeitando os limites do template e a voz da marca.",
@@ -114,16 +114,15 @@ Formato da resposta:
   buildTask(input) {
     return `Crie um ${FORMAT_LABELS[input.format]} para ${CHANNEL_LABELS[input.channel]}.
 Objetivo: ${OBJECTIVE_LABELS[input.objective]}.
-Título interno da pauta: ${input.title}
 Template visual: ${input.templateName} — ${input.templateDescription}
 
 Plano de lâminas:
 ${describePlan(input)}
 
-<briefing>
-${input.briefing.text}
-${input.briefing.audience ? `\nPúblico desta peça: ${input.briefing.audience}` : ""}${input.briefing.keyMessages ? `\nMensagens-chave:\n${input.briefing.keyMessages}` : ""}${input.briefing.offer ? `\nOferta/condição informada no briefing: ${input.briefing.offer}` : ""}${input.briefing.cta ? `\nCTA desejado: ${input.briefing.cta}` : ""}
-</briefing>`;
+<pauta>
+Título interno: ${escapeData(input.title)}
+</pauta>
+${briefingBlock(input.briefing)}`;
   },
   demo(input) {
     // Monta textos exclusivamente a partir do briefing, sem acrescentar fatos.
@@ -184,14 +183,26 @@ ${input.briefing.audience ? `\nPúblico desta peça: ${input.briefing.audience}`
   },
   postProcess(output, input) {
     const hashtags = [...new Set(output.hashtags.map(normalizeHashtag).filter((h): h is string => Boolean(h)))].slice(0, 30);
-    // Garante uma lâmina por item do plano, preservando a ordem esperada.
-    const slides = input.slidePlan.map((plan, i) => {
-      const s = output.slides[i] ?? output.slides.find((x) => x.kind === plan.kind);
-      const blank = { kind: plan.kind, kicker: "", title: "", body: "", highlight: "", footer: "", visualDirection: "", alt: "" };
-      const merged = { ...blank, ...(s ?? {}), kind: plan.kind };
-      for (const key of FIELD_KEYS) if (plan.limits[key] === undefined) merged[key] = "";
+    // Garante uma lâmina por item do plano. Com a quantidade certa, alinha pela
+    // posição; senão, pelo tipo (capa, conteúdos em ordem, CTA), deixando em
+    // branco o que faltar, sem repetir o texto de outra lâmina.
+    const plan = input.slidePlan;
+    const sameLength = output.slides.length === plan.length;
+    const pools = {
+      cover: output.slides.filter((x) => x.kind === "cover"),
+      content: output.slides.filter((x) => x.kind === "content"),
+      cta: output.slides.filter((x) => x.kind === "cta"),
+    };
+    const slides = plan.map((p, i) => {
+      const s = sameLength ? output.slides[i] : pools[p.kind].shift();
+      const blank = { kind: p.kind, kicker: "", title: "", body: "", highlight: "", footer: "", visualDirection: "", alt: "" };
+      const merged = { ...blank, ...(s ?? {}), kind: p.kind };
+      for (const key of FIELD_KEYS) if (p.limits[key] === undefined) merged[key] = "";
       return merged;
     });
-    return { ...output, slides, hashtags, caption: output.caption.slice(0, 2200) };
+    const assumptions = sameLength
+      ? output.assumptions
+      : [...output.assumptions, `A IA devolveu ${output.slides.length} lâmina(s) para um plano de ${plan.length}; as lâminas sem texto ficaram em branco para revisão.`];
+    return { ...output, slides, assumptions, hashtags, caption: output.caption.slice(0, 2200) };
   },
 };

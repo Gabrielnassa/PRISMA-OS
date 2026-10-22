@@ -4,7 +4,7 @@ import { requireAuth } from "@/server/auth/next";
 import { runAction, type ActionState } from "@/server/actions";
 import { assertCan } from "@/server/authz/permissions";
 import { getProvider } from "@/server/ai/gateway";
-import { ProviderNotConfiguredError } from "@/server/errors";
+import { IntegrationError, ProviderNotConfiguredError } from "@/server/errors";
 import { audit, userActor } from "@/server/services/audit";
 import { userCtx, withTx } from "@/server/db";
 
@@ -25,7 +25,8 @@ export async function testProviderAction(_prev: ActionState, _form: FormData): P
         metadata: { ok: r.ok, model: r.model ?? provider.model, usage: r.usage ?? null },
       }),
     );
-    if (!r.ok) throw new Error(r.detail);
+    // A mensagem do provedor já é segura (traduzida em mapAnthropicError) e é o diagnóstico que o administrador precisa.
+    if (!r.ok) throw new IntegrationError(r.detail, false);
     return { message: `${r.detail}${r.usage ? ` Consumo do teste: ${r.usage.inputTokens + r.usage.cacheReadTokens + r.usage.cacheWriteTokens} tokens de entrada, ${r.usage.outputTokens} de saída.` : ""}` };
   });
 }

@@ -97,7 +97,7 @@ export function runQualityChecks(input: QualityInput): QualityReport {
   // ---- Texto: obrigatórios, limites, campos não exibidos, repetição
   const limitsFor = (i: number) => {
     const slide = doc.slides[i]!;
-    return effectiveLimits(template.fieldLimits[slide.kind], template.capacity, doc.aspect, Boolean(slide.imageAssetId) && template.image !== "none");
+    return effectiveLimits(template.fieldLimits[slide.kind], template.capacity, doc.aspect, slide.kind, Boolean(slide.imageAssetId) && template.image !== "none");
   };
   doc.slides.forEach((slide, i) => {
     const limits = limitsFor(i);

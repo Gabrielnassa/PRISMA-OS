@@ -17,9 +17,11 @@ export class DemoProvider implements AiProvider {
     const started = Date.now();
     if (!req.demo) throw new IntegrationError("Esta skill não possui saída de demonstração.", false, { providerCode: "demo_unsupported" });
     const data = req.schema.parse(req.demo());
+    const usage = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 };
     return {
       data,
-      usage: { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 },
+      usage,
+      usageByModel: [{ model: this.model, usage }],
       model: this.model,
       provider: this.id,
       isDemo: true,

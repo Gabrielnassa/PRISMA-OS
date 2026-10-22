@@ -137,6 +137,9 @@ export const techPainel: TemplateDef = {
   defaultTheme: { cover: "dark", content: "dark", cta: "brand" },
   defaultAlign: "left",
   fieldLimits: LIMITS_STANDARD,
+  capacity: {
+    "1:1": { content: { plain: 0.9, photo: 0.9 } },
+  },
   compositionRules: ["Painel com raio de 28 px e borda sutil", "Três controles de janela no topo", "Texto dentro do painel"],
   qualityCriteria: ["Não simular telas de produtos de terceiros", "Contraste AA dentro do painel"],
   render(ctx) {

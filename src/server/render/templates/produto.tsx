@@ -25,6 +25,10 @@ export const produtoVitrine: TemplateDef = {
   defaultTheme: { cover: "light", content: "light", cta: "brand" },
   defaultAlign: "center",
   fieldLimits: PRODUCT_LIMITS,
+  capacity: {
+    "1:1": { content: { plain: 0.7, photo: 0.7 } },
+    "4:5": { content: { plain: 0.95, photo: 0.95 } },
+  },
   compositionRules: ["Foto fiel do produto em cartão central", "Selo com a condição comercial confirmada", "Título e CTA centralizados"],
   qualityCriteria: ["Foto fiel ao produto real", "Preço/condição confirmados pelo cliente", "CTA visível"],
   render(ctx) {
@@ -83,6 +87,11 @@ export const produtoOferta: TemplateDef = {
   defaultTheme: { cover: "brand", content: "light", cta: "brand" },
   defaultAlign: "left",
   fieldLimits: PRODUCT_LIMITS,
+  capacity: {
+    "1:1": { content: { plain: 1, photo: 0.7 }, cta: { plain: 1, photo: 0.85 } },
+    "4:5": { content: { plain: 1, photo: 0.9 }, cta: { plain: 1, photo: 0.95 } },
+    "9:16": { content: { plain: 1, photo: 0.9 } },
+  },
   compositionRules: ["Título em caixa alta", "Bloco de condição na cor de destaque", "Foto opcional à direita (posts) ou ao topo (Story)"],
   qualityCriteria: ["Condições e prazos confirmados", "Sem promessas exageradas", "CTA explícito"],
   render(ctx) {
@@ -145,6 +154,10 @@ export const produtoDividido: TemplateDef = {
   defaultTheme: { cover: "light", content: "light", cta: "brand" },
   defaultAlign: "left",
   fieldLimits: PRODUCT_LIMITS,
+  capacity: {
+    "1:1": { cover: { plain: 0.85, photo: 0.85 }, content: { plain: 0.75, photo: 0.75 }, cta: { plain: 0.85, photo: 0.85 } },
+    "4:5": { cover: { plain: 0.85, photo: 0.85 }, content: { plain: 0.85, photo: 0.85 }, cta: { plain: 0.85, photo: 0.85 } },
+  },
   compositionRules: ["Divisão vertical 50/50 (horizontal em Story)", "Texto com margem interna constante", "Destaque opcional acima do título"],
   qualityCriteria: ["Foto nítida com o produto inteiro visível", "Benefício concreto no título"],
   render(ctx) {

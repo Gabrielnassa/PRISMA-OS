@@ -195,7 +195,7 @@ export async function listMedia(auth: AuthContext, filter: MediaFilter = {}): Pr
        WHERE ${where}
        ORDER BY m.created_at DESC
        LIMIT $6 OFFSET $7`,
-      [...params, Math.min(filter.limit ?? 48, 200), filter.offset ?? 0],
+      [...params, Math.min(filter.limit ?? 48, 200), Math.max(0, Math.floor(filter.offset ?? 0))],
     );
     return { items: rows.map(mapMedia), total: total.n };
   });

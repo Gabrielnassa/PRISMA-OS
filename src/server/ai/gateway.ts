@@ -54,7 +54,7 @@ export function providerStatus(): ProviderStatus {
       isDemo: p.isDemo,
       detail: p.isDemo
         ? "Modo demonstração: textos montados a partir do briefing, sem IA. Não use em produção."
-        : `Modelo ${p.model}, esforço ${e.ANTHROPIC_EFFORT}, fallback do servidor ${e.ANTHROPIC_FALLBACKS === "default" ? "ativado" : "desativado"}.`,
+        : `Modelo ${p.model}, esforço ${e.ANTHROPIC_EFFORT ? `fixo em ${e.ANTHROPIC_EFFORT} (ANTHROPIC_EFFORT)` : "definido por skill"}, fallback do servidor ${e.ANTHROPIC_FALLBACKS === "default" ? "ativado" : "desativado"}.`,
     };
   }
   let detail = "Nenhum provedor de IA configurado. Defina ANTHROPIC_API_KEY no ambiente do servidor.";

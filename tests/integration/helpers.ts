@@ -4,7 +4,7 @@ import { inviteMember } from "../../src/server/services/users";
 import { login, resolveSession } from "../../src/server/auth/service";
 import type { AuthContext } from "../../src/server/auth/types";
 import type { Role } from "../../src/server/authz/permissions";
-import type { AiProvider, StructuredRequest, StructuredResult } from "../../src/server/ai/types";
+import type { AiProvider, StructuredRequest, StructuredResult, UsageByModel } from "../../src/server/ai/types";
 import { IntegrationError } from "../../src/server/errors";
 import { svgToPng } from "../../src/server/render/engine";
 
@@ -51,16 +51,33 @@ export class FakeProvider implements AiProvider {
   readonly isDemo = false;
   calls = 0;
   failures: IntegrationError[] = [];
+  /** Simula o fallback do servidor: consumo dividido entre modelos na próxima chamada. */
+  nextUsageByModel: UsageByModel | null = null;
+  /** Atraso artificial (para testar execuções simultâneas). */
+  delayMs = 0;
 
   async generateStructured<T>(req: StructuredRequest<T>): Promise<StructuredResult<T>> {
     this.calls++;
     const failure = this.failures.shift();
     if (failure) throw failure;
     if (!req.demo) throw new Error("sem demo");
+    if (this.delayMs) await new Promise((r) => setTimeout(r, this.delayMs));
+    const byModel = this.nextUsageByModel ?? [{ model: this.model, usage: { inputTokens: 1000, outputTokens: 500, cacheReadTokens: 2000, cacheWriteTokens: 0 } }];
+    this.nextUsageByModel = null;
+    const usage = byModel.reduce(
+      (a, x) => ({
+        inputTokens: a.inputTokens + x.usage.inputTokens,
+        outputTokens: a.outputTokens + x.usage.outputTokens,
+        cacheReadTokens: a.cacheReadTokens + x.usage.cacheReadTokens,
+        cacheWriteTokens: a.cacheWriteTokens + x.usage.cacheWriteTokens,
+      }),
+      { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 },
+    );
     return {
       data: req.schema.parse(req.demo()),
-      usage: { inputTokens: 1000, outputTokens: 500, cacheReadTokens: 2000, cacheWriteTokens: 0 },
-      model: this.model,
+      usage,
+      usageByModel: byModel,
+      model: byModel[byModel.length - 1]!.model,
       provider: this.id,
       isDemo: false,
       stopReason: "end_turn",

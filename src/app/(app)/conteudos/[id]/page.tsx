@@ -136,7 +136,7 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
             baseVersionId={current.id}
             initialDocument={current.document}
             initialQuality={detail.quality}
-            templates={TEMPLATES.map((t) => ({ id: t.id, name: t.name, familyLabel: FAMILY_LABELS[t.family], formats: t.formats, aspects: t.aspects, image: t.image, fieldLimits: t.fieldLimits }))}
+            templates={TEMPLATES.map((t) => ({ id: t.id, name: t.name, familyLabel: FAMILY_LABELS[t.family], formats: t.formats, aspects: t.aspects, image: t.image, fieldLimits: t.fieldLimits, capacity: t.capacity }))}
             images={media.items.map((m) => ({ id: m.id, filename: m.filename }))}
             brandStyle={brandStyle}
             canEdit={canEdit}

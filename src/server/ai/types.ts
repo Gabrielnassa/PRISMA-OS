@@ -9,6 +9,9 @@ export interface TokenUsage {
   cacheWriteTokens: number;
 }
 
+/** Consumo por modelo que atendeu (o fallback do servidor pode envolver mais de um). */
+export type UsageByModel = Array<{ model: string; usage: TokenUsage }>;
+
 export interface StructuredRequest<T> {
   /** Instruções estáveis da skill (prefixo cacheável). */
   system: string;
@@ -25,7 +28,9 @@ export interface StructuredRequest<T> {
 
 export interface StructuredResult<T> {
   data: T;
+  /** Total de todas as tentativas cobradas nesta chamada. */
   usage: TokenUsage;
+  usageByModel: UsageByModel;
   /** Modelo que efetivamente atendeu (pode diferir em caso de fallback). */
   model: string;
   provider: string;

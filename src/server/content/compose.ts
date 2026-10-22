@@ -3,11 +3,13 @@ import {
   FIELD_KEYS,
   FIELD_MAX,
   newSlideId,
+  type Aspect,
   type ContentDocument,
   type ContentFormat,
   type FieldKey,
   type SlideKind,
 } from "@/lib/content/document";
+import { effectiveLimits } from "@/lib/content/limits";
 import type { TemplateDef } from "../render/kit";
 import type { ArtDirection } from "../skills/art-director";
 import type { CopyInput, CopyOutput } from "../skills/copywriter";
@@ -21,8 +23,13 @@ export function slideKinds(format: ContentFormat, slideCount: number): SlideKind
   return ["cover", ...Array.from({ length: n - 2 }, () => "content" as const), "cta"];
 }
 
-export function slidePlan(template: TemplateDef, kinds: SlideKind[]): CopyInput["slidePlan"] {
-  return kinds.map((kind) => ({ kind, limits: { ...template.fieldLimits[kind] } }));
+/**
+ * Limites de caracteres de cada lâmina já ajustados ao espaço real do layout
+ * (proporção e presença de foto), para a IA escrever textos que cabem.
+ */
+export function slidePlan(template: TemplateDef, kinds: SlideKind[], aspect: Aspect, imageIds: string[]): CopyInput["slidePlan"] {
+  const images = assignImages(template, kinds, imageIds);
+  return kinds.map((kind, i) => ({ kind, limits: effectiveLimits(template.fieldLimits[kind], template.capacity, aspect, kind, images[i] != null) }));
 }
 
 /** Distribui as fotos selecionadas pelas lâminas (abertura primeiro). */

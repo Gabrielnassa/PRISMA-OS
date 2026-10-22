@@ -3,12 +3,13 @@ import { many, one, systemCtx, withTx } from "../../src/server/db";
 import { BudgetExceededError, IntegrationError, ProviderNotConfiguredError } from "../../src/server/errors";
 import { setProviderOverride } from "../../src/server/ai/gateway";
 import { createClient } from "../../src/server/services/clients";
-import { createContent, getContent } from "../../src/server/services/content";
+import { createContent, getContent, retryGeneration } from "../../src/server/services/content";
 import { getCostSummary, setClientBudget, addPrice } from "../../src/server/services/costs";
+import { claimNextJob, completeJob, failJob } from "../../src/server/jobs/queue";
 import { processNextJob, recoverStale } from "../../src/server/jobs/worker";
-import { runAiSkill } from "../../src/server/orchestrator";
+import { AiRunInProgressError, runAiSkill } from "../../src/server/orchestrator";
 import { ideasSkill } from "../../src/server/skills/registry";
-import { FakeProvider, newOrg } from "./helpers";
+import { FakeProvider, addMember, newOrg } from "./helpers";
 
 async function setup() {
   const { owner } = await newOrg();
@@ -130,5 +131,122 @@ describe("fila, recuperação de falhas e custos", () => {
     const { owner, clientId } = await setup();
     setProviderOverride(null);
     await expect(createContent(owner, request(clientId))).rejects.toBeInstanceOf(ProviderNotConfiguredError);
+  });
+
+  it("reprocessamento manual continua a numeração das tentativas e preserva o histórico", async () => {
+    const { owner, clientId } = await setup();
+    const fake = new FakeProvider();
+    fake.failures.push(new IntegrationError("A chave da API foi recusada.", false, { providerCode: "auth_failed" }));
+    setProviderOverride(fake);
+    const { contentId } = await createContent(owner, request(clientId));
+    await runJobsUntilIdle();
+    expect((await getContent(owner, contentId)).status).toBe("failed");
+    await retryGeneration(owner, contentId);
+    await runJobsUntilIdle();
+    expect((await getContent(owner, contentId)).status).toBe("in_review");
+    const rows = await withTx(systemCtx("test"), (tx) =>
+      many<{ attempt: number; status: string; error: string | null }>(
+        tx,
+        "SELECT a.attempt, a.status, a.error FROM job_attempts a JOIN jobs j ON j.id = a.job_id WHERE j.payload->>'contentItemId' = $1 ORDER BY a.id",
+        [contentId],
+      ),
+    );
+    expect(rows.map((r) => [r.attempt, r.status])).toEqual([
+      [1, "failed"],
+      [2, "succeeded"],
+    ]);
+    expect(rows[0]!.error).toContain("chave");
+  });
+
+  it("worker que perdeu a reserva não conclui nem reagenda a tarefa de outro", async () => {
+    const { owner, clientId } = await setup();
+    setProviderOverride(new FakeProvider());
+    const { contentId } = await createContent(owner, request(clientId));
+    const a = await claimNextJob("worker-a");
+    expect(a?.payload.contentItemId).toBe(contentId);
+    // A ficou sem renovar a reserva: a recuperação devolve a tarefa à fila e B a assume.
+    await withTx(systemCtx("test"), (tx) => tx.query("UPDATE jobs SET locked_at = now() - interval '1 hour' WHERE id = $1", [a!.id]));
+    await recoverStale(60_000);
+    const b = await claimNextJob("worker-b");
+    expect(b?.id).toBe(a!.id);
+    expect(await completeJob(a!, { stale: true })).toBe(false);
+    expect((await failJob(a!, "erro tardio", true)).owned).toBe(false);
+    const mid = await withTx(systemCtx("test"), (tx) => one<{ status: string; locked_by: string }>(tx, "SELECT status, locked_by FROM jobs WHERE id = $1", [a!.id]));
+    expect(mid).toMatchObject({ status: "running", locked_by: "worker-b" });
+    expect(await completeJob(b!, { ok: true })).toBe(true);
+  });
+
+  it("chamada de IA em andamento com a mesma chave não é cobrada duas vezes", async () => {
+    const { owner, clientId } = await setup();
+    const fake = new FakeProvider();
+    fake.delayMs = 300;
+    setProviderOverride(fake);
+    const key = `test:${crypto.randomUUID()}`;
+    const input = { objective: "engagement" as const, format: "post" as const, quantity: 3 };
+    const results = await Promise.allSettled([
+      runAiSkill(ideasSkill, { auth: owner, clientId, idempotencyKey: key, input }),
+      runAiSkill(ideasSkill, { auth: owner, clientId, idempotencyKey: key, input }),
+    ]);
+    expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+    const rejected = results.find((r) => r.status === "rejected") as PromiseRejectedResult;
+    expect(rejected.reason).toBeInstanceOf(AiRunInProgressError);
+    expect(fake.calls).toBe(1);
+    // Depois de concluída, a mesma chave reaproveita o resultado.
+    const again = await runAiSkill(ideasSkill, { auth: owner, clientId, idempotencyKey: key, input });
+    expect(again.reused).toBe(true);
+    expect(fake.calls).toBe(1);
+    // Entrada diferente com a mesma chave é uma nova execução (não reaproveita texto de outro pedido).
+    const other = await runAiSkill(ideasSkill, { auth: owner, clientId, idempotencyKey: key, input: { ...input, quantity: 4 } });
+    expect(other.reused).toBe(false);
+    expect(fake.calls).toBe(2);
+  });
+
+  it("fallback do servidor: cada tentativa é cobrada pelo modelo que a executou", async () => {
+    const { owner, clientId } = await setup();
+    const fake = new FakeProvider();
+    fake.nextUsageByModel = [
+      { model: "claude-opus-5-5", usage: { inputTokens: 1000, outputTokens: 100, cacheReadTokens: 0, cacheWriteTokens: 0 } },
+      { model: "claude-opus-5", usage: { inputTokens: 1000, outputTokens: 500, cacheReadTokens: 0, cacheWriteTokens: 0 } },
+    ];
+    setProviderOverride(fake);
+    const out = await runAiSkill(ideasSkill, { auth: owner, clientId, input: { objective: "engagement", format: "post", quantity: 3 } });
+    expect(out.model).toBe("claude-opus-5");
+    // Opus 5.5: 1000×4 + 100×20 = 6000; Opus 5: 1000×5 + 500×25 = 17500 → US$ 0,0235
+    expect(out.costUsd).toBeCloseTo(0.0235, 6);
+    const run = await withTx(systemCtx("test"), (tx) => one<{ input_tokens: number; usage_breakdown: unknown[] }>(tx, "SELECT input_tokens, usage_breakdown FROM ai_runs WHERE id = $1", [out.runId]));
+    expect(run.input_tokens).toBe(2000);
+    expect(run.usage_breakdown).toHaveLength(2);
+  });
+
+  it("modelo sem tarifa: custo fica 'sem tarifa', mas a estimativa conta para o teto", async () => {
+    const { owner, clientId } = await setup();
+    const fake = new FakeProvider();
+    fake.nextUsageByModel = [{ model: "modelo-sem-tarifa", usage: { inputTokens: 1000, outputTokens: 500, cacheReadTokens: 0, cacheWriteTokens: 0 } }];
+    setProviderOverride(fake);
+    const out = await runAiSkill(ideasSkill, { auth: owner, clientId, input: { objective: "engagement", format: "post", quantity: 3 } });
+    expect(out.costUsd).toBeNull();
+    const summary = await getCostSummary(owner);
+    // Estimativa pela tarifa do modelo configurado: 1000×4 + 500×20 = US$ 0,014
+    expect(summary.totals.unpricedRuns).toBe(1);
+    expect(summary.totals.unpricedEstimateUsd).toBeCloseTo(0.014, 6);
+    expect(summary.byClient.find((c) => c.clientId === clientId)?.budgetSpendUsd).toBeCloseTo(0.014, 6);
+    await setClientBudget(owner, clientId, { monthlyLimitUsd: 0.01, alertThresholdPct: 80, hardStop: true });
+    await expect(runAiSkill(ideasSkill, { auth: owner, clientId, input: { objective: "engagement", format: "post", quantity: 3 } })).rejects.toBeInstanceOf(BudgetExceededError);
+  });
+
+  it("o custo é registrado mesmo se a pessoa perder o acesso durante a chamada", async () => {
+    const { owner, clientId } = await setup();
+    const editor = await addMember(owner, "editor");
+    await withTx(systemCtx("test"), (tx) => tx.query("INSERT INTO client_access (organization_id, client_id, user_id) VALUES ($1, $2, $3)", [owner.organizationId, clientId, editor.userId]));
+    const fake = new FakeProvider();
+    fake.delayMs = 300;
+    setProviderOverride(fake);
+    const pending = runAiSkill(ideasSkill, { auth: editor, clientId, input: { objective: "engagement", format: "post", quantity: 3 } });
+    await new Promise((r) => setTimeout(r, 100));
+    await withTx(systemCtx("test"), (tx) => tx.query("DELETE FROM client_access WHERE client_id = $1 AND user_id = $2", [clientId, editor.userId]));
+    const out = await pending;
+    const run = await withTx(systemCtx("test"), (tx) => one<{ status: string; cost_usd: string | null }>(tx, "SELECT status, cost_usd::text FROM ai_runs WHERE id = $1", [out.runId]));
+    expect(run.status).toBe("succeeded");
+    expect(Number(run.cost_usd)).toBeCloseTo(0.0144, 6);
   });
 });

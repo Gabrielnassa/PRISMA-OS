@@ -1,11 +1,13 @@
 import { z } from "zod";
 import { FIELD_KEYS, OBJECTIVE_LABELS, OBJECTIVES } from "@/lib/content/document";
-import { SHARED_RULES } from "./common";
+import { BriefingSchema } from "@/lib/content/briefing";
+import { SHARED_RULES, briefingBlock, escapeData } from "./common";
 import type { AiSkill } from "./types";
 
 export const ReviewInputSchema = z.object({
   objective: z.enum(OBJECTIVES),
-  briefing: z.string().max(6000),
+  // O mesmo briefing estruturado que a IA de textos recebeu (oferta, público, mensagens e CTA).
+  briefing: BriefingSchema,
   slides: z.array(z.object({ kind: z.string(), kicker: z.string(), title: z.string(), body: z.string(), highlight: z.string(), footer: z.string(), alt: z.string() })),
   caption: z.string(),
   hashtags: z.array(z.string()),
@@ -29,7 +31,7 @@ export type ReviewOutput = z.infer<typeof ReviewOutputSchema>;
 
 export const reviewerSkill: AiSkill<ReviewInput, ReviewOutput, z.input<typeof ReviewInputSchema>> = {
   id: "quality.ai-review",
-  version: "1.0.0",
+  version: "1.1.0",
   name: "Revisor de qualidade (IA)",
   specSection: "9.9",
   description: "Revisa ortografia, aderência ao briefing, coerência, tom de voz e afirmações sem comprovação. Complementa as regras automáticas.",
@@ -52,17 +54,15 @@ ${SHARED_RULES}
 - Se não houver problemas, devolva "issues" vazio e diga isso no resumo.`,
   buildTask(input) {
     const slides = input.slides
-      .map((s, i) => `Lâmina ${i + 1} (${s.kind}):\n${FIELD_KEYS.map((k) => `  ${k}: ${s[k] || "(vazio)"}`).join("\n")}\n  alt: ${s.alt || "(vazio)"}`)
+      .map((s, i) => `Lâmina ${i + 1} (${s.kind}):\n${FIELD_KEYS.map((k) => `  ${k}: ${s[k] ? escapeData(s[k]) : "(vazio)"}`).join("\n")}\n  alt: ${s.alt ? escapeData(s.alt) : "(vazio)"}`)
       .join("\n");
     return `Objetivo: ${OBJECTIVE_LABELS[input.objective]}
-<briefing>
-${input.briefing}
-</briefing>
+${briefingBlock(input.briefing)}
 <peca_para_revisao>
 ${slides}
-Legenda: ${input.caption}
-Hashtags: ${input.hashtags.join(" ")}
-CTA: ${input.cta}
+Legenda: ${escapeData(input.caption)}
+Hashtags: ${escapeData(input.hashtags.join(" "))}
+CTA: ${escapeData(input.cta)}
 </peca_para_revisao>`;
   },
   demo() {

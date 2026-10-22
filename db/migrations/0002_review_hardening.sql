@@ -30,3 +30,14 @@ ALTER TABLE ai_runs
 ALTER TABLE jobs DROP CONSTRAINT jobs_max_attempts_check;
 ALTER TABLE jobs ADD CONSTRAINT jobs_max_attempts_check CHECK (max_attempts BETWEEN 1 AND 100);
 ALTER TABLE job_attempts ALTER COLUMN duration_ms TYPE bigint;
+
+-- 6) Tarifas dos modelos de fallback do servidor para organizações existentes
+--    (novas organizações recebem as mesmas tarifas em DEFAULT_PRICES).
+INSERT INTO provider_prices (organization_id, provider, model, input_usd_per_mtok, output_usd_per_mtok, source)
+SELECT o.id, 'anthropic', m.model, 5.00, 25.00,
+       'Preços públicos Anthropic para ' || m.model || ' (US$5 entrada / US$25 saída por milhão de tokens), usados quando o fallback do servidor atende uma solicitação recusada. Cache sem tarifa própria cadastrada: cobrado como entrada. Conferir em https://platform.claude.com/docs/en/about-claude/pricing'
+FROM organizations o
+CROSS JOIN (VALUES ('claude-opus-5'), ('claude-opus-4-8')) AS m (model)
+WHERE NOT EXISTS (
+  SELECT 1 FROM provider_prices p WHERE p.organization_id = o.id AND p.provider = 'anthropic' AND p.model = m.model
+);

@@ -15,7 +15,8 @@ const EnvSchema = z.object({
   AI_PROVIDER: z.enum(["anthropic", "demo", "none"]).optional(),
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
   ANTHROPIC_MODEL: z.string().min(1).default("claude-opus-5-5"),
-  ANTHROPIC_EFFORT: z.enum(["low", "medium", "high", "xhigh", "max"]).default("medium"),
+  // Opcional: substitui o esforço definido por skill (ideias "low", textos e revisão "medium").
+  ANTHROPIC_EFFORT: z.enum(["low", "medium", "high", "xhigh", "max"]).optional(),
   ANTHROPIC_FALLBACKS: z.enum(["default", "off"]).default("default"),
   AI_TIMEOUT_MS: z.coerce.number().int().min(5_000).max(600_000).default(180_000),
   GENERATION_RATE_PER_MINUTE: z.coerce.number().int().min(1).max(600).default(10),
@@ -33,7 +34,9 @@ let cached: Env | undefined;
 
 export function env(): Env {
   if (!cached) {
-    const parsed = EnvSchema.safeParse(process.env);
+    // Variáveis vazias (ex.: `AI_PROVIDER=` copiado do .env.example) valem como não definidas.
+    const defined = Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined && v.trim() !== ""));
+    const parsed = EnvSchema.safeParse(defined);
     if (!parsed.success) {
       const issues = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
       throw new Error(`Configuração inválida: ${issues}`);

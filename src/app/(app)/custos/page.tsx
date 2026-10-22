@@ -16,14 +16,19 @@ export default async function CostsPage() {
     <>
       <PageHeader
         title="Custos e consumo"
-        description={`Mês ${s.month}. Custos calculados com os tokens informados pelo provedor e a tarifa cadastrada vigente — nunca estimados sem tarifa.`}
+        description={`Mês ${s.month}. Custos calculados com os tokens informados pelo provedor e a tarifa cadastrada vigente. Execuções atendidas por um modelo sem tarifa aparecem como "sem tarifa"; para o teto, contam pela tarifa do modelo configurado (estimativa).`}
       />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <Stat label="Custo calculado" value={formatUsd(s.totals.costUsd, 4)} tone="violet" />
         <Stat label="Execuções" value={s.totals.runs} hint={`${s.totals.failed} sem sucesso`} />
         <Stat label="Tokens de entrada" value={formatNumber(s.totals.inputTokens)} />
         <Stat label="Tokens de saída" value={formatNumber(s.totals.outputTokens)} />
-        <Stat label="Sem tarifa" value={s.totals.unpricedRuns} tone={s.totals.unpricedRuns ? "warning" : undefined} hint={s.totals.demoRuns ? `${s.totals.demoRuns} execução(ões) demo sem custo` : undefined} />
+        <Stat
+          label="Sem tarifa"
+          value={s.totals.unpricedRuns}
+          tone={s.totals.unpricedRuns ? "warning" : undefined}
+          hint={[s.totals.unpricedEstimateUsd ? `≈ ${formatUsd(s.totals.unpricedEstimateUsd, 4)} estimado` : "", s.totals.demoRuns ? `${s.totals.demoRuns} execução(ões) demo sem custo` : ""].filter(Boolean).join(" · ") || undefined}
+        />
       </div>
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
         <Card>
@@ -39,7 +44,7 @@ export default async function CostsPage() {
             </thead>
             <tbody>
               {s.byClient.map((c) => {
-                const pct = c.limitUsd ? (c.costUsd / c.limitUsd) * 100 : null;
+                const pct = c.limitUsd ? (c.budgetSpendUsd / c.limitUsd) * 100 : null;
                 return (
                   <tr key={c.clientId}>
                     <Td>
@@ -48,7 +53,10 @@ export default async function CostsPage() {
                       </Link>
                     </Td>
                     <Td className="text-right">{c.runs}</Td>
-                    <Td className="text-right">{formatUsd(c.costUsd, 4)}</Td>
+                    <Td className="text-right">
+                      {formatUsd(c.costUsd, 4)}
+                      {c.budgetSpendUsd > c.costUsd ? <span className="block text-xs text-amber-300">+ {formatUsd(c.budgetSpendUsd - c.costUsd, 4)} estimado</span> : null}
+                    </Td>
                     <Td className="text-right">
                       {c.limitUsd === null ? (
                         <span className="text-ink-500">sem teto</span>
@@ -124,7 +132,7 @@ export default async function CostsPage() {
                 <Td className="text-right tabular-nums">
                   {formatNumber(r.inputTokens)} / {formatNumber(r.outputTokens)}
                 </Td>
-                <Td className="text-right">{r.isDemo ? "—" : r.costUsd === null ? <span className="text-amber-300">sem tarifa</span> : formatUsd(r.costUsd, 4)}</Td>
+                <Td className="text-right">{r.isDemo ? "—" : r.costUsd === null ? <span className="text-amber-300">sem tarifa{r.estimatedCostUsd !== null ? ` (≈ ${formatUsd(r.estimatedCostUsd, 4)})` : ""}</span> : formatUsd(r.costUsd, 4)}</Td>
               </tr>
             ))}
           </tbody>
