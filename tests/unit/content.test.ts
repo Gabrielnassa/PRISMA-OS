@@ -137,3 +137,43 @@ describe("delimitação de dados no prompt", () => {
     expect(task.match(/<\/peca_para_revisao>/g)).toHaveLength(1);
   });
 });
+
+describe("pedido de conteúdo", () => {
+  it("aceita post e story com uma lâmina e exige ao menos 2 no carrossel", async () => {
+    const { CreateContentSchema } = await import("@/lib/content/briefing");
+    const base = {
+      clientId: "00000000-0000-4000-8000-0000000000aa",
+      title: "Pauta",
+      channel: "instagram",
+      objective: "conversion",
+      briefing: { text: "Briefing com texto suficiente." },
+      mode: "ai",
+      requestId: "00000000-0000-4000-8000-0000000000bb",
+    };
+    expect(CreateContentSchema.safeParse({ ...base, format: "post", slideCount: 1 }).success).toBe(true);
+    expect(CreateContentSchema.safeParse({ ...base, format: "story", slideCount: 1 }).success).toBe(true);
+    const carousel = CreateContentSchema.safeParse({ ...base, format: "carousel", slideCount: 1 });
+    expect(carousel.success).toBe(false);
+    expect(carousel.error?.issues[0]?.path).toEqual(["slideCount"]);
+  });
+});
+
+describe("demonstração sem IA", () => {
+  it("nunca corta uma oferta no meio: cabe inteira no destaque ou vai completa para o texto", () => {
+    const template = getTemplate("produto-oferta").template;
+    const input = copywriterSkill.inputSchema.parse({
+      format: "post",
+      channel: "instagram",
+      objective: "conversion",
+      title: "Check-up de inverno",
+      briefing: { text: "Campanha de check-up completo para o inverno.", offer: "15% de desconto até 30/11 para novos pacientes", cta: "Agende" },
+      templateName: template.name,
+      templateDescription: template.description,
+      slidePlan: slidePlan(template, slideKinds("post", 1), "4:5", []),
+    });
+    const [cover] = copywriterSkill.demo(input).slides;
+    expect(cover!.highlight).toBe("");
+    expect(cover!.body).toContain("15% de desconto até 30/11 para novos pacientes");
+  });
+});
+

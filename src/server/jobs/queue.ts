@@ -133,26 +133,29 @@ export async function failJob(
   error: string,
   retryable: boolean,
   onFinal?: FinalFailureHook,
+  /** Mensagem exibida na interface (jobs.last_error); o detalhe técnico fica em job_attempts.error e nos logs. */
+  userMessage = error,
 ): Promise<{ final: boolean; owned: boolean }> {
   const canRetry = retryable && job.attempts < job.max_attempts;
   const message = error.slice(0, 2000);
+  const shown = userMessage.slice(0, 2000);
   return withTx(systemCtx("jobs.fail"), async (tx) => {
     const res = canRetry
       ? await tx.query(
           `UPDATE jobs SET status = 'queued', last_error = $4, run_after = now() + make_interval(secs => $5), locked_at = NULL, locked_by = NULL
            WHERE ${OWNED}`,
-          [job.id, job.locked_by, job.attempts, message, backoffMs(job.attempts) / 1000],
+          [job.id, job.locked_by, job.attempts, shown, backoffMs(job.attempts) / 1000],
         )
       : await tx.query(
           `UPDATE jobs SET status = 'failed', last_error = $4, finished_at = now(), locked_at = NULL, locked_by = NULL WHERE ${OWNED}`,
-          [job.id, job.locked_by, job.attempts, message],
+          [job.id, job.locked_by, job.attempts, shown],
         );
     const owned = (res.rowCount ?? 0) > 0;
     await tx.query(
       `UPDATE job_attempts SET status = $2, error = $3, finished_at = now(), duration_ms = ${DURATION} WHERE id = $1 AND status = 'running'`,
       [job.attemptId, owned ? "failed" : "abandoned", owned ? message : `Reserva perdida: ${message}`.slice(0, 2000)],
     );
-    if (owned && !canRetry && onFinal) await onFinal(tx, job, message);
+    if (owned && !canRetry && onFinal) await onFinal(tx, job, shown);
     return { final: owned && !canRetry, owned };
   });
 }

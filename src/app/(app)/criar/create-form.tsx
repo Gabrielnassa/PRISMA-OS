@@ -122,7 +122,7 @@ export function CreateForm({
               </Select>
             </Field>
             {format === "carousel" ? (
-              <Field label="Número de lâminas" htmlFor="slideCount" hint="Abertura + desenvolvimento + chamada final.">
+              <Field label="Número de lâminas" htmlFor="slideCount" hint="Abertura + desenvolvimento + chamada final." error={fe("slideCount")}>
                 <Input id="slideCount" name="slideCount" type="number" min={2} max={10} defaultValue={5} />
               </Field>
             ) : (

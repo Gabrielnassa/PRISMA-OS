@@ -54,7 +54,7 @@ Executados em 22/10/2026 neste ambiente (Node 22, PostgreSQL 16 local, Chromium 
 | --- | --- |
 | `npm run typecheck` | sem erros |
 | `npm run lint` | sem erros nem avisos |
-| `npm test` (Vitest: unitários + integração com PostgreSQL real) | **11 arquivos, 112 testes aprovados**, 0 falhas |
+| `npm test` (Vitest: unitários + integração com PostgreSQL real) | **11 arquivos, 116 testes aprovados**, 0 falhas |
 | `npm run test:e2e` (Playwright, `next dev` + worker) | **2/2 aprovados** (desktop 1440 px e celular Pixel 7) |
 | `npm run build` + `npm run test:e2e:prod` (build de produção) | build concluído; **2/2 aprovados** |
 
@@ -79,6 +79,10 @@ Destaques da cobertura: isolamento entre organizações e clientes (RLS efetivo,
 | 13 | Permissões no backend | ✅ `rules.test.ts`, `isolation.test.ts`, `content-flow.test.ts` |
 | 14 | Interface em diferentes telas | ✅ E2E desktop e celular (sem rolagem horizontal) |
 | 15 | Documentação reproduz o ambiente | ✅ README (início rápido), OPERATIONS.md; o E2E recria o ambiente do zero a cada execução |
+
+### Correções após a revisão
+
+Ao capturar as telas para a página de apresentação, apareceram mais três problemas, já corrigidos e cobertos por testes: pedidos de **post** e **story** eram recusados (a interface envia uma lâmina e a validação exigia duas); um erro interno inesperado aparecia para a pessoa com a mensagem técnica crua (agora ela vê uma mensagem clara e o detalhe fica no registro); e, no modo demonstração, uma oferta longa era cortada no destaque ("15% de desconto até"), hoje ela entra inteira ou vai completa para o texto.
 
 ### Revisão adversarial
 

@@ -132,13 +132,18 @@ ${briefingBlock(input.briefing)}`;
     const slides = input.slidePlan.map((s) => {
       const lim = s.limits;
       const fit = (text: string, max?: number) => (max ? clipWords(text, max) : "");
+      // Oferta nunca é cortada (perderia prazo ou condição): ou cabe inteira, ou fica fora do destaque.
+      const whole = (text: string, max?: number) => (max && text.trim().length <= max ? text.trim() : "");
+      const offer = input.briefing.offer.trim();
+      const offerStatement = offer ? `Condição informada: ${offer}` : "";
       if (s.kind === "cover") {
+        const highlight = whole(offer, lim.highlight);
         return {
           kind: s.kind,
           kicker: fit(OBJECTIVE_LABELS[input.objective], lim.kicker),
           title: fit(input.title || firstSentence(input.briefing.text), lim.title),
-          body: fit(firstSentence(input.briefing.text), lim.body),
-          highlight: fit(input.briefing.offer, lim.highlight),
+          body: offer && !highlight && whole(offerStatement, lim.body) ? offerStatement : fit(firstSentence(input.briefing.text), lim.body),
+          highlight,
           footer: fit(input.companyName, lim.footer),
           visualDirection: "Foto real do cliente relacionada ao tema (demonstração).",
           alt: fit(input.title, 200),
@@ -149,8 +154,8 @@ ${briefingBlock(input.briefing)}`;
           kind: s.kind,
           kicker: fit("Próximo passo", lim.kicker),
           title: fit(input.briefing.cta || "Fale com a nossa equipe", lim.title),
-          body: fit(input.briefing.offer ? `Condição informada: ${input.briefing.offer}` : "", lim.body),
-          highlight: fit(input.briefing.offer, lim.highlight),
+          body: whole(offerStatement, lim.body),
+          highlight: whole(offer, lim.highlight),
           footer: fit(input.handle || input.companyName, lim.footer),
           visualDirection: "Lâmina de fechamento com a cor da marca (demonstração).",
           alt: "",

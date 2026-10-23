@@ -18,10 +18,15 @@ export const CreateContentSchema = z.object({
   aspect: z.enum(["1:1", "4:5", "9:16"]).optional(),
   objective: z.enum(OBJECTIVES),
   briefing: BriefingSchema,
-  slideCount: z.coerce.number().int().min(2).max(10).default(5),
+  // Post e story têm uma lâmina; o carrossel precisa de 2 a 10 (validado abaixo).
+  slideCount: z.coerce.number().int().min(1).max(10).default(5),
   templatePreference: z.string().max(60).default("auto"),
   imageAssetIds: z.array(z.string().uuid()).max(10).default([]),
   mode: z.enum(["ai", "manual"]),
   requestId: z.string().uuid(),
+}).superRefine((v, ctx) => {
+  if (v.format === "carousel" && v.slideCount < 2) {
+    ctx.addIssue({ code: "custom", path: ["slideCount"], message: "O carrossel precisa de pelo menos 2 lâminas." });
+  }
 });
 export type CreateContentInput = z.input<typeof CreateContentSchema>;

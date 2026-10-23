@@ -278,5 +278,34 @@ describe("fila, recuperação de falhas e custos", () => {
     for (const leaked of ["Empresa Vizinha", "segredo-do-outro", "Fato exclusivo do outro cliente"]) expect(req.context + req.task).not.toContain(leaked);
     expect(req.task).toContain("Lançamento da nova coleção de outono.");
   });
+
+  it("post e story pedidos com uma lâmina (como a interface envia) são gerados", async () => {
+    const { owner, clientId } = await setup();
+    setProviderOverride(new FakeProvider());
+    const post = await createContent(owner, { ...request(clientId), format: "post", slideCount: 1 });
+    const story = await createContent(owner, { ...request(clientId), format: "story", slideCount: 1 });
+    await runJobsUntilIdle();
+    for (const { contentId } of [post, story]) {
+      const detail = await getContent(owner, contentId);
+      expect(detail.status).toBe("in_review");
+      expect(detail.current?.document.slides).toHaveLength(1);
+    }
+  });
+
+  it("erro inesperado na chamada de IA aparece como mensagem genérica, sem detalhes técnicos", async () => {
+    const { owner, clientId } = await setup();
+    const fake = new FakeProvider();
+    fake.failures.push(Object.assign(new Error('relation "tabela_x" does not exist'), { retryable: false }) as unknown as IntegrationError);
+    setProviderOverride(fake);
+    const { contentId } = await createContent(owner, request(clientId));
+    await runJobsUntilIdle();
+    const detail = await getContent(owner, contentId);
+    expect(detail.status).toBe("failed");
+    expect(detail.lastError).toContain("Falha inesperada ao chamar a IA");
+    expect(detail.lastError).not.toContain("tabela_x");
+    // O detalhe técnico fica no registro da execução de IA, para a operação.
+    const runs = await withTx(systemCtx("test"), (tx) => many<{ error_message: string }>(tx, "SELECT error_message FROM ai_runs WHERE content_item_id = $1", [contentId]));
+    expect(runs[0]?.error_message).toContain("tabela_x");
+  });
 });
 

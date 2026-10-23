@@ -14,7 +14,7 @@ import type { Job } from "./queue";
 
 export const GeneratePayloadSchema = z.object({
   contentItemId: z.string().uuid(),
-  slideCount: z.number().int().min(2).max(10).default(5),
+  slideCount: z.number().int().min(1).max(10).default(5),
   templatePreference: z.string().default("auto"),
   aspect: z.enum(["1:1", "4:5", "9:16"]).nullable().default(null),
   imageAssetIds: z.array(z.string().uuid()).default([]),

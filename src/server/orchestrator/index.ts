@@ -182,6 +182,7 @@ export async function runAiSkill<I, O, In>(skill: AiSkill<I, O, In>, req: SkillR
   const started = Date.now();
   let result: StructuredResult<O> | null = null;
   let failure: IntegrationError | null = null;
+  let technicalError: string | null = null;
   try {
     result = await provider.generateStructured<O>({
       system: skill.instructions,
@@ -193,7 +194,12 @@ export async function runAiSkill<I, O, In>(skill: AiSkill<I, O, In>, req: SkillR
       demo: () => skill.demo(input),
     });
   } catch (err) {
-    failure = err instanceof IntegrationError ? err : new IntegrationError((err as Error).message ?? "Falha na IA", false, { cause: err });
+    if (err instanceof IntegrationError) failure = err;
+    else {
+      // Erro fora do mapeamento do provedor: a pessoa vê uma mensagem genérica; o detalhe fica no registro da execução.
+      technicalError = (err as Error)?.message ?? String(err);
+      failure = new IntegrationError("Falha inesperada ao chamar a IA. O detalhe foi registrado.", false, { cause: err, providerCode: "unexpected" });
+    }
   }
 
   // 3) Registro do resultado, custo e auditoria. Em contexto de sistema (a
@@ -225,7 +231,7 @@ export async function runAiSkill<I, O, In>(skill: AiSkill<I, O, In>, req: SkillR
         priced.priceId,
         Date.now() - started,
         failure?.code ?? null,
-        failure?.message ?? null,
+        (technicalError ?? failure?.message ?? null)?.slice(0, 2000) ?? null,
         output === null ? null : JSON.stringify(output),
         priced.estimated,
         priced.breakdown.length > 1 ? JSON.stringify(priced.breakdown) : null,
