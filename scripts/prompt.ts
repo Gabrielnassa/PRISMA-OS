@@ -1,25 +1,45 @@
 import readline from "node:readline";
+import { Writable } from "node:stream";
+
+/**
+ * Lê uma linha do terminal. Com `hidden`, a saída do readline vai para um
+ * destino mudo: nada do que é digitado aparece, nem quando o readline redesenha
+ * a linha (Backspace, por exemplo). Ctrl+C e Ctrl+D encerram sem alterar nada.
+ */
+function readLine(question: string, hidden: boolean): Promise<string> {
+  if (hidden) process.stdout.write(question);
+  const output = hidden ? new Writable({ write: (_chunk, _encoding, done) => done() }) : process.stdout;
+  const rl = readline.createInterface({ input: process.stdin, output, terminal: Boolean(process.stdin.isTTY) });
+  return new Promise((resolve) => {
+    let answered = false;
+    rl.on("SIGINT", () => {
+      process.stdout.write("\n");
+      process.exit(130);
+    });
+    rl.on("close", () => {
+      if (answered) return;
+      process.stdout.write("\n");
+      process.exit(1);
+    });
+    rl.question(hidden ? "" : question, (answer) => {
+      answered = true;
+      rl.close();
+      if (hidden) process.stdout.write("\n");
+      resolve(answer);
+    });
+  });
+}
 
 /** Pergunta no terminal (resposta sem espaços nas pontas; repete se vazia). */
 export async function ask(question: string): Promise<string> {
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   let answer = "";
-  while (!answer) answer = (await new Promise<string>((resolve) => rl.question(question, resolve))).trim();
-  rl.close();
+  while (!answer) answer = (await readLine(question, false)).trim();
   return answer;
 }
 
 /** Pergunta no terminal sem mostrar o que é digitado. */
-export async function askHidden(question: string): Promise<string> {
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout, terminal: true });
-  const anyRl = rl as unknown as { _writeToOutput: (s: string) => void; output: NodeJS.WriteStream };
-  anyRl._writeToOutput = (s: string) => {
-    if (s.includes(question)) anyRl.output.write(s);
-  };
-  const answer = await new Promise<string>((resolve) => rl.question(question, resolve));
-  rl.close();
-  process.stdout.write("\n");
-  return answer;
+export function askHidden(question: string): Promise<string> {
+  return readLine(question, true);
 }
 
 /** Pede uma senha nova duas vezes; encerra o processo se não conferirem. */
