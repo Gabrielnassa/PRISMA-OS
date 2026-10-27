@@ -4,7 +4,11 @@ Este Codespace é um computador na nuvem do GitHub rodando o PRISMA OS completo:
 
 ## Primeira vez
 
-1. **Espere a preparação terminar.** No painel de baixo (Terminal), aparece "Preparação concluída". Leva uns 5 minutos.
+1. **Espere a preparação terminar** (uns 5 minutos na primeira vez). Para saber se o sistema já está no ar, rode no Terminal:
+   ```
+   curl -s localhost:3000/api/health
+   ```
+   Se responder `{"status":"ok",...}`, está pronto. Se não responder nada, ainda está preparando: espere um pouco e rode de novo. Para ver o andamento, tecle Cmd+Shift+P (no Windows, Ctrl+Shift+P), digite `creation log` e escolha **Codespaces: View Creation Log**.
 2. **Crie o seu acesso.** Clique no Terminal, digite o comando abaixo e tecle Enter:
    ```
    npm run primeiro-acesso
