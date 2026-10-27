@@ -1,0 +1,74 @@
+# PRISMA OS no próprio computador: banco, migrations, site e worker.
+# Use pelos atalhos desta pasta ("Iniciar PRISMA OS.command" etc.); as senhas
+# ficam em ~/.prisma-os/config.env, gerado na primeira execução.
+name: prisma-os
+
+x-app: &app
+  image: prisma-os-app:local
+  # Processo init repassa o sinal de parada: o worker termina a tarefa atual com calma.
+  init: true
+  build:
+    context: ..
+    dockerfile: Dockerfile
+  environment:
+    NODE_ENV: production
+    TZ: America/Sao_Paulo
+    DATABASE_URL: postgres://prisma_app_login:${PRISMA_APP_PASSWORD:?}@postgres:5432/prisma_os
+    MIGRATION_DATABASE_URL: postgres://prisma_owner:${PRISMA_OWNER_PASSWORD:?}@postgres:5432/prisma_os
+    APP_URL: ${PRISMA_APP_URL:-http://localhost:${PRISMA_PORT:-3000}}
+    STORAGE_LOCAL_DIR: /app/storage
+    ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    ANTHROPIC_EFFORT: ${ANTHROPIC_EFFORT:-}
+  volumes:
+    - storage:/app/storage
+
+services:
+  postgres:
+    image: postgres:16.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      PRISMA_OWNER_PASSWORD: ${PRISMA_OWNER_PASSWORD:?}
+      PRISMA_APP_PASSWORD: ${PRISMA_APP_PASSWORD:?}
+      TZ: America/Sao_Paulo
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../docker/init-db.sh:/docker-entrypoint-initdb.d/10-init.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d prisma_os"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  # Aplica as migrations pendentes antes de o site e o worker subirem.
+  migrate:
+    <<: *app
+    command: ["npm", "run", "db:migrate"]
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    <<: *app
+    command: ["npm", "start"]
+    restart: unless-stopped
+    # Por padrão só este computador acessa (127.0.0.1). Para liberar à equipe, veja mac/LEIA-ME.md.
+    ports:
+      - "${PRISMA_BIND:-127.0.0.1}:${PRISMA_PORT:-3000}:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  worker:
+    <<: *app
+    command: ["npm", "run", "worker"]
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  pgdata:
+  storage:

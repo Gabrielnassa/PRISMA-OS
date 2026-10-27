@@ -23,7 +23,8 @@
     "test:e2e": "playwright test",
     "render:samples": "tsx scripts/render-samples.ts",
     "test:e2e:prod": "E2E_PROD=1 playwright test",
-    "member:add": "tsx --conditions=react-server scripts/add-member.ts"
+    "member:add": "tsx --conditions=react-server scripts/add-member.ts",
+    "user:reset-password": "tsx --conditions=react-server scripts/reset-password.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.1.0",

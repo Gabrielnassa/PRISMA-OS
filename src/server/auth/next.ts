@@ -42,9 +42,11 @@ export async function requestMeta(): Promise<{ ip: string | null; userAgent: str
 }
 
 export async function setSessionCookie(token: string, expiresAt: Date): Promise<void> {
+  const { APP_URL, NODE_ENV } = env();
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
-    secure: env().NODE_ENV === "production",
+    // Segue o endereço público: https exige cookie seguro; http://localhost (instalação local) não.
+    secure: APP_URL ? APP_URL.startsWith("https://") : NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     expires: expiresAt,

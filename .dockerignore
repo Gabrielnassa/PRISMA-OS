@@ -1,0 +1,19 @@
+# Fora da imagem: dependências e builds locais, segredos, dados e arquivos de teste.
+node_modules
+.next
+.git
+.env
+.env.*
+!.env.example
+storage
+.e2e-storage
+.e2e-worker.pid
+test-results
+test-results-worker.log
+playwright-report
+blob-report
+coverage
+docs/img
+mac
+*.tsbuildinfo
+.DS_Store

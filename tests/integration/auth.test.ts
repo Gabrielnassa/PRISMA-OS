@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { login, resolveSession, revokeSession } from "../../src/server/auth/service";
+import { login, operatorResetPassword, resolveSession, revokeSession } from "../../src/server/auth/service";
 import { many, systemCtx, withTx } from "../../src/server/db";
-import { ConflictError, RateLimitError, UnauthenticatedError } from "../../src/server/errors";
+import { ConflictError, RateLimitError, UnauthenticatedError, ValidationError } from "../../src/server/errors";
 import { changeOwnPassword, inviteMember, updateMember } from "../../src/server/services/users";
 import { PASSWORD, authFor, newOrg, uniqueEmail } from "./helpers";
 
@@ -88,4 +88,21 @@ describe("autenticação", () => {
     const user = await withTx(systemCtx("test"), (tx) => many<{ is_active: boolean }>(tx, "SELECT is_active FROM users WHERE id = $1", [userId]));
     expect(user[0]?.is_active).toBe(true);
   });
+
+  it("redefinição pelo terminal libera o bloqueio, troca a senha e encerra sessões", async () => {
+    const { email } = await newOrg();
+    const { token } = await login({ email, password: PASSWORD });
+    for (let i = 0; i < 5; i++) await expect(login({ email, password: `errada-${i}-xxxx` })).rejects.toBeInstanceOf(UnauthenticatedError);
+    await expect(login({ email, password: PASSWORD })).rejects.toBeInstanceOf(RateLimitError);
+
+    await expect(operatorResetPassword(email, "curta")).rejects.toBeInstanceOf(ValidationError);
+    expect(await operatorResetPassword("ninguem@teste.prisma", "NovaSenha2026")).toBe(false);
+    expect(await operatorResetPassword(email.toUpperCase(), "NovaSenha2026")).toBe(true);
+
+    expect(await resolveSession(token)).toBeNull();
+    await expect(login({ email, password: PASSWORD })).rejects.toBeInstanceOf(UnauthenticatedError);
+    const fresh = await login({ email, password: "NovaSenha2026" });
+    expect((await resolveSession(fresh.token))?.mustChangePassword).toBe(false);
+  });
 });
+

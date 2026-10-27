@@ -26,6 +26,10 @@ Central operacional de marketing com IA para agências que atendem vários clien
 | Auditoria de ações, custos por execução de IA (por modelo, inclusive fallback), tetos mensais por cliente | Histórico, Custos e consumo |
 | Saúde do sistema e teste real de conexão com a IA | Integrações, `GET /api/health` |
 
+## Instalar no seu Mac (uso interno da agência)
+
+Sem programar nada: instale o Docker Desktop, abra a pasta [`mac`](mac/) e dê dois cliques em **Iniciar PRISMA OS**. O passo a passo completo, com backup, chave da IA e atualização, está em [mac/LEIA-ME.md](mac/LEIA-ME.md).
+
 ## Requisitos
 
 - Node.js 22+
@@ -66,6 +70,7 @@ Sem `ANTHROPIC_API_KEY`, defina `AI_PROVIDER=demo` para testar o fluxo completo:
 | `npm run db:migrate` | Aplica migrations pendentes (usa `MIGRATION_DATABASE_URL`) |
 | `npm run admin:create -- --org … --name … --email …` | Cria organização e proprietário |
 | `npm run member:add -- --org … --email … --role …` | Operador: vincula uma conta existente a outra organização |
+| `npm run user:reset-password -- --email …` | Operador: define uma senha nova (quem esqueceu a sua) e libera o bloqueio de login |
 | `npm run build` / `npm start` | Build e execução de produção |
 | `npm run typecheck` / `npm run lint` | TypeScript estrito e ESLint |
 | `npm test` | Testes unitários + integração (PostgreSQL real) |

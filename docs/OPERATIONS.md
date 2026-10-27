@@ -1,5 +1,9 @@
 # Operação e implantação
 
+## Instalação local no Mac (Docker)
+
+Para uso interno num único computador, a pasta `mac/` traz atalhos de dois cliques (iniciar, parar, backup, restaurar, atualizar, chave da IA, redefinir senha) sobre `mac/compose.yml`: PostgreSQL, migrations, web e worker a partir da mesma imagem (`Dockerfile`). As senhas do banco são geradas na primeira execução em `~/.prisma-os/config.env`, a porta fica presa a `127.0.0.1` e os dados ficam nos volumes `prisma-os_pgdata` e `prisma-os_storage`. Guia para o usuário: [mac/LEIA-ME.md](../mac/LEIA-ME.md). O mesmo `Dockerfile` e o mesmo compose servem de ponto de partida para um VPS.
+
 ## Processos
 
 | Processo | Comando | Função |
@@ -71,6 +75,14 @@ npm run member:add -- --org <slug-da-organização> --email pessoa@exemplo.com -
 ```
 
 A desativação de um membro vale apenas para a organização que a fez; a conta continua ativa nas demais.
+
+### Senha esquecida
+
+Pelo terminal do servidor (pede a senha nova duas vezes; também libera o bloqueio por tentativas e encerra as sessões abertas):
+
+```bash
+npm run user:reset-password -- --email pessoa@exemplo.com
+```
 
 ## Backup e restauração
 

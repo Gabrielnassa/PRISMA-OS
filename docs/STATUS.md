@@ -54,7 +54,7 @@ Executados em 22/10/2026 neste ambiente (Node 22, PostgreSQL 16 local, Chromium 
 | --- | --- |
 | `npm run typecheck` | sem erros |
 | `npm run lint` | sem erros nem avisos |
-| `npm test` (Vitest: unitários + integração com PostgreSQL real) | **11 arquivos, 116 testes aprovados**, 0 falhas |
+| `npm test` (Vitest: unitários + integração com PostgreSQL real) | **11 arquivos, 117 testes aprovados**, 0 falhas |
 | `npm run test:e2e` (Playwright, `next dev` + worker) | **2/2 aprovados** (desktop 1440 px e celular Pixel 7) |
 | `npm run build` + `npm run test:e2e:prod` (build de produção) | build concluído; **2/2 aprovados** |
 
@@ -99,6 +99,8 @@ Depois da primeira versão, uma revisão em várias frentes levantou **61 achado
 | Redes sociais, e-mail, n8n, Meta/Google Ads, Analytics, Drive, S3 | Não conectados (fases seguintes); nada é apresentado como conectado |
 
 ## 6. Configurações pendentes
+
+**Instalação local disponível.** A pasta `mac/` instala o sistema completo (banco, migrations, site e worker em Docker) num Mac, com atalhos de dois cliques para iniciar, parar, fazer e restaurar backup, atualizar, configurar a chave da IA e redefinir senha (guia: `mac/LEIA-ME.md`). Testado neste ambiente com Docker: primeira instalação interativa (inclusive senha fraca recusada), login no navegador sobre `http://localhost`, criação e edição de peça, download de rascunho, backup, restauração que de fato volta banco e arquivos, persistência ao parar e iniciar, troca da chave da IA e redefinição de senha. Não testado aqui: a execução num Mac real (o comportamento do macOS com arquivos baixados está descrito no guia) e o atalho de atualização de ponta a ponta.
 
 1. `ANTHROPIC_API_KEY` no ambiente do servidor (e, se desejado, `ANTHROPIC_EFFORT`). Depois: Integrações → "Testar conexão" e uma geração real para fechar o critério 4.
 2. `APP_URL` com a URL pública e `TRUST_PROXY=true` somente atrás de proxy confiável.

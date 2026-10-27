@@ -4,7 +4,7 @@ import { maybeOne, one, systemCtx, withTx } from "../db";
 import { isRole } from "../authz/permissions";
 import { RateLimitError, UnauthenticatedError, ValidationError } from "../errors";
 import { audit } from "../services/audit";
-import { getDummyHash, verifyPassword } from "./password";
+import { getDummyHash, hashPassword, validatePasswordStrength, verifyPassword } from "./password";
 import type { AuthContext } from "./types";
 
 export const SESSION_COOKIE = "prisma_session";
@@ -168,3 +168,34 @@ export async function revokeAllSessions(userId: string, opts: { exceptSessionId?
     );
   });
 }
+
+/**
+ * Operação local (terminal do servidor): define uma nova senha definitiva para
+ * a conta, libera o bloqueio por tentativas e encerra as sessões abertas. Usada
+ * quando a única pessoa administradora esquece a senha. Retorna false se o
+ * e-mail não existir.
+ */
+export async function operatorResetPassword(emailInput: string, password: string): Promise<boolean> {
+  const email = emailInput.trim().toLowerCase();
+  const problem = validatePasswordStrength(password);
+  if (problem) throw new ValidationError(problem);
+  const passwordHash = await hashPassword(password);
+  const userId = await withTx(systemCtx("operator.reset_password"), async (tx) => {
+    const user = await maybeOne<{ id: string }>(
+      tx,
+      "UPDATE users SET password_hash = $2, must_change_password = false, password_set_at = now() WHERE email = $1 RETURNING id",
+      [email, passwordHash],
+    );
+    if (!user) return null;
+    await tx.query("DELETE FROM login_attempts WHERE email_hash = $1 AND NOT success", [hashEmail(email)]);
+    const orgs = await tx.query<{ organization_id: string }>("SELECT organization_id FROM memberships WHERE user_id = $1", [user.id]);
+    for (const { organization_id } of orgs.rows) {
+      await audit(tx, { type: "system" }, { organizationId: organization_id, action: "user.password_reset_by_operator", entityType: "user", entityId: user.id });
+    }
+    return user.id;
+  });
+  if (!userId) return false;
+  await revokeAllSessions(userId);
+  return true;
+}
+
