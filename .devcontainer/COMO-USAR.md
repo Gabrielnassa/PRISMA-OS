@@ -52,7 +52,7 @@ O backup vai para a pasta `backups/<data>` (painel de arquivos à esquerda). Cli
 | Comando | Para quê |
 | --- | --- |
 | `bash .devcontainer/atualizar.sh` | Baixa a versão mais nova do GitHub e reinicia (faz backup antes) |
-| `bash .devcontainer/iniciar.sh` | Reinicia o sistema se algo travar |
+| `bash .devcontainer/iniciar.sh` | Liga ou reinicia o sistema (use se o endereço der erro, como 401 ou 502, ou se algo travar) |
 | `npm run user:reset-password -- --email voce@exemplo.com` | Define uma senha nova (se você esquecer a sua) |
 | `tail -n 50 /tmp/prisma-web.log` | Mostra as últimas mensagens do site, para pedir ajuda |
 
