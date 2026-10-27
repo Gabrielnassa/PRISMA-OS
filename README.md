@@ -28,7 +28,7 @@ Central operacional de marketing com IA para agências que atendem vários clien
 
 ## Rodar pelo GitHub (Codespaces)
 
-[![Abrir no GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/gabrielnassa/PRISMA-OS?ref=claude/session-vagl59)
+[![Abrir no GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Gabrielnassa/PRISMA-OS?ref=claude/session-vagl59)
 
 Sem instalar nada: o botão cria um Codespace (computador na nuvem do GitHub) que prepara o banco, o site e o worker. O endereço é privado, só a sua conta do GitHub abre. O passo a passo abre sozinho no Codespace ([.devcontainer/COMO-USAR.md](.devcontainer/COMO-USAR.md)). O GitHub desliga o Codespace depois de 30 minutos parado e apaga Codespaces sem uso por muito tempo, então faça backups.
 

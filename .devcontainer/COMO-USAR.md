@@ -18,8 +18,10 @@ Salve esse endereço nos favoritos. Ele continua o mesmo enquanto este Codespace
 
 Sem a chave, você cria as peças pelos templates e escreve os textos no editor. Para gerar com IA:
 
-1. No GitHub, abra **Settings > Codespaces > Secrets > New secret**.
+1. Abra https://github.com/settings/codespaces (são as configurações da **sua conta**: foto no canto superior direito > Settings > Codespaces; não é a aba Settings do repositório). Em **Codespaces secrets**, clique em **New secret**.
 2. Nome: `ANTHROPIC_API_KEY`. Valor: a sua chave (começa com `sk-ant-`). Em **Repository access**, escolha o repositório do PRISMA OS.
+
+   Outro caminho: na aba **Settings do repositório**, menu **Secrets and variables > Codespaces > New repository secret**, com o mesmo nome e valor.
 3. Pare e abra o Codespace de novo (o GitHub também pode oferecer "Reload to apply").
 4. No PRISMA OS, confirme em **Integrações > Testar conexão**.
 
