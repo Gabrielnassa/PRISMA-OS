@@ -3,7 +3,7 @@ import { login } from "./helpers";
 
 test("interface utilizável no celular, sem rolagem horizontal", async ({ page }) => {
   await login(page);
-  for (const path of ["/", "/clientes", "/criar", "/conteudos", "/aprovacoes", "/templates", "/custos", "/integracoes"]) {
+  for (const path of ["/", "/clientes", "/criar", "/conteudos", "/aprovacoes", "/templates", "/skills", "/skills/nova", "/custos", "/integracoes"]) {
     await page.goto(path);
     await expect(page.locator("main")).toBeVisible();
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

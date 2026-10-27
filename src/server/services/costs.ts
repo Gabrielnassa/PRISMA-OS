@@ -6,6 +6,7 @@ import { BudgetExceededError, ValidationError } from "../errors";
 import type { TokenUsage } from "../ai/types";
 import { audit, userActor } from "./audit";
 import { requireClient } from "./clients";
+import { findSkill } from "../skills/registry";
 
 export interface PriceRow {
   id: string;
@@ -74,9 +75,16 @@ export interface CostSummary {
   month: string;
   totals: { runs: number; failed: number; costUsd: number; unpricedRuns: number; unpricedEstimateUsd: number; inputTokens: number; outputTokens: number; demoRuns: number };
   byClient: Array<{ clientId: string | null; clientName: string; runs: number; costUsd: number; budgetSpendUsd: number; limitUsd: number | null; alertPct: number | null; hardStop: boolean | null }>;
-  bySkill: Array<{ skillId: string; runs: number; costUsd: number; avgDurationMs: number | null }>;
-  recent: Array<{ id: string; createdAt: string; clientName: string | null; skillId: string; model: string; status: string; isDemo: boolean; inputTokens: number; outputTokens: number; costUsd: number | null; estimatedCostUsd: number | null; durationMs: number | null; errorMessage: string | null }>;
+  bySkill: Array<{ skillId: string; skillName: string; runs: number; costUsd: number; avgDurationMs: number | null }>;
+  recent: Array<{ id: string; createdAt: string; clientName: string | null; skillId: string; skillName: string; model: string; status: string; isDemo: boolean; inputTokens: number; outputTokens: number; costUsd: number | null; estimatedCostUsd: number | null; durationMs: number | null; errorMessage: string | null }>;
   prices: Array<{ id: string; provider: string; model: string; input: string; output: string; cacheRead: string | null; cacheWrite: string | null; source: string; effectiveFrom: string }>;
+}
+
+/** Nome legível da skill: personalizada (pelo cadastro), do sistema (pelo registro) ou o próprio id. */
+function skillLabel(skillId: string, customName: string | null): string {
+  if (customName) return customName;
+  if (skillId.startsWith("custom:")) return "Skill personalizada";
+  return findSkill(skillId)?.name ?? skillId;
 }
 
 export async function getCostSummary(auth: AuthContext): Promise<CostSummary> {
@@ -108,21 +116,23 @@ export async function getCostSummary(auth: AuthContext): Promise<CostSummary> {
        ORDER BY coalesce(sum(r.cost_usd), 0) DESC, c.name`,
       [org],
     );
-    const bySkill = await many<{ skill_id: string; runs: number; cost: string; avg_ms: string | null }>(
+    const bySkill = await many<{ skill_id: string; custom_name: string | null; runs: number; cost: string; avg_ms: string | null }>(
       tx,
-      `SELECT skill_id, count(*)::int AS runs, coalesce(sum(cost_usd), 0)::text AS cost, avg(duration_ms)::text AS avg_ms
-       FROM ai_runs WHERE organization_id = $1 AND created_at >= date_trunc('month', now())
-       GROUP BY skill_id ORDER BY runs DESC`,
+      `SELECT r.skill_id, cs.name AS custom_name, count(*)::int AS runs, coalesce(sum(r.cost_usd), 0)::text AS cost, avg(r.duration_ms)::text AS avg_ms
+       FROM ai_runs r LEFT JOIN custom_skills cs ON 'custom:' || cs.id::text = r.skill_id
+       WHERE r.organization_id = $1 AND r.created_at >= date_trunc('month', now())
+       GROUP BY r.skill_id, cs.name ORDER BY runs DESC`,
       [org],
     );
     const recent = await many<{
-      id: string; created_at: Date; client_name: string | null; skill_id: string; model: string; status: string; is_demo: boolean;
+      id: string; created_at: Date; client_name: string | null; skill_id: string; custom_name: string | null; model: string; status: string; is_demo: boolean;
       input_tokens: number; output_tokens: number; cost_usd: string | null; estimated_cost_usd: string | null; duration_ms: number | null; error_message: string | null;
     }>(
       tx,
-      `SELECT r.id, r.created_at, c.name AS client_name, r.skill_id, r.model, r.status, r.is_demo, r.input_tokens, r.output_tokens,
+      `SELECT r.id, r.created_at, c.name AS client_name, r.skill_id, cs.name AS custom_name, r.model, r.status, r.is_demo, r.input_tokens, r.output_tokens,
               r.cost_usd::text, r.estimated_cost_usd::text, r.duration_ms, r.error_message
        FROM ai_runs r LEFT JOIN clients c ON c.id = r.client_id
+       LEFT JOIN custom_skills cs ON 'custom:' || cs.id::text = r.skill_id
        WHERE r.organization_id = $1 ORDER BY r.created_at DESC LIMIT 50`,
       [org],
     );
@@ -154,12 +164,13 @@ export async function getCostSummary(auth: AuthContext): Promise<CostSummary> {
         alertPct: r.alert,
         hardStop: r.hard_stop,
       })),
-      bySkill: bySkill.map((r) => ({ skillId: r.skill_id, runs: r.runs, costUsd: Number(r.cost), avgDurationMs: r.avg_ms === null ? null : Math.round(Number(r.avg_ms)) })),
+      bySkill: bySkill.map((r) => ({ skillId: r.skill_id, skillName: skillLabel(r.skill_id, r.custom_name), runs: r.runs, costUsd: Number(r.cost), avgDurationMs: r.avg_ms === null ? null : Math.round(Number(r.avg_ms)) })),
       recent: recent.map((r) => ({
         id: r.id,
         createdAt: r.created_at.toISOString(),
         clientName: r.client_name,
         skillId: r.skill_id,
+        skillName: skillLabel(r.skill_id, r.custom_name),
         model: r.model,
         status: r.status,
         isDemo: r.is_demo,

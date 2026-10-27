@@ -1,6 +1,7 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import { env } from "./env";
+import { extraAllowedHosts } from "@/lib/allowed-origins";
 import { AppError, UnauthenticatedError, ForbiddenError, toUserMessage } from "./errors";
 import { getAuth } from "./auth/next";
 import type { AuthContext } from "./auth/types";
@@ -24,8 +25,7 @@ export function assertSameOrigin(request: Request): void {
   const allowed = new Set<string>();
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
   if (host) allowed.add(host);
-  const appUrl = env().APP_URL;
-  if (appUrl) allowed.add(new URL(appUrl).host);
+  for (const h of extraAllowedHosts({ APP_URL: env().APP_URL, CODESPACE_NAME: process.env.CODESPACE_NAME })) allowed.add(h);
   if (!allowed.has(originHost)) throw new ForbiddenError("Origem não autorizada.");
 }
 

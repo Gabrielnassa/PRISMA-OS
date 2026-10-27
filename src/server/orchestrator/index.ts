@@ -19,6 +19,8 @@ export interface SkillRunRequest<I> {
   jobId?: string | null;
   /** Mesma chave => mesma execução (reaproveita resultado bem-sucedido, sem nova cobrança). */
   idempotencyKey?: string;
+  /** Dados extras guardados no resumo da execução (ex.: o pedido de uma skill personalizada). */
+  summary?: Record<string, unknown>;
 }
 
 export interface SkillRunResult<O> {
@@ -153,7 +155,7 @@ export async function runAiSkill<I, O, In>(skill: AiSkill<I, O, In>, req: SkillR
         provider.id,
         provider.model,
         provider.isDemo,
-        JSON.stringify({ memoryCount: context.memoryCount, contextChars: context.text.length }),
+        JSON.stringify({ ...req.summary, memoryCount: context.memoryCount, contextChars: context.text.length }),
         key,
         auth.userId,
       ],

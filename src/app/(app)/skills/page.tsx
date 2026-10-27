@@ -1,21 +1,68 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { requireAuth } from "@/server/auth/next";
 import { PLANNED_SKILLS, SKILLS } from "@/server/skills/registry";
 import { getCostSummary } from "@/server/services/costs";
+import { listCustomSkills } from "@/server/services/custom-skills";
 import { can } from "@/server/authz/permissions";
-import { Badge, Card, CardHeader, PageHeader, formatUsd } from "@/components/ui";
+import { Badge, Card, CardHeader, EmptyState, LinkButton, PageHeader, formatUsd } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Agentes e skills" };
 
-export default async function SkillsPage() {
+export default async function SkillsPage({ searchParams }: { searchParams: Promise<{ arquivadas?: string }> }) {
   const auth = await requireAuth();
+  const { arquivadas } = await searchParams;
+  const showArchived = arquivadas === "1";
   const usage = can(auth.role, "costs.view") ? (await getCostSummary(auth)).bySkill : [];
+  const custom = await listCustomSkills(auth, { includeArchived: showArchived });
+  const canManage = can(auth.role, "skills.manage");
   return (
     <>
       <PageHeader
         title="Agentes e skills"
-        description="Cada skill é um módulo versionado com esquemas de entrada e saída, critérios de qualidade e testes. Só o orquestrador decide o que executa; nenhuma skill publica ou gasta sem autorização."
+        description="Skills são especialistas que a IA segue para entregar um tipo de trabalho. Crie as da sua agência ou importe um SKILL.md; o contexto de cada cliente entra sozinho. Nenhuma skill publica ou gasta sem autorização."
+        actions={canManage ? <LinkButton href="/skills/nova">Nova skill</LinkButton> : null}
       />
+
+      <section className="mb-8">
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-lg font-semibold text-ink-50">Skills da agência</h2>
+          <Link href={showArchived ? "/skills" : "/skills?arquivadas=1"} className="text-xs text-ink-400 hover:text-ink-100 hover:underline">
+            {showArchived ? "Ocultar arquivadas" : "Mostrar arquivadas"}
+          </Link>
+        </div>
+        {custom.length === 0 ? (
+          <EmptyState
+            title="Nenhuma skill da agência ainda"
+            description="Crie uma skill para tarefas que vocês repetem (roteiros, legendas, respostas, planejamentos) ou importe um arquivo SKILL.md."
+            action={canManage ? <LinkButton href="/skills/nova">Criar a primeira skill</LinkButton> : undefined}
+          />
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {custom.map((s) => (
+              <Link key={s.id} href={`/skills/${s.id}`} className="group">
+                <Card className="h-full transition-colors group-hover:border-violet-500/60">
+                  <div className="space-y-3 p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 className="font-semibold text-ink-50">{s.name}</h3>
+                      <Badge tone="accent">v{s.version}</Badge>
+                    </div>
+                    <p className="line-clamp-3 text-sm text-ink-300">{s.description || "Sem descrição."}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      <Badge>{s.clientName ? `Só ${s.clientName}` : "Todos os clientes"}</Badge>
+                      {s.source === "skill_md" ? <Badge tone="teal">SKILL.md</Badge> : null}
+                      {s.status === "archived" ? <Badge tone="warning">arquivada</Badge> : null}
+                      {s.runsThisMonth ? <Badge tone="info">{s.runsThisMonth} uso(s) no mês</Badge> : null}
+                    </div>
+                  </div>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <h2 className="mb-3 text-lg font-semibold text-ink-50">Skills do sistema</h2>
       <div className="grid gap-4 lg:grid-cols-2">
         {SKILLS.map((s) => {
           const u = usage.find((x) => x.skillId === s.id);

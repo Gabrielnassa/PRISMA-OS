@@ -15,6 +15,7 @@ Central operacional de marketing com IA para agências que atendem vários clien
 | Memória do cliente (fatos, preferências, hipóteses, sugestões) revisável e excluível | Clientes → Memória |
 | Biblioteca de mídia com validação do tipo real do arquivo | Clientes → Arquivos, Biblioteca de mídia |
 | Pedido de conteúdo com briefing, sugestão de pautas e escolha de fotos | Central de criação |
+| Skills da agência: criar, importar um SKILL.md (formato das skills do Claude) ou partir de um modelo; versões; executar para um cliente com o contexto da marca; histórico; resultado vira briefing de uma peça; baixar SKILL.md | Agentes e skills |
 | Geração assíncrona (fila no PostgreSQL + worker) com direção de arte por regras e copy por IA | Conteúdos |
 | 18 templates originais (6 famílias × 3) renderizados em SVG/PNG nas proporções 1:1, 4:5 e 9:16 | Biblioteca de layouts |
 | Editor visual: textos com limite por campo ajustado ao layout, tema, alinhamento, escala, foto com foco/zoom, template, cores, fontes, logotipo | Conteúdos → editor |

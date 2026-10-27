@@ -16,6 +16,7 @@ import {
 } from "@/lib/content/document";
 import { Alert, Badge, Button, Card, CardHeader, Field, Input, Select, Textarea, cx } from "@/components/ui";
 import { ActionForm, FormMessage, SubmitButton } from "@/components/form";
+import { uuid } from "@/lib/uuid";
 import { createContentAction, suggestIdeasAction } from "./actions";
 
 type TemplateOption = { id: string; name: string; familyLabel: string; formats: string[]; aspects: string[]; image: string };
@@ -28,6 +29,7 @@ export function CreateForm({
   images,
   providerReady,
   providerDemo,
+  initialBriefing,
 }: {
   clients: Array<{ id: string; name: string }>;
   clientId: string | null;
@@ -35,15 +37,17 @@ export function CreateForm({
   images: ImageOption[];
   providerReady: boolean;
   providerDemo: boolean;
+  /** Texto inicial do briefing (ex.: resultado de uma skill personalizada). */
+  initialBriefing?: string;
 }) {
   const router = useRouter();
   const [state, action] = useActionState(createContentAction, { status: "idle" });
   const [ideasState, ideasAction, ideasPending] = useActionState(suggestIdeasAction, { status: "idle" });
-  const [requestId] = useState(() => crypto.randomUUID());
+  const [requestId] = useState(() => uuid());
   const [format, setFormat] = useState<ContentFormat>("carousel");
   const [objective, setObjective] = useState<Objective>("education");
   const [title, setTitle] = useState("");
-  const [briefing, setBriefing] = useState("");
+  const [briefing, setBriefing] = useState(initialBriefing ?? "");
   const [selected, setSelected] = useState<string[]>([]);
   const aspects = FORMAT_ASPECTS[format];
   const availableTemplates = templates.filter((t) => t.formats.includes(format));

@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { extraAllowedHosts } from "./src/lib/allowed-origins";
 
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -7,22 +8,9 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
 ];
 
-// Endereço público da aplicação. Atrás de um proxy que reescreve o host (ex.:
-// GitHub Codespaces), as Server Actions só aceitam a origem declarada aqui.
-const publicHost = (() => {
-  try {
-    return process.env.APP_URL ? new URL(process.env.APP_URL).host : null;
-  } catch {
-    return null;
-  }
-})();
-// O túnel de portas do Codespaces faz o contrário: põe o endereço público em
-// x-forwarded-host e troca o Origin por localhost:3000. Só vale dentro de um
-// Codespace (a porta é privada e o cookie de sessão é SameSite=Lax).
-const allowedOrigins = [
-  ...(publicHost ? [publicHost] : []),
-  ...(process.env.CODESPACE_NAME ? ["localhost:3000"] : []),
-];
+// Origens aceitas pelas Server Actions além do host da requisição (endereço
+// público em APP_URL e o túnel do Codespaces): ver src/lib/allowed-origins.ts.
+const allowedOrigins = extraAllowedHosts({ APP_URL: process.env.APP_URL, CODESPACE_NAME: process.env.CODESPACE_NAME });
 
 const nextConfig: NextConfig = {
   // Native/heavy server packages must not be bundled.

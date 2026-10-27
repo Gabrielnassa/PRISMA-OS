@@ -91,7 +91,10 @@ export default async function CostsPage() {
               ) : (
                 s.bySkill.map((k) => (
                   <tr key={k.skillId}>
-                    <Td className="font-mono text-xs">{k.skillId}</Td>
+                    <Td>
+                      <div>{k.skillName}</div>
+                      <div className="font-mono text-[11px] text-ink-500">{k.skillId}</div>
+                    </Td>
                     <Td className="text-right">{k.runs}</Td>
                     <Td className="text-right">{formatUsd(k.costUsd, 4)}</Td>
                     <Td className="text-right">{k.avgDurationMs ? `${(k.avgDurationMs / 1000).toFixed(1)} s` : "—"}</Td>
@@ -121,7 +124,9 @@ export default async function CostsPage() {
               <tr key={r.id}>
                 <Td>{formatDateTime(r.createdAt)}</Td>
                 <Td>{r.clientName ?? "—"}</Td>
-                <Td className="font-mono text-xs">{r.skillId}</Td>
+                <Td className="text-xs">
+                  <span title={r.skillId}>{r.skillName}</span>
+                </Td>
                 <Td className="text-xs">{r.model}</Td>
                 <Td>
                   <Badge tone={r.status === "succeeded" ? "success" : r.status === "running" ? "info" : "danger"} title={r.errorMessage ?? undefined}>

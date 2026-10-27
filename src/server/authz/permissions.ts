@@ -38,6 +38,8 @@ const MATRIX = {
   "content.archive": ["owner", "admin", "editor"],
   "content.export": ["owner", "admin", "editor", "reviewer", "viewer"],
   "integrations.test": ["owner", "admin"],
+  "skills.manage": ["owner", "admin"],
+  "skills.run": ["owner", "admin", "editor"],
   "audit.view": ["owner", "admin"],
 } as const satisfies Record<string, readonly Role[]>;
 

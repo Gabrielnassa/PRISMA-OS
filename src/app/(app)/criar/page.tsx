@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { requireAuth } from "@/server/auth/next";
 import { listClients } from "@/server/services/clients";
 import { listMedia } from "@/server/services/media";
+import { getCustomSkillRunText } from "@/server/services/custom-skills";
 import { providerStatus } from "@/server/ai/gateway";
 import { TEMPLATES } from "@/server/render/templates";
 import { can } from "@/server/authz/permissions";
@@ -11,9 +12,9 @@ import { CreateForm } from "./create-form";
 
 export const metadata: Metadata = { title: "Central de criação" };
 
-export default async function CreatePage({ searchParams }: { searchParams: Promise<{ cliente?: string }> }) {
+export default async function CreatePage({ searchParams }: { searchParams: Promise<{ cliente?: string; de?: string }> }) {
   const auth = await requireAuth();
-  const { cliente } = await searchParams;
+  const { cliente: clienteParam, de } = await searchParams;
   if (!can(auth.role, "content.create")) {
     return <EmptyState title="Sem permissão de criação" description="Seu papel permite revisar e consultar conteúdos." />;
   }
@@ -26,6 +27,9 @@ export default async function CreatePage({ searchParams }: { searchParams: Promi
       </>
     );
   }
+  // ?de=<execução>: o resultado de uma skill personalizada vira o briefing (no cliente dela).
+  const fromSkill = de ? await getCustomSkillRunText(auth, de) : null;
+  const cliente = fromSkill?.clientId ?? clienteParam;
   const clientId = clients.some((c) => c.id === cliente) ? cliente! : clients.length === 1 ? clients[0]!.id : null;
   const images = clientId ? await listMedia(auth, { clientId, imagesOnly: true, limit: 60 }) : { items: [] };
   const provider = providerStatus();
@@ -39,6 +43,7 @@ export default async function CreatePage({ searchParams }: { searchParams: Promi
         images={images.items.filter((i) => i.kind !== "logo").map((i) => ({ id: i.id, filename: i.filename, altText: i.altText }))}
         providerReady={provider.configured}
         providerDemo={provider.isDemo}
+        initialBriefing={fromSkill && fromSkill.clientId === clientId ? fromSkill.text.slice(0, 6000) : undefined}
       />
     </>
   );
