@@ -209,10 +209,10 @@ criar_administrador_se_preciso() {
   fi
   titulo "Criar o seu acesso de administrador"
   local org="${PRISMA_ADMIN_ORG:-}" nome="${PRISMA_ADMIN_NOME:-}" email="${PRISMA_ADMIN_EMAIL:-}" tentativa=1
-  while [ -z "$org" ]; do read -r -p "Nome da agência: " org; done
-  while [ -z "$nome" ]; do read -r -p "Seu nome: " nome; done
-  while [ -z "$email" ]; do read -r -p "Seu e-mail (será o login): " email; done
   while true; do
+    while [ -z "$org" ]; do read -r -p "Nome da agência: " org; done
+    while [ -z "$nome" ]; do read -r -p "Seu nome: " nome; done
+    while [ -z "$email" ]; do read -r -p "Seu e-mail (será o login): " email; done
     if compose run --rm --no-deps -e ADMIN_PASSWORD web npm run --silent admin:create -- --org "$org" --name "$nome" --email "$email"; then
       ok "Acesso criado. Entre com $email e a senha que você definiu."
       return 0
@@ -221,7 +221,9 @@ criar_administrador_se_preciso() {
     if [ "$tentativa" -gt 3 ] || ! interativo; then
       return 1
     fi
-    aviso "Vamos tentar de novo."
+    aviso "Vamos tentar de novo. Confira o e-mail e a senha."
+    # O e-mail é pedido de novo (pode ter sido o erro); agência e nome são mantidos.
+    [ -n "${PRISMA_ADMIN_EMAIL:-}" ] || email=""
   done
 }
 
@@ -233,8 +235,13 @@ abrir_navegador() {
 }
 
 fazer_backup() {
-  local destino
+  local destino n=1
   destino="$BACKUP_DIR/$(date '+%Y-%m-%d_%H%M%S')"
+  # Nunca sobrescreve um backup feito no mesmo segundo.
+  while [ -e "$destino" ]; do
+    n=$((n + 1))
+    destino="$BACKUP_DIR/$(date '+%Y-%m-%d_%H%M%S')-$n"
+  done
   mkdir -p "$destino"
   info "Salvando o banco de dados..."
   compose up -d postgres >/dev/null

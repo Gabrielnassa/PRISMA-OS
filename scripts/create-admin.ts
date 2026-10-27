@@ -1,10 +1,11 @@
 /**
  * Cria a organização e o primeiro administrador (proprietário).
  * Uso: npm run admin:create -- --org "Minha Agência" --name "Nome" --email email@dominio.com
- * A senha é lida da variável ADMIN_PASSWORD ou solicitada no terminal (não ecoada).
+ * Sem argumentos, pergunta os dados no terminal. A senha é lida da variável
+ * ADMIN_PASSWORD ou solicitada no terminal (duas vezes, sem eco).
  */
 import { loadDotEnv } from "./load-env";
-import { askNewPassword } from "./prompt";
+import { ask, askNewPassword } from "./prompt";
 
 loadDotEnv();
 
@@ -13,9 +14,11 @@ function arg(name: string): string | undefined {
   return i >= 0 ? process.argv[i + 1] : undefined;
 }
 
-const org = arg("org");
-const name = arg("name");
-const email = arg("email");
+// Sem argumentos, num terminal, pergunta o que faltar (primeiro acesso guiado).
+const interactive = process.stdin.isTTY;
+const org = arg("org") || (interactive ? await ask("Nome da agência: ") : "");
+const name = arg("name") || (interactive ? await ask("Seu nome: ") : "");
+const email = arg("email") || (interactive ? await ask("Seu e-mail (será o login): ") : "");
 if (!org || !name || !email) {
   console.error('Uso: npm run admin:create -- --org "Agência" --name "Seu Nome" --email voce@dominio.com');
   process.exit(1);

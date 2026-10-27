@@ -1,5 +1,14 @@
 import readline from "node:readline";
 
+/** Pergunta no terminal (resposta sem espaços nas pontas; repete se vazia). */
+export async function ask(question: string): Promise<string> {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  let answer = "";
+  while (!answer) answer = (await new Promise<string>((resolve) => rl.question(question, resolve))).trim();
+  rl.close();
+  return answer;
+}
+
 /** Pergunta no terminal sem mostrar o que é digitado. */
 export async function askHidden(question: string): Promise<string> {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout, terminal: true });

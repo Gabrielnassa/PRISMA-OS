@@ -1,0 +1,38 @@
+# Serviços do Codespace: a aplicação (onde o código roda) e o PostgreSQL.
+# As senhas vêm de .devcontainer/.env, gerado com valores aleatórios antes de os
+# contêineres subirem (initializeCommand). Se esse passo não rodar, valem as
+# senhas de desenvolvimento abaixo: o banco não tem porta exposta e só é
+# alcançável de dentro deste Codespace.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: sleep infinity
+    volumes:
+      - ../..:/workspaces:cached
+    environment:
+      DATABASE_URL: postgres://prisma_app_login:${PRISMA_APP_PASSWORD:-prisma_app_dev}@postgres:5432/prisma_os
+      MIGRATION_DATABASE_URL: postgres://prisma_owner:${PRISMA_OWNER_PASSWORD:-prisma_owner_dev}@postgres:5432/prisma_os
+      # Usadas só pelo backup (pg_dump precisa ler todas as linhas, acima do RLS).
+      PGHOST: postgres
+      PRISMA_DB_SUPERUSER_PASSWORD: ${POSTGRES_PASSWORD:-postgres_dev}
+      TZ: America/Sao_Paulo
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_dev}
+      PRISMA_OWNER_PASSWORD: ${PRISMA_OWNER_PASSWORD:-prisma_owner_dev}
+      PRISMA_APP_PASSWORD: ${PRISMA_APP_PASSWORD:-prisma_app_dev}
+      TZ: America/Sao_Paulo
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../docker/init-db.sh:/docker-entrypoint-initdb.d/10-init.sh:ro
+
+volumes:
+  pgdata:

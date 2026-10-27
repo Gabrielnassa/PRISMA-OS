@@ -1,0 +1,26 @@
+{
+  // PRISMA OS no GitHub Codespaces: banco PostgreSQL, site e worker numa
+  // máquina na nuvem do GitHub. A porta 3000 é privada (só a sua conta acessa).
+  "name": "PRISMA OS",
+  "dockerComposeFile": "compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "shutdownAction": "stopCompose",
+  "initializeCommand": "bash .devcontainer/gerar-senhas.sh",
+  "postCreateCommand": "bash .devcontainer/preparar.sh",
+  "postStartCommand": "bash .devcontainer/iniciar.sh",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "PRISMA OS", "onAutoForward": "notify" }
+  },
+  "secrets": {
+    "ANTHROPIC_API_KEY": {
+      "description": "Opcional. Chave da API Anthropic para gerar textos com IA. Sem ela, as peças são criadas pelos templates.",
+      "documentationUrl": "https://platform.claude.com"
+    }
+  },
+  "hostRequirements": { "cpus": 2, "memory": "8gb" },
+  "customizations": {
+    "codespaces": { "openFiles": [".devcontainer/COMO-USAR.md"] }
+  }
+}

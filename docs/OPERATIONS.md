@@ -1,5 +1,9 @@
 # Operação e implantação
 
+## GitHub Codespaces
+
+`.devcontainer/` define o ambiente: contêiner de aplicação (Node 22 + cliente do PostgreSQL 16) e PostgreSQL 16, com senhas aleatórias geradas antes de os contêineres subirem (`gerar-senhas.sh`, em `.devcontainer/.env`, fora do Git). Na criação, `preparar.sh` instala dependências, aplica migrations e faz o build; a cada início, `iniciar.sh` aplica migrations e sobe site e worker em segundo plano (PIDs em `/tmp/prisma-*.pid`, registros em `/tmp/prisma-*.log`). `APP_URL` é o endereço encaminhado da porta 3000 (`https://<codespace>-3000.<domínio>`), declarado em `serverActions.allowedOrigins` porque o proxy do Codespaces reescreve o host. A chave da IA vem do segredo de Codespaces `ANTHROPIC_API_KEY`. Backups (`backup.sh`) usam o mesmo formato da instalação no Mac.
+
 ## Instalação local no Mac (Docker)
 
 Para uso interno num único computador, a pasta `mac/` traz atalhos de dois cliques (iniciar, parar, backup, restaurar, atualizar, chave da IA, redefinir senha) sobre `mac/compose.yml`: PostgreSQL, migrations, web e worker a partir da mesma imagem (`Dockerfile`). As senhas do banco são geradas na primeira execução em `~/.prisma-os/config.env`, a porta fica presa a `127.0.0.1` e os dados ficam nos volumes `prisma-os_pgdata` e `prisma-os_storage`. Guia para o usuário: [mac/LEIA-ME.md](../mac/LEIA-ME.md). O mesmo `Dockerfile` e o mesmo compose servem de ponto de partida para um VPS.
