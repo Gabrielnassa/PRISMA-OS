@@ -16,6 +16,13 @@ const publicHost = (() => {
     return null;
   }
 })();
+// O túnel de portas do Codespaces faz o contrário: põe o endereço público em
+// x-forwarded-host e troca o Origin por localhost:3000. Só vale dentro de um
+// Codespace (a porta é privada e o cookie de sessão é SameSite=Lax).
+const allowedOrigins = [
+  ...(publicHost ? [publicHost] : []),
+  ...(process.env.CODESPACE_NAME ? ["localhost:3000"] : []),
+];
 
 const nextConfig: NextConfig = {
   // Native/heavy server packages must not be bundled.
@@ -23,7 +30,7 @@ const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: "2mb",
-      ...(publicHost ? { allowedOrigins: [publicHost] } : {}),
+      ...(allowedOrigins.length ? { allowedOrigins } : {}),
     },
   },
   async headers() {
