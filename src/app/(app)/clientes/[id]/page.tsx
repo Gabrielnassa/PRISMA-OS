@@ -11,7 +11,7 @@ import { can } from "@/server/authz/permissions";
 import { NotFoundError } from "@/server/errors";
 import { brandCompleteness } from "@/lib/brand";
 import { FORMAT_LABELS } from "@/lib/content/document";
-import { Badge, Card, CardHeader, EmptyState, LinkButton, PageHeader, TabLinks, Table, Td, Th, formatDateTime } from "@/components/ui";
+import { Alert, Badge, Card, CardHeader, EmptyState, LinkButton, PageHeader, TabLinks, Table, Td, Th, formatDateTime, formatUsd } from "@/components/ui";
 import { StatusBadge } from "@/components/status";
 import { MediaUploader } from "@/components/media-uploader";
 import { MediaGrid } from "@/components/media-grid";
@@ -45,15 +45,21 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
   return (
     <>
       <PageHeader
-        eyebrow="Cliente"
+        eyebrow={
+          <Link href="/clientes" className="hover:text-ink-200">
+            Clientes
+          </Link>
+        }
         title={client.name}
         description={client.segment || "Segmento não informado"}
         actions={can(auth.role, "content.create") && client.status !== "archived" ? <LinkButton href={`/criar?cliente=${client.id}`}>Criar conteúdo</LinkButton> : null}
       />
       <TabLinks tabs={TABS.map(([t, label]) => ({ id: t, label, href: `/clientes/${client.id}?aba=${t}` }))} active={tab} />
       {novo === "1" && tab === "marca" ? (
-        <div className="mb-6 rounded-lg border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-sm text-violet-100">
-          Cliente cadastrado. Preencha o perfil da marca: ele é usado em todas as criações deste cliente.
+        <div className="mb-6">
+          <Alert tone="success" title="Cliente cadastrado">
+            Preencha o perfil da marca: ele é usado em todas as criações deste cliente.
+          </Alert>
         </div>
       ) : null}
       {tab === "visao" ? <Overview auth={auth} client={client} completeness={completeness} /> : null}
@@ -72,12 +78,12 @@ async function Overview({ auth, client, completeness }: { auth: Auth; client: Cl
   const costs = can(auth.role, "costs.view") ? await getCostSummary(auth) : null;
   const myCosts = costs?.byClient.find((c) => c.clientId === client.id);
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
+    <div className="grid items-start gap-6 lg:grid-cols-3">
       <Card className="lg:col-span-2">
         <CardHeader title="Perfil da marca" description={`${completeness.percent}% dos campos essenciais preenchidos`} actions={<LinkButton href={`/clientes/${client.id}?aba=marca`} size="sm" variant="secondary">Editar perfil</LinkButton>} />
         <div className="p-5">
-          <div className="h-2 rounded-full bg-ink-800">
-            <div className="h-2 rounded-full prisma-gradient" style={{ width: `${completeness.percent}%` }} />
+          <div className="h-[3px] rounded-full bg-ink-800">
+            <div className={completeness.percent === 100 ? "h-[3px] rounded-full bg-teal-400" : "h-[3px] rounded-full bg-violet-400"} style={{ width: `${completeness.percent}%` }} />
           </div>
           {completeness.missing.length ? (
             <p className="mt-3 text-sm text-ink-300">
@@ -99,7 +105,7 @@ async function Overview({ auth, client, completeness }: { auth: Auth; client: Cl
               <dt className="text-ink-400">Cores</dt>
               <dd className="mt-1 flex gap-1.5">
                 {Object.entries(client.brand.visual.colors).map(([k, v]) => (
-                  <span key={k} className="size-6 rounded ring-1 ring-ink-600" style={{ backgroundColor: v }} title={`${k}: ${v}`} />
+                  <span key={k} className="size-6 rounded-[4px] ring-1 ring-inset ring-white/10" style={{ backgroundColor: v }} title={`${k}: ${v}`} />
                 ))}
                 {!client.brand.visual.configured ? <Badge tone="warning" className="ml-2">Provisórias</Badge> : null}
               </dd>
@@ -109,7 +115,7 @@ async function Overview({ auth, client, completeness }: { auth: Auth; client: Cl
               <dd className="mt-0.5 text-ink-100">{client.brand.voice.forbiddenTerms.join(", ") || "—"}</dd>
             </div>
           </dl>
-          <div className="mt-5 text-xs text-ink-500">Revisão {client.brandRevision} · atualizado em {formatDateTime(client.brandUpdatedAt)}</div>
+          <div className="mt-6 border-t border-ink-800 pt-3 font-mono text-[11.5px] text-ink-400">Revisão {client.brandRevision} · atualizado em {formatDateTime(client.brandUpdatedAt)}</div>
         </div>
       </Card>
       <div className="flex flex-col gap-6">
@@ -123,7 +129,7 @@ async function Overview({ auth, client, completeness }: { auth: Auth; client: Cl
         </Card>
         {can(auth.role, "costs.manage") ? (
           <Card>
-            <CardHeader title="Consumo de IA" description={myCosts ? `${myCosts.runs} execução(ões) no mês · US$ ${myCosts.costUsd.toFixed(4)}` : "Sem execuções no mês"} />
+            <CardHeader title="Consumo de IA" description={myCosts ? `${myCosts.runs} execução(ões) no mês · ${formatUsd(myCosts.costUsd, 4)}` : "Sem execuções no mês"} />
             <BudgetForm clientId={client.id} budget={{ limitUsd: myCosts?.limitUsd ?? null, alertPct: myCosts?.alertPct ?? null, hardStop: myCosts?.hardStop ?? null }} />
           </Card>
         ) : null}
@@ -166,8 +172,8 @@ async function MemoryTab({ auth, clientId }: { auth: Auth; clientId: string }) {
               <li key={m.id} className="flex flex-wrap items-start gap-3 px-5 py-3">
                 <Badge tone={m.kind === "fact" ? "success" : m.kind === "preference" ? "accent" : m.kind === "hypothesis" ? "warning" : "neutral"}>{MEMORY_KIND_LABELS[m.kind]}</Badge>
                 <div className="min-w-0 flex-1">
-                  <p className={m.status === "archived" ? "text-sm text-ink-500 line-through" : "text-sm text-ink-100"}>{m.content}</p>
-                  <p className="mt-0.5 text-xs text-ink-500">
+                  <p className={m.status === "archived" ? "text-sm text-ink-400 line-through" : "text-sm text-ink-100"}>{m.content}</p>
+                  <p className="mt-0.5 text-xs text-ink-400">
                     {m.source === "approval_feedback" ? "Origem: reprovação" : "Registro manual"} · {m.createdByName ?? "—"} · {formatDateTime(m.createdAt)}
                     {m.kind === "suggestion" && m.status === "active" ? " · não entra no contexto da IA até ser registrada como fato ou preferência" : ""}
                   </p>
@@ -229,9 +235,9 @@ async function ContentsTab({ auth, clientId }: { auth: Auth; clientId: string })
         </thead>
         <tbody>
           {items.map((c) => (
-            <tr key={c.id} className="hover:bg-ink-850">
+            <tr key={c.id} className="transition-colors hover:bg-ink-850/50">
               <Td>
-                <Link className="font-medium text-ink-50 hover:text-violet-300" href={`/conteudos/${c.id}`}>
+                <Link className="font-medium text-ink-50 underline-offset-4 hover:underline" href={`/conteudos/${c.id}`}>
                   {c.title}
                 </Link>
               </Td>
@@ -240,7 +246,7 @@ async function ContentsTab({ auth, clientId }: { auth: Auth; clientId: string })
                 <StatusBadge status={c.status} />
               </Td>
               <Td>{c.currentVersion ? `v${c.currentVersion}` : "—"}</Td>
-              <Td>{formatDateTime(c.updatedAt)}</Td>
+              <Td className="whitespace-nowrap font-mono text-[12px] text-ink-400">{formatDateTime(c.updatedAt)}</Td>
             </tr>
           ))}
         </tbody>

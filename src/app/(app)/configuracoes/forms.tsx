@@ -21,7 +21,7 @@ export function OrgSettingsForm({ org, canEdit }: { org: { name: string; globalC
           <Textarea id="o-context" name="globalContext" defaultValue={org.globalContext} maxLength={20000} className="min-h-40" />
         </Field>
         <label className="flex items-start gap-3 text-sm">
-          <input type="checkbox" name="requireDistinctApprover" defaultChecked={org.requireDistinctApprover} className="mt-0.5 accent-violet-500" />
+          <input type="checkbox" name="requireDistinctApprover" defaultChecked={org.requireDistinctApprover} className="mt-0.5 accent-violet-400" />
           <span>
             <span className="font-medium text-ink-100">Exigir aprovador diferente de quem solicitou</span>
             <span className="block text-ink-400">Impede que a mesma pessoa envie e aprove a própria peça.</span>
@@ -38,10 +38,10 @@ export function OrgSettingsForm({ org, canEdit }: { org: { name: string; globalC
   );
 }
 
-export function PasswordForm({ redirectTo }: { redirectTo?: string }) {
+export function PasswordForm({ redirectTo, stacked = false }: { redirectTo?: string; stacked?: boolean }) {
   const [state, action] = useActionState(passwordAction, { status: "idle" });
   return (
-    <ActionForm action={action} state={state} resetOnSuccess className="grid gap-4 p-5 md:grid-cols-3">
+    <ActionForm action={action} state={state} resetOnSuccess className={stacked ? "grid gap-4 p-5" : "grid gap-4 p-5 md:grid-cols-3"}>
       {redirectTo ? <input type="hidden" name="redirectTo" value={redirectTo} /> : null}
       <Field label="Senha atual" htmlFor="pw-current">
         <Input id="pw-current" name="current" type="password" autoComplete="current-password" required />
@@ -52,11 +52,13 @@ export function PasswordForm({ redirectTo }: { redirectTo?: string }) {
       <Field label="Confirmar nova senha" htmlFor="pw-confirm">
         <Input id="pw-confirm" name="confirm" type="password" autoComplete="new-password" required minLength={10} />
       </Field>
-      <div className="md:col-span-3">
+      <div className={stacked ? "" : "md:col-span-3"}>
         <FormMessage state={state} />
       </div>
       <div>
-        <SubmitButton variant="secondary">Alterar senha</SubmitButton>
+        <SubmitButton variant={stacked ? "primary" : "secondary"} className={stacked ? "h-10 w-full" : undefined}>
+          {stacked ? "Salvar e continuar" : "Alterar senha"}
+        </SubmitButton>
       </div>
     </ActionForm>
   );

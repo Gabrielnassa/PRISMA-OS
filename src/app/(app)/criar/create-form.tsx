@@ -188,7 +188,7 @@ export function CreateForm({
                         key={img.id}
                         className={cx(
                           "relative cursor-pointer overflow-hidden rounded-lg border-2 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-violet-400 has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-ink-900",
-                          on ? "border-violet-500" : "border-transparent",
+                          on ? "border-violet-400" : "border-transparent",
                         )}
                       >
                         <input
@@ -201,7 +201,7 @@ export function CreateForm({
                         />
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={`/api/media/${img.id}`} alt={img.altText || img.filename} className="aspect-square w-full bg-ink-850 object-cover" loading="lazy" />
-                        {on ? <span className="absolute right-1 top-1 rounded bg-violet-600 px-1.5 text-[10px] font-semibold text-white">{selected.indexOf(img.id) + 1}</span> : null}
+                        {on ? <span className="absolute right-1 top-1 rounded-[4px] bg-ink-50 px-1.5 font-mono text-[10px] font-medium text-ink-950">{selected.indexOf(img.id) + 1}</span> : null}
                       </label>
                     );
                   })}

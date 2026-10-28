@@ -34,11 +34,11 @@ export default async function UsersPage() {
                   <Badge>{ROLE_LABELS[m.role]}</Badge>
                   {!m.isActive ? <Badge tone="danger">Inativo</Badge> : null}
                 </div>
-                <div className="mt-1 text-[11px] text-ink-500">Último acesso: {formatDateTime(m.lastLoginAt)}</div>
+                <div className="mt-1 text-[11px] text-ink-400">Último acesso: {formatDateTime(m.lastLoginAt)}</div>
                 {m.userId !== auth.userId && (m.role !== "owner" || auth.role === "owner") ? <ResetPasswordForm userId={m.userId} email={m.email} /> : null}
               </div>
               {m.role === "owner" && auth.role !== "owner" ? (
-                <p className="text-xs text-ink-500">Somente proprietários alteram proprietários.</p>
+                <p className="text-xs text-ink-400">Somente proprietários alteram proprietários.</p>
               ) : (
                 <MemberForm member={m} roles={roles} clients={clients.map((c) => ({ id: c.id, name: c.name }))} isSelf={m.userId === auth.userId} />
               )}
@@ -53,7 +53,7 @@ export default async function UsersPage() {
             <li key={r} className="px-5 py-3 text-sm">
               <div className="font-medium text-ink-100">{ROLE_LABELS[r]}</div>
               <div className="text-ink-400">{ROLE_DESCRIPTIONS[r]}</div>
-              <div className="mt-1 font-mono text-[11px] text-ink-500">{permissionsFor(r).join(" · ")}</div>
+              <div className="mt-1 font-mono text-[11px] text-ink-400">{permissionsFor(r).join(" · ")}</div>
             </li>
           ))}
         </ul>

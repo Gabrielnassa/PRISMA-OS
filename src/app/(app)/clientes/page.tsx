@@ -51,19 +51,19 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
             </thead>
             <tbody>
               {clients.map((c) => (
-                <tr key={c.id} className="hover:bg-ink-850">
+                <tr key={c.id} className="transition-colors hover:bg-ink-850/50">
                   <Td>
-                    <Link href={`/clientes/${c.id}`} className="font-medium text-ink-50 hover:text-violet-300">
+                    <Link href={`/clientes/${c.id}`} className="font-medium text-ink-50 underline-offset-4 hover:underline">
                       {c.name}
                     </Link>
                   </Td>
-                  <Td>{c.segment || <span className="text-ink-500">—</span>}</Td>
+                  <Td>{c.segment || <span className="text-ink-400">—</span>}</Td>
                   <Td>
                     <Badge tone={STATUS[c.status].tone}>{STATUS[c.status].label}</Badge>
                   </Td>
                   <Td className="text-right">{c.contentCount}</Td>
                   <Td className="text-right">{c.pendingApprovals}</Td>
-                  <Td>{formatDateTime(c.createdAt)}</Td>
+                  <Td className="whitespace-nowrap font-mono text-[12px] text-ink-400">{formatDateTime(c.createdAt)}</Td>
                 </tr>
               ))}
             </tbody>

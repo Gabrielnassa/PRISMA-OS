@@ -1,6 +1,14 @@
 @import "tailwindcss";
 
-/* Tokens do PRISMA OS: base grafite, acentos violeta e verde-água. */
+/*
+ * Sistema visual do PRISMA OS.
+ * Base grafite (ink), violeta como cor de marca e de interação, verde-água
+ * para estados positivos e dados. Sem degradês nem brilhos: hierarquia por
+ * tipografia, espaço e linhas finas.
+ *
+ * Tipografia: Schibsted Grotesk (interface), Newsreader (títulos e números
+ * de destaque) e IBM Plex Mono (metadados: datas, versões, custos, códigos).
+ */
 @theme {
   --color-ink-950: #0b0c0f;
   --color-ink-900: #101217;
@@ -27,46 +35,108 @@
   --color-danger: #f87171;
   --color-info: #60a5fa;
 
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Newsreader", ui-serif, Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 
-  --radius-card: 14px;
+  --radius-card: 10px;
 }
 
-:root {
-  color-scheme: dark;
+/* Estilos de base em camada própria: utilitários do Tailwind podem sobrescrever. */
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body {
+    background: var(--color-ink-950);
+    color: var(--color-ink-100);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Números alinhados quando a coluna pede (a vírgula tabular da fonte é larga; use com moderação). */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--color-violet-500) 38%, transparent);
+    color: var(--color-ink-50);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-violet-400);
+    outline-offset: 2px;
+  }
+
+  /* O Chrome usa números tabulares nos marcadores de lista; nesta fonte o ponto fica largo. */
+  ::marker {
+    font-variant-numeric: normal;
+  }
+
+  /* Barras de rolagem discretas (Chromium e Firefox). */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-ink-600) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-ink-700);
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-ink-600);
+  }
+
+  input[type="range"] {
+    accent-color: var(--color-violet-400);
+  }
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: var(--color-violet-500);
+  }
+
+  /* Seletor de arquivo com a mesma linguagem dos botões secundários. */
+  input[type="file"]::file-selector-button {
+    margin-right: 0.75rem;
+    border: 1px solid var(--color-ink-600);
+    border-radius: 6px;
+    background: var(--color-ink-800);
+    color: var(--color-ink-100);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 0.3rem 0.7rem;
+    cursor: pointer;
+  }
+  input[type="file"]::file-selector-button:hover {
+    background: var(--color-ink-700);
+  }
 }
 
-html,
-body {
-  background: var(--color-ink-950);
-  color: var(--color-ink-100);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
+/* Entrada de página: um único movimento curto e discreto. */
+@keyframes prisma-rise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
-
-::selection {
-  background: color-mix(in srgb, var(--color-violet-500) 45%, transparent);
-}
-
-:focus-visible {
-  outline: 2px solid var(--color-violet-400);
-  outline-offset: 2px;
-}
-
-.prisma-gradient {
-  background-image: linear-gradient(120deg, var(--color-violet-500), var(--color-teal-400));
-}
-
-.prisma-gradient-text {
-  background-image: linear-gradient(120deg, var(--color-violet-400), var(--color-teal-300));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-input[type="range"] {
-  accent-color: var(--color-violet-500);
+.page-enter {
+  animation: prisma-rise 260ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {

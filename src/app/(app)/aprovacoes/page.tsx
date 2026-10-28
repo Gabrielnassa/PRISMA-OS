@@ -29,7 +29,7 @@ export default async function ApprovalsPage() {
                   <img src={`/api/contents/${a.contentId}/versions/${a.versionId}/slides/0`} alt={`Capa de ${a.title}`} className="mx-auto max-h-72 w-auto" loading="lazy" />
                 </Link>
                 <div className="flex flex-1 flex-col gap-2 p-4">
-                  <Link href={`/conteudos/${a.contentId}`} className="font-medium text-ink-50 hover:text-violet-300">
+                  <Link href={`/conteudos/${a.contentId}`} className="font-medium text-ink-50 underline-offset-4 hover:underline">
                     {a.title}
                   </Link>
                   <div className="flex flex-wrap gap-2 text-xs">

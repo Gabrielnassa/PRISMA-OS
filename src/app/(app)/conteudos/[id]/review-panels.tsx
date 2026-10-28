@@ -96,7 +96,7 @@ export function ApprovalPanel({
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge tone={APPROVAL_STATUS[a.status].tone}>{APPROVAL_STATUS[a.status].label}</Badge>
                   <span className="text-ink-200">Versão {a.versionNumber}</span>
-                  <span className="text-xs text-ink-500">{formatDateTime(a.decidedAt ?? a.requestedAt)}</span>
+                  <span className="text-xs text-ink-400">{formatDateTime(a.decidedAt ?? a.requestedAt)}</span>
                 </div>
                 {a.decidedByName ? (
                   <p className="mt-1 text-xs text-ink-400">
@@ -155,7 +155,7 @@ export function CommentsPanel({ contentId, comments, canComment }: { contentId: 
 export function RetryPanel({ contentId, error, canRetry }: { contentId: string; error: string | null; canRetry: boolean }) {
   const [state, action] = useActionState(retryGenerationAction, { status: "idle" });
   return (
-    <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-5">
+    <div className="rounded-[var(--radius-card)] border border-red-400/25 bg-red-400/[0.05] p-5">
       <div className="text-sm font-semibold text-red-100">A geração falhou</div>
       <p className="mt-1 text-sm text-red-100/80">{error ?? "Erro não informado."}</p>
       {canRetry ? (

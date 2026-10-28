@@ -43,7 +43,7 @@ export function BudgetForm({ clientId, budget }: { clientId: string; budget: { l
         <Input id="b-alert" name="alertThresholdPct" type="number" min={1} max={100} defaultValue={budget.alertPct ?? 80} />
       </Field>
       <label className="flex items-center gap-2 text-sm text-ink-200">
-        <input type="checkbox" name="hardStop" defaultChecked={budget.hardStop ?? true} className="accent-violet-500" />
+        <input type="checkbox" name="hardStop" defaultChecked={budget.hardStop ?? true} className="accent-violet-400" />
         Interromper novas gerações ao atingir o teto
       </label>
       <FormMessage state={state} />

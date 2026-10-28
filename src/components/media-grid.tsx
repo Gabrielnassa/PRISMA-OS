@@ -17,13 +17,13 @@ export function MediaGrid({
   return (
     <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
       {items.map((m) => (
-        <li key={m.id} className="group overflow-hidden rounded-xl border border-ink-700 bg-ink-900">
+        <li key={m.id} className="group overflow-hidden rounded-[var(--radius-card)] border border-ink-800 bg-ink-900">
           <a href={`/api/media/${m.id}`} target="_blank" rel="noreferrer" className="block aspect-square bg-ink-850">
             {m.mimeType.startsWith("image/") ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={`/api/media/${m.id}`} alt={m.altText || m.filename} loading="lazy" className="h-full w-full object-contain" />
             ) : (
-              <div className="flex h-full items-center justify-center text-xs uppercase text-ink-400">{m.mimeType.split("/")[1]}</div>
+              <div className="flex h-full items-center justify-center font-mono text-xs text-ink-400">{m.mimeType.split("/")[1]}</div>
             )}
           </a>
           <div className="space-y-1 p-2.5">
@@ -34,7 +34,7 @@ export function MediaGrid({
               <Badge tone={m.kind === "logo" ? "accent" : "neutral"}>{MEDIA_KIND_LABELS[m.kind]}</Badge>
               {showClient ? <span className="truncate text-[11px] text-ink-400">{m.clientName}</span> : null}
             </div>
-            <div className="text-[11px] text-ink-500">
+            <div className="text-[11px] text-ink-400">
               {m.width && m.height ? `${m.width}×${m.height} · ` : ""}
               {formatBytes(m.sizeBytes)} · {formatDateTime(m.createdAt)}
             </div>

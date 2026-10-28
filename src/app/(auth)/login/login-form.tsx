@@ -8,7 +8,7 @@ import { loginAction } from "./actions";
 export function LoginForm({ next }: { next: string }) {
   const [state, action] = useActionState(loginAction, { status: "idle" });
   return (
-    <ActionForm action={action} state={state} className="flex flex-col gap-4">
+    <ActionForm action={action} state={state} className="flex flex-col gap-5">
       <input type="hidden" name="next" value={next} />
       <Field label="E-mail" htmlFor="email">
         <Input id="email" name="email" type="email" autoComplete="username" required autoFocus />
@@ -17,7 +17,9 @@ export function LoginForm({ next }: { next: string }) {
         <Input id="password" name="password" type="password" autoComplete="current-password" required />
       </Field>
       <FormMessage state={state} />
-      <SubmitButton pendingText="Entrando...">Entrar</SubmitButton>
+      <SubmitButton pendingText="Entrando..." className="mt-1 h-10 w-full">
+        Entrar
+      </SubmitButton>
     </ActionForm>
   );
 }

@@ -7,12 +7,26 @@ import { listClients } from "@/server/services/clients";
 import { providerStatus } from "@/server/ai/gateway";
 import { can } from "@/server/authz/permissions";
 import { CONTENT_STATUSES, STATUS_LABELS, type ContentStatus } from "@/lib/content/status";
-import { Alert, Card, CardHeader, EmptyState, LinkButton, PageHeader, Select, Stat, Table, Td, Th, cx, formatDateTime, formatUsd } from "@/components/ui";
+import { Alert, Card, CardHeader, EmptyState, LinkButton, PageHeader, Select, Stat, StatGroup, Table, Td, Th, buttonClass, cx, formatDateTime, formatUsd } from "@/components/ui";
 import { StatusBadge } from "@/components/status";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
 const PIPELINE: ContentStatus[] = ["generating", "in_review", "awaiting_approval", "approved", "rejected", "failed"];
+const PIPELINE_BAR: Partial<Record<ContentStatus, string>> = {
+  generating: "bg-sky-400",
+  in_review: "bg-violet-400",
+  awaiting_approval: "bg-amber-400",
+  approved: "bg-teal-400",
+  rejected: "bg-red-400",
+  failed: "bg-red-400",
+};
+
+/** Ex.: "Quarta-feira, 28 de outubro" (só a primeira letra maiúscula). */
+function today(): string {
+  const t = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long", timeZone: "America/Sao_Paulo" }).format(new Date());
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
 
 const oneOf = <T extends string>(list: readonly T[], v: string | undefined): T | undefined => (list as readonly string[]).includes(v ?? "") ? (v as T) : undefined;
 
@@ -31,14 +45,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   return (
     <>
       <PageHeader
-        eyebrow="Centro de operações"
+        eyebrow={today()}
         title={`Olá, ${auth.userName.split(" ")[0]}`}
         description="Indicadores calculados a partir dos registros reais da sua organização."
         actions={can(auth.role, "content.create") ? <LinkButton href="/criar">Criar conteúdo</LinkButton> : null}
       />
 
       {clients.length > 0 ? (
-        <form className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_170px_185px_190px_auto]" action="/" aria-label="Filtros do dashboard">
+        <form className="mb-8 grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_160px_170px_190px_auto]" action="/" aria-label="Filtros do dashboard">
           <Select name="cliente" defaultValue={clientId ?? ""} aria-label="Cliente">
             <option value="">Todos os clientes</option>
             {clients.map((c) => (
@@ -70,20 +84,20 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               </option>
             ))}
           </Select>
-          <button type="submit" className="h-10 rounded-lg border border-ink-600 px-4 text-sm text-ink-200 hover:bg-ink-800">
+          <button type="submit" className={buttonClass("secondary")}>
             Filtrar
           </button>
         </form>
       ) : null}
 
       {!provider.configured ? (
-        <div className="mb-6">
+        <div className="mb-8">
           <Alert tone="warning" title="IA não configurada">
             {provider.detail} Ainda é possível criar peças manualmente a partir dos templates. <Link href="/integracoes" className="underline">Ver integrações</Link>
           </Alert>
         </div>
       ) : provider.isDemo ? (
-        <div className="mb-6">
+        <div className="mb-8">
           <Alert tone="warning" title="Modo demonstração ativo">
             As gerações usam o provedor de demonstração (sem IA). Os conteúdos gerados assim ficam identificados como “Demonstração”.
           </Alert>
@@ -98,22 +112,22 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+          <StatGroup className="md:grid-cols-3 xl:grid-cols-6">
             <Stat label="Clientes ativos" value={data.clients.active} hint={`${data.clients.total} no total`} />
-            <Stat label="Produzidos" value={data.producedInPeriod} tone="violet" hint={DASHBOARD_PERIOD_LABELS[period]} />
-            <Stat label="Aprovados" value={data.approvedInPeriod} tone="teal" hint={DASHBOARD_PERIOD_LABELS[period]} />
+            <Stat label="Produzidos" value={data.producedInPeriod} hint={DASHBOARD_PERIOD_LABELS[period]} />
+            <Stat label="Aprovados" value={data.approvedInPeriod} hint={DASHBOARD_PERIOD_LABELS[period]} />
             <Stat label="Aguardando aprovação" value={data.pendingApprovals} tone={data.pendingApprovals > 0 ? "warning" : undefined} />
             <Stat label="Falhas de geração" value={data.failedJobs} tone={data.failedJobs > 0 ? "danger" : undefined} hint={`${DASHBOARD_PERIOD_LABELS[period]} · ${data.runningJobs} em andamento`} />
             <Stat
-              label={`Consumo de IA (${periodLabel})`}
+              label="Consumo de IA"
               value={formatUsd(data.ai.costUsd)}
               hint={
                 data.ai.runs === 0
-                  ? "Nenhuma execução registrada"
-                  : `${data.ai.runs} execução(ões)${data.ai.unpriced ? ` · ${data.ai.unpriced} sem tarifa` : ""}${data.ai.demoRuns ? ` · ${data.ai.demoRuns} demo` : ""}`
+                  ? `${DASHBOARD_PERIOD_LABELS[period]} · nenhuma execução`
+                  : `${DASHBOARD_PERIOD_LABELS[period]} · ${data.ai.runs} execução(ões)${data.ai.unpriced ? ` · ${data.ai.unpriced} sem tarifa` : ""}${data.ai.demoRuns ? ` · ${data.ai.demoRuns} demo` : ""}`
               }
             />
-          </div>
+          </StatGroup>
 
           <div className="mt-6 grid gap-6 xl:grid-cols-3">
             <Card className="xl:col-span-2">
@@ -123,14 +137,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                   <EmptyState title="Sem conteúdos ainda" description="Os conteúdos criados aparecerão aqui." action={can(auth.role, "content.create") ? <LinkButton href="/criar" size="sm">Criar o primeiro</LinkButton> : undefined} />
                 </div>
               ) : (
-                <ul className="divide-y divide-ink-800">
+                <ul className="divide-y divide-ink-800/70">
                   {data.recent.map((r) => (
                     <li key={r.id}>
-                      <Link href={`/conteudos/${r.id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-ink-850">
+                      <Link href={`/conteudos/${r.id}`} className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-ink-850/60">
                         <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-medium text-ink-100">{r.title}</div>
-                          <div className="text-xs text-ink-400">
-                            {r.clientName} · {formatDateTime(r.updatedAt)}
+                          <div className="truncate text-[14px] font-medium text-ink-100">{r.title}</div>
+                          <div className="mt-0.5 flex gap-2 text-[12.5px] text-ink-400">
+                            <span className="truncate">{r.clientName}</span>
+                            <span className="shrink-0 font-mono text-[11.5px] text-ink-400">{formatDateTime(r.updatedAt)}</span>
                           </div>
                         </div>
                         <StatusBadge status={r.status} />
@@ -143,28 +158,28 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
             <Card>
               <CardHeader title="Fluxo de produção" description="Conteúdos por estado" />
-              <ul className="space-y-3 p-5">
+              <ul className="space-y-4 p-5">
                 {PIPELINE.map((s) => {
                   const n = data.contentByStatus[s] ?? 0;
                   const total = Math.max(1, ...PIPELINE.map((p) => data.contentByStatus[p] ?? 0));
                   return (
                     <li key={s}>
-                      <Link href={`/conteudos?status=${s}${clientId ? `&cliente=${clientId}` : ""}`} className={cx("block", status && status !== s && "opacity-50")}>
-                        <div className="mb-1 flex justify-between text-sm">
-                          <span className="text-ink-300">{STATUS_LABELS[s]}</span>
-                          <span className="font-semibold text-ink-100">{n}</span>
+                      <Link href={`/conteudos?status=${s}${clientId ? `&cliente=${clientId}` : ""}`} className={cx("group block", status && status !== s && "opacity-50")}>
+                        <div className="mb-1.5 flex items-baseline justify-between text-[13px]">
+                          <span className="text-ink-300 group-hover:text-ink-100">{STATUS_LABELS[s]}</span>
+                          <span className="font-mono text-[12px] text-ink-200">{n}</span>
                         </div>
-                        <div className="h-1.5 rounded-full bg-ink-800">
-                          <div className="h-1.5 rounded-full prisma-gradient" style={{ width: `${(n / total) * 100}%` }} />
+                        <div className="h-[3px] rounded-full bg-ink-800">
+                          <div className={cx("h-[3px] rounded-full", n > 0 ? PIPELINE_BAR[s] : "")} style={{ width: `${(n / total) * 100}%` }} />
                         </div>
                       </Link>
                     </li>
                   );
                 })}
               </ul>
-              <div className="border-t border-ink-700 px-5 py-3 text-xs text-ink-400">
+              <div className="border-t border-ink-800 px-5 py-3.5 text-[12.5px] text-ink-400">
                 Tempo médio do pedido à aprovação ({periodLabel}):{" "}
-                <span className="font-semibold text-ink-200">
+                <span className="font-medium text-ink-100">
                   {data.avgHoursToApproval === null
                     ? "sem dados"
                     : data.avgHoursToApproval < 48
@@ -191,20 +206,20 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 {data.perClient.map((c) => (
                   <tr key={c.clientId}>
                     <Td>
-                      <Link href={`/clientes/${c.clientId}`} className="font-medium text-ink-100 hover:text-violet-300">
+                      <Link href={`/clientes/${c.clientId}`} className="font-medium text-ink-100 underline-offset-4 hover:underline">
                         {c.name}
                       </Link>
                     </Td>
                     <Td className="text-right">{c.contents}</Td>
                     <Td className="text-right">{c.pending}</Td>
                     <Td className="text-right">{c.approved}</Td>
-                    <Td className="text-right">{formatUsd(c.costUsd)}</Td>
+                    <Td className="text-right font-mono text-[12.5px]">{formatUsd(c.costUsd)}</Td>
                   </tr>
                 ))}
               </tbody>
             </Table>
           </Card>
-          <p className="mt-4 text-xs text-ink-500">
+          <p className="mt-5 max-w-3xl text-[12.5px] leading-relaxed text-ink-400">
             Publicações, campanhas e métricas de redes sociais aparecerão aqui quando as integrações oficiais forem conectadas (fases 4 e 6). Nenhum número é estimado.
           </p>
         </>

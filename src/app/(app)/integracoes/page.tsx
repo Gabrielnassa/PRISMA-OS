@@ -38,7 +38,7 @@ export default async function IntegrationsPage() {
             {!provider.configured ? (
               <ol className="list-decimal space-y-1 pl-5 text-ink-300">
                 <li>Crie uma chave em console.anthropic.com.</li>
-                <li>Defina <code className="text-violet-300">ANTHROPIC_API_KEY</code> no ambiente do servidor e do worker (nunca no código).</li>
+                <li>Defina <code className="rounded-[4px] bg-ink-800 px-1 font-mono text-[12.5px] text-ink-100">ANTHROPIC_API_KEY</code> no ambiente do servidor e do worker (nunca no código).</li>
                 <li>Reinicie a aplicação e o worker e use “Testar conexão”.</li>
               </ol>
             ) : null}

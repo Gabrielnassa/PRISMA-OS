@@ -25,6 +25,8 @@ Objetivo da etapa (seções 25, 26 e 30): fundação do PRISMA OS e o ciclo comp
 
 Módulos das fases 3–6 (estratégias, calendário, automações, relatórios, sites, campanhas) aparecem no menu como "próximas fases", desabilitados — nada é simulado.
 
+**Interface (redesenho de 28/10/2026).** Visual sóbrio e editorial sobre a mesma paleta (grafite, violeta e verde-água), sem degradês, brilhos ou rótulos em caixa alta: Newsreader nos títulos e números de destaque, Schibsted Grotesk na interface e IBM Plex Mono em metadados (datas, versões, custos, códigos), todas servidas pelo próprio sistema. Botão principal claro; violeta reservado a navegação ativa, foco, seleção e links; verde-água para estados positivos. Nova marca (prisma de duas faces), tela de acesso com painel da marca, barra lateral com agência, estado da IA e usuário, indicadores em faixa única com divisórias finas, estados com ponto colorido, tabelas e alertas mais discretos. Textos informativos com contraste mínimo AA (4,5:1); só itens desativados ficam abaixo disso. Corrigidos no caminho: rolagem horizontal no celular na página da peça (já existia) e na de custos, status de execuções em inglês ("succeeded") nas telas de custos e da peça, e a dica de primeiro acesso da tela de login, que mostrava um comando técnico.
+
 ## 2. Arquivos e módulos
 
 | Caminho | Conteúdo |
@@ -51,14 +53,14 @@ Módulos das fases 3–6 (estratégias, calendário, automações, relatórios, 
 
 ## 4. Testes executados e resultados reais
 
-Executados em 27/10/2026 neste ambiente (Node 22, PostgreSQL 16 local, Chromium do Playwright):
+Executados em 28/10/2026 neste ambiente (Node 22, PostgreSQL 16 local, Chromium do Playwright):
 
 | Comando | Resultado |
 | --- | --- |
 | `npm run typecheck` | sem erros |
 | `npm run lint` | sem erros nem avisos |
 | `npm test` (Vitest: unitários + integração com PostgreSQL real) | **13 arquivos, 140 testes aprovados**, 0 falhas |
-| `npm run test:e2e` (Playwright, `next dev` + worker) | **3/3 aprovados** (ciclo completo, skills da agência e celular) |
+| `npm run test:e2e` (Playwright, `next dev` + worker) | **3/3 aprovados** (ciclo completo, skills da agência e celular, inclusive a página da peça sem rolagem horizontal) |
 | `npm run build` + `npm run test:e2e:prod` (build de produção) | build concluído; **3/3 aprovados** (sem chave, o botão de executar skill fica desativado com o aviso) |
 
 Destaques da cobertura: isolamento entre organizações e clientes (RLS efetivo, inserção cruzada recusada pelo banco); ciclo completo com versões e aprovação vinculada; invalidação da aprovação quando a peça muda; bloqueio por termo proibido; fila (backoff, recuperação, reserva perdida, reprocessamento com histórico); idempotência da IA (reaproveitamento, chamada simultânea não paga duas vezes); custo por modelo no fallback e estimativa sem tarifa no teto; contexto correto enviado à IA sem dados de outro cliente; login (limite em paralelo, senha temporária vencida, convite de e-mail existente, desativação por organização); redirecionamento seguro; provedor Anthropic contra API simulada (esquema com `enum`, esforço, recusa, erros recuperáveis); todos os 18 templates em todas as proporções sem texto cortado e com textos no limite efetivo; dashboard com filtros e isolamento; skills da agência (versões a cada alteração, edição simultânea recusada, nome repetido, permissões por papel, skill exclusiva invisível para quem não acessa o cliente e recusada em outro cliente, outra organização sem acesso, versões imutáveis no banco, contexto do cliente e regras invioláveis enviados à IA, custo com o nome da skill, clique duplo sem cobrança dupla, histórico filtrado pelo acesso, leitura e exportação de SKILL.md); origens aceitas no túnel do Codespaces só dentro de um Codespace. O E2E também confirma que um erro devolvido pelo servidor não apaga o formulário, que descartar alterações mantém o editor utilizável e que sair pelo menu com alterações pendentes pede confirmação.

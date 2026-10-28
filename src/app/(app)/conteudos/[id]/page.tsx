@@ -13,7 +13,7 @@ import { TEMPLATES, getTemplate } from "@/server/render/templates";
 import { diffDocuments } from "@/server/content/compose";
 import { FAMILY_LABELS } from "@/lib/brand";
 import { ASPECTS, CHANNEL_LABELS, FORMAT_LABELS, OBJECTIVE_LABELS, type DocumentStyle } from "@/lib/content/document";
-import { Alert, Badge, Card, CardHeader, LinkButton, PageHeader, buttonClass, formatDateTime, formatUsd } from "@/components/ui";
+import { Alert, Badge, Card, CardHeader, Dot, LinkButton, PageHeader, buttonClass, formatDateTime, formatUsd } from "@/components/ui";
 import { SourceBadge, StatusBadge } from "@/components/status";
 import { Icon } from "@/components/icons";
 import { ContentEditor } from "./editor";
@@ -152,7 +152,7 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
                 ))}
               </div>
               <div className="border-t border-ink-700 p-5 text-sm">
-                <div className="text-xs font-semibold uppercase tracking-wider text-ink-400">Legenda</div>
+                <div className="text-[12px] font-medium text-ink-400">Legenda</div>
                 <p className="mt-1 whitespace-pre-wrap text-ink-100">{current.document.caption || "—"}</p>
                 <p className="mt-2 text-violet-300">{current.document.hashtags.join(" ")}</p>
               </div>
@@ -163,7 +163,7 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
       ) : null}
 
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
-        <div className="flex flex-col gap-6">
+        <div className="flex min-w-0 flex-col gap-6">
           {current ? (
             <ApprovalPanel
               contentId={id}
@@ -179,7 +179,7 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
           <CommentsPanel contentId={id} comments={detail.comments} canComment={can(auth.role, "content.comment")} />
           {current && can(auth.role, "content.edit") ? <AiReviewPanel contentId={id} enabled={provider.configured} /> : null}
         </div>
-        <div className="flex flex-col gap-6">
+        <div className="flex min-w-0 flex-col gap-6">
           <Card>
             <CardHeader title="Versões" description="Versões são imutáveis. Restaurar cria uma nova versão igual à escolhida." />
             <ul className="divide-y divide-ink-800">
@@ -250,7 +250,7 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
                 <li key={h.id} className="px-5 py-2.5 text-sm">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-ink-100">{ACTION_LABELS[h.action] ?? h.action}</span>
-                    <span className="text-xs text-ink-500">
+                    <span className="text-xs text-ink-400">
                       {h.actorName ?? (h.actorType === "worker" ? "worker" : "sistema")} · {formatDateTime(h.createdAt)}
                     </span>
                   </div>
@@ -268,11 +268,13 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
               <CardHeader title="Execuções de IA" />
               <ul className="divide-y divide-ink-800 text-sm">
                 {detail.aiRuns.map((r) => (
-                  <li key={r.id} className="flex flex-wrap items-center gap-2 px-5 py-2.5">
-                    <span className="text-ink-100">{r.skillId}</span>
-                    <Badge tone={r.status === "succeeded" ? "success" : "danger"}>{r.status}</Badge>
+                  <li key={r.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-2.5">
+                    <span className="font-mono text-[12.5px] text-ink-100">{r.skillId}</span>
+                    <Dot tone={r.status === "succeeded" ? "success" : r.status === "running" ? "info" : r.status === "refused" ? "warning" : "danger"}>
+                      {r.status === "succeeded" ? "Concluída" : r.status === "running" ? "Em andamento" : r.status === "refused" ? "Recusada pela IA" : "Falhou"}
+                    </Dot>
                     {r.isDemo ? <Badge tone="warning">demo</Badge> : null}
-                    <span className="text-xs text-ink-400">
+                    <span className="basis-full font-mono text-[11.5px] text-ink-400">
                       {r.model} · {r.isDemo ? "sem custo" : r.costUsd === null ? "tarifa não cadastrada" : formatUsd(r.costUsd, 4)} · {formatDateTime(r.createdAt)}
                     </span>
                   </li>

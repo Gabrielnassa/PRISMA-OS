@@ -104,7 +104,7 @@ export function BrandForm({ clientId, brand, revision, logos, canEdit }: { clien
                         aria-label={`${label} (seletor)`}
                         value={colors[key]}
                         onChange={(e) => setColors((c) => ({ ...c, [key]: e.target.value }))}
-                        className="h-10 w-10 shrink-0 cursor-pointer rounded-lg border border-ink-600 bg-transparent"
+                        className="h-9 w-9 shrink-0 cursor-pointer rounded-md border border-ink-700 bg-transparent"
                       />
                       <Input
                         id={`c-${key}`}
@@ -150,8 +150,8 @@ export function BrandForm({ clientId, brand, revision, logos, canEdit }: { clien
                 <legend className="mb-2 text-sm font-medium text-ink-200">Famílias de layout preferidas</legend>
                 <div className="flex flex-wrap gap-2">
                   {TEMPLATE_FAMILIES.map((f) => (
-                    <label key={f} className="flex cursor-pointer items-center gap-2 rounded-lg border border-ink-600 px-3 py-1.5 text-sm has-[:checked]:border-violet-500 has-[:checked]:bg-violet-500/10">
-                      <input type="checkbox" name="visual.preferredFamilies" value={f} defaultChecked={brand.visual.preferredFamilies.includes(f)} className="accent-violet-500" />
+                    <label key={f} className="flex cursor-pointer items-center gap-2 rounded-md border border-ink-700 px-3 py-1.5 text-[13px] has-[:checked]:border-violet-400/70 has-[:checked]:bg-violet-400/[0.06] has-[:checked]:bg-violet-500/10">
+                      <input type="checkbox" name="visual.preferredFamilies" value={f} defaultChecked={brand.visual.preferredFamilies.includes(f)} className="accent-violet-400" />
                       {FAMILY_LABELS[f]}
                     </label>
                   ))}
@@ -175,8 +175,8 @@ export function BrandForm({ clientId, brand, revision, logos, canEdit }: { clien
               <Field label="Elementos proibidos ou restritos" htmlFor="v-restricted">
                 <Textarea id="v-restricted" name="visual.restrictedElements" defaultValue={brand.visual.restrictedElements} maxLength={2000} />
               </Field>
-              <label className="flex items-start gap-3 rounded-lg border border-ink-600 p-3 text-sm md:col-span-2">
-                <input type="checkbox" name="visual.configured" defaultChecked={brand.visual.configured} className="mt-0.5 accent-violet-500" />
+              <label className="flex items-start gap-3 rounded-md border border-ink-700 p-3 text-[13.5px] md:col-span-2">
+                <input type="checkbox" name="visual.configured" defaultChecked={brand.visual.configured} className="mt-0.5 accent-violet-400" />
                 <span>
                   <span className="font-medium text-ink-100">Identidade visual definida</span>
                   <span className="block text-ink-400">Marque quando cores e fontes estiverem confirmadas com o cliente. Antes disso, as peças são sinalizadas como provisórias.</span>
@@ -184,8 +184,8 @@ export function BrandForm({ clientId, brand, revision, logos, canEdit }: { clien
               </label>
             </div>
 
-            <div className="rounded-xl border border-ink-700 p-4" aria-label="Pré-visualização da identidade">
-              <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-400">Pré-visualização</div>
+            <div className="rounded-[var(--radius-card)] border border-ink-800 p-4" aria-label="Pré-visualização da identidade">
+              <div className="mb-3 text-[12px] font-medium text-ink-400">Pré-visualização</div>
               <div className="overflow-hidden rounded-lg" style={{ backgroundColor: colors.background }}>
                 <div className="h-2" style={{ backgroundColor: colors.accent }} />
                 <div className="p-5">
@@ -213,7 +213,7 @@ export function BrandForm({ clientId, brand, revision, logos, canEdit }: { clien
               <p className={cx("mt-3 text-xs", textContrast >= 4.5 ? "text-emerald-300" : "text-amber-300")}>
                 Contraste texto/fundo: {textContrast.toFixed(1)}:1 {textContrast >= 4.5 ? "(adequado)" : "(abaixo de 4,5:1; o motor ajusta automaticamente)"}
               </p>
-              <p className="mt-2 text-xs text-ink-500">A pré-visualização usa fontes do navegador; as peças finais usam as fontes empacotadas.</p>
+              <p className="mt-2 text-xs text-ink-400">A pré-visualização usa fontes do navegador; as peças finais usam as fontes empacotadas.</p>
             </div>
           </div>
         </Card>
@@ -256,7 +256,7 @@ export function BrandForm({ clientId, brand, revision, logos, canEdit }: { clien
       </fieldset>
 
       {canEdit ? (
-        <div className="sticky bottom-0 z-10 -mx-1 flex flex-wrap items-center gap-3 border-t border-ink-700 bg-ink-950/90 px-1 py-3 backdrop-blur">
+        <div className="sticky bottom-0 z-10 -mx-1 flex flex-wrap items-center gap-3 border-t border-ink-800 bg-ink-950/90 px-1 py-3 backdrop-blur">
           <SubmitButton pendingText="Salvando...">Salvar perfil da marca</SubmitButton>
           <div className="min-w-0 flex-1">
             <FormMessage state={state} />

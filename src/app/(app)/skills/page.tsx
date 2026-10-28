@@ -5,7 +5,7 @@ import { PLANNED_SKILLS, SKILLS } from "@/server/skills/registry";
 import { getCostSummary } from "@/server/services/costs";
 import { listCustomSkills } from "@/server/services/custom-skills";
 import { can } from "@/server/authz/permissions";
-import { Badge, Card, CardHeader, EmptyState, LinkButton, PageHeader, formatUsd } from "@/components/ui";
+import { Badge, Card, CardHeader, EmptyState, LinkButton, PageHeader, SectionTitle, formatUsd } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Agentes e skills" };
 
@@ -24,13 +24,16 @@ export default async function SkillsPage({ searchParams }: { searchParams: Promi
         actions={canManage ? <LinkButton href="/skills/nova">Nova skill</LinkButton> : null}
       />
 
-      <section className="mb-8">
-        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-lg font-semibold text-ink-50">Skills da agência</h2>
-          <Link href={showArchived ? "/skills" : "/skills?arquivadas=1"} className="text-xs text-ink-400 hover:text-ink-100 hover:underline">
-            {showArchived ? "Ocultar arquivadas" : "Mostrar arquivadas"}
-          </Link>
-        </div>
+      <section className="mb-12">
+        <SectionTitle
+          aside={
+            <Link href={showArchived ? "/skills" : "/skills?arquivadas=1"} className="hover:text-ink-100">
+              {showArchived ? "Ocultar arquivadas" : "Mostrar arquivadas"}
+            </Link>
+          }
+        >
+          Skills da agência
+        </SectionTitle>
         {custom.length === 0 ? (
           <EmptyState
             title="Nenhuma skill da agência ainda"
@@ -41,7 +44,7 @@ export default async function SkillsPage({ searchParams }: { searchParams: Promi
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {custom.map((s) => (
               <Link key={s.id} href={`/skills/${s.id}`} className="group">
-                <Card className="h-full transition-colors group-hover:border-violet-500/60">
+                <Card className="h-full transition-colors group-hover:border-ink-600 group-hover:bg-ink-850/40">
                   <div className="space-y-3 p-5">
                     <div className="flex items-start justify-between gap-3">
                       <h3 className="font-semibold text-ink-50">{s.name}</h3>
@@ -62,7 +65,7 @@ export default async function SkillsPage({ searchParams }: { searchParams: Promi
         )}
       </section>
 
-      <h2 className="mb-3 text-lg font-semibold text-ink-50">Skills do sistema</h2>
+      <SectionTitle>Skills do sistema</SectionTitle>
       <div className="grid gap-4 lg:grid-cols-2">
         {SKILLS.map((s) => {
           const u = usage.find((x) => x.skillId === s.id);
@@ -76,7 +79,7 @@ export default async function SkillsPage({ searchParams }: { searchParams: Promi
               <div className="space-y-3 p-5 text-sm">
                 <p className="text-ink-200">{s.description}</p>
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-wider text-ink-400">Critérios de qualidade</div>
+                  <div className="text-[12px] font-medium text-ink-400">Critérios de qualidade</div>
                   <ul className="mt-1 list-disc space-y-0.5 pl-5 text-ink-300">
                     {s.qualityCriteria.map((c) => (
                       <li key={c}>{c}</li>
@@ -106,7 +109,7 @@ export default async function SkillsPage({ searchParams }: { searchParams: Promi
           {PLANNED_SKILLS.map((s) => (
             <li key={s.name} className="flex items-center gap-3 px-5 py-2.5 text-sm">
               <span className="flex-1 text-ink-200">{s.name}</span>
-              <span className="text-xs text-ink-500">seção {s.specSection}</span>
+              <span className="text-xs text-ink-400">seção {s.specSection}</span>
               <Badge>{s.phase}</Badge>
             </li>
           ))}

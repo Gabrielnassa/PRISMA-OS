@@ -36,7 +36,8 @@ export function GenerationStatus({ contentId }: { contentId: string }) {
 
   const job = data?.job;
   return (
-    <div className="flex items-start gap-4 rounded-xl border border-sky-500/30 bg-sky-500/5 p-5" role="status" aria-live="polite">
+    <div className="relative flex items-start gap-4 overflow-hidden rounded-[var(--radius-card)] border border-ink-800 bg-ink-900 p-5 pl-6" role="status" aria-live="polite">
+      <span aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-sky-400" />
       <span className="mt-1 size-5 shrink-0 animate-spin rounded-full border-2 border-sky-300 border-t-transparent" aria-hidden />
       <div className="text-sm">
         <div className="font-semibold text-sky-100">Gerando conteúdo</div>

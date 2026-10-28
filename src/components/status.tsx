@@ -1,8 +1,8 @@
 import { STATUS_LABELS, STATUS_TONE, type ContentStatus } from "@/lib/content/status";
-import { Badge } from "./ui";
+import { Badge, Dot } from "./ui";
 
 export function StatusBadge({ status }: { status: ContentStatus }) {
-  return <Badge tone={STATUS_TONE[status]}>{STATUS_LABELS[status]}</Badge>;
+  return <Dot tone={STATUS_TONE[status]}>{STATUS_LABELS[status]}</Dot>;
 }
 
 export function SourceBadge({ source }: { source: string }) {

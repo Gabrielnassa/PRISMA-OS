@@ -30,8 +30,8 @@ export function InviteForm({ roles }: { roles: RoleOption[] }) {
       <div className="md:col-span-4">
         <FormMessage state={state} />
         {state.status === "ok" && state.data?.temporaryPassword ? (
-          <div className="mt-2 rounded-lg border border-violet-500/30 bg-violet-500/10 p-3 text-sm">
-            Senha temporária de <strong>{state.data.email}</strong>: <code className="select-all rounded bg-ink-900 px-2 py-0.5 font-mono text-violet-200">{state.data.temporaryPassword}</code>
+          <div className="mt-2 rounded-md border border-amber-400/25 bg-amber-400/[0.06] p-3 text-[13.5px] text-ink-200">
+            Senha temporária de <strong>{state.data.email}</strong>: <code className="select-all rounded-[4px] bg-ink-950 px-2 py-0.5 font-mono text-ink-50 ring-1 ring-ink-700">{state.data.temporaryPassword}</code>
             <p className="mt-1 text-xs text-ink-400">Envie por um canal seguro. A pessoa deverá trocá-la no primeiro acesso. O envio por e-mail depende da integração de e-mail (fase 3).</p>
           </div>
         ) : null}
@@ -65,7 +65,7 @@ export function MemberForm({
         </Select>
         {isSelf ? <input type="hidden" name="role" value={member.role} /> : null}
         <label className="flex items-center gap-2 text-sm text-ink-200">
-          <input type="checkbox" name="isActive" defaultChecked={member.isActive} disabled={isSelf} className="accent-violet-500" />
+          <input type="checkbox" name="isActive" defaultChecked={member.isActive} disabled={isSelf} className="accent-violet-400" />
           Ativo
         </label>
         {isSelf ? <input type="hidden" name="isActive" value="on" /> : null}
@@ -75,16 +75,16 @@ export function MemberForm({
           <legend className="mb-1 text-xs text-ink-400">Clientes com acesso</legend>
           <div className="flex flex-wrap gap-2">
             {clients.map((c) => (
-              <label key={c.id} className="flex items-center gap-1.5 rounded-md border border-ink-700 px-2 py-1 text-xs text-ink-200 has-[:checked]:border-violet-500">
-                <input type="checkbox" name="clientIds" value={c.id} defaultChecked={member.clientIds.includes(c.id)} className="accent-violet-500" />
+              <label key={c.id} className="flex items-center gap-1.5 rounded-md border border-ink-700 px-2 py-1 text-xs text-ink-200 has-[:checked]:border-violet-400/70 has-[:checked]:bg-violet-400/[0.06]">
+                <input type="checkbox" name="clientIds" value={c.id} defaultChecked={member.clientIds.includes(c.id)} className="accent-violet-400" />
                 {c.name}
               </label>
             ))}
-            {clients.length === 0 ? <span className="text-xs text-ink-500">Nenhum cliente cadastrado.</span> : null}
+            {clients.length === 0 ? <span className="text-xs text-ink-400">Nenhum cliente cadastrado.</span> : null}
           </div>
         </fieldset>
       ) : (
-        <p className="text-xs text-ink-500">Proprietários e administradores acessam todos os clientes.</p>
+        <p className="text-xs text-ink-400">Proprietários e administradores acessam todos os clientes.</p>
       )}
       <div className="flex items-center gap-3">
         <SubmitButton variant="secondary" size="sm">
@@ -115,8 +115,8 @@ export function ResetPasswordForm({ userId, email }: { userId: string; email: st
       </div>
       <FormMessage state={state} />
       {state.status === "ok" && state.data?.temporaryPassword ? (
-        <div className="rounded-lg border border-violet-500/30 bg-violet-500/10 p-3 text-sm">
-          Nova senha temporária: <code className="select-all rounded bg-ink-900 px-2 py-0.5 font-mono text-violet-200">{state.data.temporaryPassword}</code>
+        <div className="rounded-md border border-amber-400/25 bg-amber-400/[0.06] p-3 text-[13.5px] text-ink-200">
+          Nova senha temporária: <code className="select-all rounded-[4px] bg-ink-950 px-2 py-0.5 font-mono text-ink-50 ring-1 ring-ink-700">{state.data.temporaryPassword}</code>
           <p className="mt-1 text-xs text-ink-400">Exibida uma única vez. Envie por um canal seguro; ela expira em 7 dias e deve ser trocada no primeiro acesso.</p>
         </div>
       ) : null}

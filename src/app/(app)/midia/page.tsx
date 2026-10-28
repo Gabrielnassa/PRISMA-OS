@@ -35,7 +35,7 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
       ) : can(auth.role, "media.upload") ? (
         <p className="mb-4 text-sm text-ink-400">Selecione um cliente no filtro para enviar arquivos.</p>
       ) : null}
-      <form className="mb-4 grid gap-3 md:grid-cols-[1fr_220px_180px_auto]" action="/midia">
+      <form className="mb-6 grid gap-2 md:grid-cols-[1fr_220px_180px_auto]" action="/midia">
         <Input name="q" defaultValue={sp.q ?? ""} placeholder="Buscar por nome, descrição ou etiqueta" aria-label="Buscar" />
         <Select name="cliente" defaultValue={clientId ?? ""} aria-label="Cliente">
           <option value="">Todos os clientes</option>
@@ -53,7 +53,7 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
             </option>
           ))}
         </Select>
-        <button type="submit" className="h-10 rounded-lg border border-ink-600 px-4 text-sm text-ink-200 hover:bg-ink-800">
+        <button type="submit" className="inline-flex h-9 items-center justify-center rounded-md border border-ink-700 bg-ink-900 px-3.5 text-[13.5px] font-medium text-ink-100 transition-colors hover:border-ink-600 hover:bg-ink-850">
           Filtrar
         </button>
       </form>

@@ -40,7 +40,11 @@ export default async function SkillPage({
   return (
     <>
       <PageHeader
-        eyebrow="Skill da agência"
+        eyebrow={
+          <Link href="/skills" className="hover:text-ink-200">
+            Agentes e skills
+          </Link>
+        }
         title={skill.name}
         description={skill.description || undefined}
         actions={
@@ -49,7 +53,7 @@ export default async function SkillPage({
           </a>
         }
       />
-      <div className="-mt-4 mb-6 flex flex-wrap gap-1.5">
+      <div className="-mt-5 mb-8 flex flex-wrap gap-1.5">
         <Badge tone="accent">versão {skill.version}</Badge>
         <Badge>{skill.clientName ? `Só ${skill.clientName}` : "Todos os clientes"}</Badge>
         <Badge>esforço {EFFORT_LABEL[skill.effort]}</Badge>
@@ -57,8 +61,10 @@ export default async function SkillPage({
         {skill.status === "archived" ? <Badge tone="warning">arquivada</Badge> : null}
       </div>
       {nova === "1" ? (
-        <div className="mb-6 rounded-lg border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-sm text-violet-100">
-          Skill criada. Para usar, escolha o cliente, escreva o pedido e clique em Executar.
+        <div className="mb-6">
+          <Alert tone="success" title="Skill criada">
+            Para usar, escolha o cliente, escreva o pedido e clique em Executar.
+          </Alert>
         </div>
       ) : null}
       {skill.status === "archived" ? (
@@ -121,10 +127,10 @@ async function HistoryTab({ auth, skill }: { auth: AuthContext; skill: CustomSki
               <summary className="flex cursor-pointer flex-wrap items-center gap-2 text-sm">
                 <span className="text-ink-100">{formatDateTime(r.createdAt)}</span>
                 <span className="text-ink-400">· {r.clientName ?? "—"}</span>
-                <span className="text-ink-500">· v{r.version}</span>
+                <span className="text-ink-400">· v{r.version}</span>
                 <Badge tone={STATUS[r.status]?.tone ?? "info"}>{STATUS[r.status]?.label ?? r.status}</Badge>
                 {r.isDemo ? <Badge tone="warning">demonstração</Badge> : null}
-                <span className="ml-auto text-xs text-ink-500">
+                <span className="ml-auto text-xs text-ink-400">
                   {r.createdByName ?? ""}
                   {!r.isDemo && r.costUsd !== null ? ` · ${formatUsd(r.costUsd, 4)}` : ""}
                 </span>
@@ -132,13 +138,13 @@ async function HistoryTab({ auth, skill }: { auth: AuthContext; skill: CustomSki
               </summary>
               <div className="mt-3 space-y-3">
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-wider text-ink-400">Pedido</div>
+                  <div className="text-[12px] font-medium text-ink-400">Pedido</div>
                   <p className="mt-1 whitespace-pre-wrap text-sm text-ink-300">{r.request || "—"}</p>
                 </div>
                 {r.result !== null ? (
                   <>
                     <div>
-                      <div className="text-xs font-semibold uppercase tracking-wider text-ink-400">Resultado</div>
+                      <div className="text-[12px] font-medium text-ink-400">Resultado</div>
                       <div className="mt-1 whitespace-pre-wrap rounded-lg border border-ink-700 bg-ink-850 p-4 text-sm leading-relaxed text-ink-100">{r.result}</div>
                     </div>
                     {r.assumptions.length ? (
@@ -202,14 +208,14 @@ function VersionsTab({ skill }: { skill: CustomSkillDetail }) {
               <summary className="flex cursor-pointer flex-wrap items-center gap-2 text-sm">
                 <Badge tone={v.version === skill.version ? "accent" : "neutral"}>v{v.version}</Badge>
                 <span className="text-ink-100">{v.name}</span>
-                <span className="ml-auto text-xs text-ink-500">
+                <span className="ml-auto text-xs text-ink-400">
                   {formatDateTime(v.createdAt)}
                   {v.createdByName ? ` · ${v.createdByName}` : ""}
                 </span>
               </summary>
               <div className="mt-3 space-y-2 text-sm">
                 {v.description ? <p className="text-ink-300">{v.description}</p> : null}
-                <p className="text-xs text-ink-500">Esforço: {EFFORT_LABEL[v.effort] ?? v.effort}</p>
+                <p className="text-xs text-ink-400">Esforço: {EFFORT_LABEL[v.effort] ?? v.effort}</p>
                 <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg border border-ink-700 bg-ink-850 p-4 font-mono text-xs text-ink-200">{v.instructions}</pre>
               </div>
             </details>

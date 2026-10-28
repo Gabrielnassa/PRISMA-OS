@@ -93,7 +93,7 @@ export function RunResult({ result, canCreateContent }: { result: RunSkillData; 
         <div className="whitespace-pre-wrap rounded-lg border border-ink-700 bg-ink-850 p-4 text-sm leading-relaxed text-ink-100">{result.result}</div>
         {result.assumptions.length ? (
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-ink-400">Para confirmar com o cliente</div>
+            <div className="text-[12px] font-medium text-ink-400">Para confirmar com o cliente</div>
             <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-300">
               {result.assumptions.map((a) => (
                 <li key={a}>{a}</li>

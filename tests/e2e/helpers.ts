@@ -19,5 +19,8 @@ export function png(width: number, height: number, svgBody: string): Buffer {
 }
 
 export async function shot(page: Page, name: string) {
-  if (process.env.CAPTURE_SCREENSHOTS === "1") await page.screenshot({ path: `docs/img/${name}.png`, fullPage: false });
+  if (process.env.CAPTURE_SCREENSHOTS !== "1") return;
+  // O indicador de desenvolvimento do Next não faz parte da interface.
+  await page.addStyleTag({ content: "nextjs-portal{display:none!important}" });
+  await page.screenshot({ path: `docs/img/${name}.png`, fullPage: false });
 }

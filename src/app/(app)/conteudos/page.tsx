@@ -32,7 +32,7 @@ export default async function ContentsPage({ searchParams }: { searchParams: Pro
   return (
     <>
       <PageHeader title="Conteúdos" description="Todas as peças, com status, versões e histórico." actions={can(auth.role, "content.create") ? <LinkButton href="/criar">Criar conteúdo</LinkButton> : null} />
-      <form className="mb-4 grid gap-3 md:grid-cols-[1fr_220px_220px_auto]" action="/conteudos">
+      <form className="mb-6 grid gap-2 md:grid-cols-[1fr_220px_220px_auto]" action="/conteudos">
         <label className="sr-only" htmlFor="q">
           Buscar
         </label>
@@ -53,7 +53,7 @@ export default async function ContentsPage({ searchParams }: { searchParams: Pro
             </option>
           ))}
         </Select>
-        <button type="submit" className="h-10 rounded-lg border border-ink-600 px-4 text-sm text-ink-200 hover:bg-ink-800">
+        <button type="submit" className="inline-flex h-9 items-center justify-center rounded-md border border-ink-700 bg-ink-900 px-3.5 text-[13.5px] font-medium text-ink-100 transition-colors hover:border-ink-600 hover:bg-ink-850">
           Filtrar
         </button>
       </form>
@@ -74,9 +74,9 @@ export default async function ContentsPage({ searchParams }: { searchParams: Pro
             </thead>
             <tbody>
               {items.map((c) => (
-                <tr key={c.id} className="hover:bg-ink-850">
+                <tr key={c.id} className="transition-colors hover:bg-ink-850/50">
                   <Td>
-                    <Link href={`/conteudos/${c.id}`} className="font-medium text-ink-50 hover:text-violet-300">
+                    <Link href={`/conteudos/${c.id}`} className="font-medium text-ink-50 underline-offset-4 hover:underline">
                       {c.title}
                     </Link>
                   </Td>
@@ -89,7 +89,7 @@ export default async function ContentsPage({ searchParams }: { searchParams: Pro
                     {c.currentVersion ? `v${c.currentVersion}` : "—"}
                     {c.hasApprovedVersion ? <span className="ml-1 text-xs text-emerald-300">(aprovada)</span> : null}
                   </Td>
-                  <Td>{formatDateTime(c.updatedAt)}</Td>
+                  <Td className="whitespace-nowrap font-mono text-[12px] text-ink-400">{formatDateTime(c.updatedAt)}</Td>
                 </tr>
               ))}
             </tbody>

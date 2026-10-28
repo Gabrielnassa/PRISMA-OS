@@ -47,7 +47,7 @@ function svgUrl(svg: string): string {
 
 function Counter({ value, limit }: { value: string; limit: number }) {
   const over = value.length > limit;
-  return <span className={cx("tabular-nums", over ? "font-semibold text-red-300" : value.length > limit * 0.9 ? "text-amber-300" : "text-ink-500")}>{value.length}/{limit}</span>;
+  return <span className={cx("tabular-nums", over ? "font-semibold text-red-300" : value.length > limit * 0.9 ? "text-amber-300" : "text-ink-400")}>{value.length}/{limit}</span>;
 }
 
 export function ContentEditor({
@@ -245,7 +245,7 @@ export function ContentEditor({
         <Card>
           <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
             <div className="flex flex-col gap-3">
-              <div className="relative overflow-hidden rounded-xl border border-ink-700 bg-ink-850" style={{ aspectRatio: `${ASPECTS[doc.aspect].width} / ${ASPECTS[doc.aspect].height}` }}>
+              <div className="relative overflow-hidden rounded-[var(--radius-card)] border border-ink-800 bg-ink-850" style={{ aspectRatio: `${ASPECTS[doc.aspect].width} / ${ASPECTS[doc.aspect].height}` }}>
                 {urls[selected] ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={urls[selected]} alt={`Pré-visualização da lâmina ${selected + 1}`} className="h-full w-full object-contain" />
@@ -267,7 +267,7 @@ export function ContentEditor({
                     role="tab"
                     aria-selected={i === selected}
                     onClick={() => setSelected(i)}
-                    className={cx("relative w-20 shrink-0 overflow-hidden rounded-lg border-2 bg-ink-850", i === selected ? "border-violet-500" : "border-ink-700 hover:border-ink-500")}
+                    className={cx("relative w-20 shrink-0 overflow-hidden rounded-lg border-2 bg-ink-850", i === selected ? "border-violet-400" : "border-ink-700 hover:border-ink-500")}
                     style={{ aspectRatio: `${ASPECTS[doc.aspect].width} / ${ASPECTS[doc.aspect].height}` }}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -299,7 +299,7 @@ export function ContentEditor({
 
             <fieldset disabled={!canEdit} className="flex min-w-0 flex-col gap-3">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="shrink-0 whitespace-nowrap font-display text-sm font-semibold text-ink-100">Lâmina {selected + 1}</h3>
+                <h3 className="shrink-0 whitespace-nowrap text-[13.5px] font-semibold text-ink-100">Lâmina {selected + 1}</h3>
                 <Select aria-label="Tipo da lâmina" value={slide.kind} onChange={(e) => updateSlide({ kind: e.target.value as SlideKind })} className="w-48">
                   {SLIDE_KINDS.map((k) => (
                     <option key={k} value={k}>
@@ -426,7 +426,7 @@ export function ContentEditor({
 
       <div className="flex min-w-0 flex-col gap-4">
         {canEdit ? (
-          <Card className={cx(dirty && "ring-1 ring-violet-500/50")}>
+          <Card className={cx(dirty && "border-amber-400/40")}>
             <div className="flex flex-col gap-3 p-4">
               <Field label="Nota da alteração (opcional)" htmlFor="note">
                 <Input id="note" value={changeNote} maxLength={500} onChange={(e) => setChangeNote(e.target.value)} placeholder="Ex.: título mais direto" />
@@ -443,7 +443,7 @@ export function ContentEditor({
                   Descartar alterações
                 </Button>
               </div>
-              {dirty ? <p className="text-xs text-violet-300">Alterações não salvas. Salvar cria uma nova versão e exige nova aprovação.</p> : <p className="text-xs text-ink-500">Sem alterações pendentes.</p>}
+              {dirty ? <p className="text-xs text-amber-300">Alterações não salvas. Salvar cria uma nova versão e exige nova aprovação.</p> : <p className="text-xs text-ink-400">Sem alterações pendentes.</p>}
               {saveMessage ? (
                 <p role={saveMessage.tone === "error" ? "alert" : "status"} className={cx("text-sm", saveMessage.tone === "error" ? "text-red-300" : "text-emerald-300")}>
                   {saveMessage.text}
@@ -523,7 +523,7 @@ export function ContentEditor({
               </Field>
             </div>
             <label className="flex items-center gap-2 text-sm text-ink-200">
-              <input type="checkbox" checked={doc.style.showLogo} onChange={(e) => setStyle({ showLogo: e.target.checked })} className="accent-violet-500" />
+              <input type="checkbox" checked={doc.style.showLogo} onChange={(e) => setStyle({ showLogo: e.target.checked })} className="accent-violet-400" />
               Exibir logotipo / assinatura
             </label>
             <Field label="Assinatura (quando não há logotipo)" htmlFor="handle">
