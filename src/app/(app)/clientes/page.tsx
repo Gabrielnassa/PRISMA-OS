@@ -3,16 +3,16 @@ import type { Metadata } from "next";
 import { requireAuth } from "@/server/auth/next";
 import { listClients } from "@/server/services/clients";
 import { can } from "@/server/authz/permissions";
-import { Badge, Card, CardHeader, EmptyState, PageHeader, Table, Td, Th, formatDateTime } from "@/components/ui";
+import { Alert, Badge, Card, CardHeader, EmptyState, PageHeader, Table, Td, Th, formatDateTime } from "@/components/ui";
 import { CreateClientForm } from "./create-client-form";
 
 export const metadata: Metadata = { title: "Clientes" };
 
 const STATUS = { active: { label: "Ativo", tone: "success" }, paused: { label: "Pausado", tone: "warning" }, archived: { label: "Arquivado", tone: "neutral" } } as const;
 
-export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ arquivados?: string }> }) {
+export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ arquivados?: string; excluido?: string }> }) {
   const auth = await requireAuth();
-  const { arquivados } = await searchParams;
+  const { arquivados, excluido } = await searchParams;
   const clients = await listClients(auth, { includeArchived: arquivados === "1" });
   return (
     <>
@@ -25,6 +25,13 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
           </Link>
         }
       />
+      {excluido === "1" ? (
+        <div className="mb-6">
+          <Alert tone="success" title="Cliente excluído">
+            O cliente, seus conteúdos, arquivos e memória foram apagados. O consumo de IA continua nos totais de Custos.
+          </Alert>
+        </div>
+      ) : null}
       {can(auth.role, "client.create") ? (
         <Card className="mb-6">
           <CardHeader title="Novo cliente" description="Depois do cadastro você será levado ao perfil da marca." />

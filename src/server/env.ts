@@ -22,6 +22,12 @@ const EnvSchema = z.object({
   GENERATION_RATE_PER_MINUTE: z.coerce.number().int().min(1).max(600).default(10),
   WORKER_POLL_MS: z.coerce.number().int().min(100).max(60_000).default(1_000),
   JOB_LOCK_TIMEOUT_MS: z.coerce.number().int().min(10_000).max(3_600_000).default(600_000),
+  // Instagram (API oficial da Meta, "Business Discovery"): consulta perfis comerciais pelo @.
+  // Integração opcional: valores inválidos não derrubam o sistema; a tela de
+  // Integrações explica o problema (veja integrations/instagram.ts).
+  META_ACCESS_TOKEN: z.string().trim().optional(),
+  META_IG_USER_ID: z.string().trim().optional(),
+  META_GRAPH_VERSION: z.string().trim().regex(/^v\d+\.\d+$/).catch("v23.0").default("v23.0"),
   TRUST_PROXY: z
     .enum(["true", "false"])
     .default("false")

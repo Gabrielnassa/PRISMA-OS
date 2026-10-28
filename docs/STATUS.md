@@ -15,6 +15,8 @@ Objetivo da etapa (seções 25, 26 e 30): fundação do PRISMA OS e o ciclo comp
 | Central de criação | Pedido com cliente, canal, formato (post, carrossel, story), objetivo, briefing estruturado, fotos, template preferido; sugestão de pautas por IA; criação manual pelo template sem IA |
 | IA | Gateway de provedores (Anthropic + demonstração), 4 skills versionadas (`planner.ideas`, `copywriter.social`, `art-director.rules`, `quality.ai-review`), orquestrador com camadas de contexto, idempotência, limites, registro de custo por modelo |
 | Skills da agência | Skills escritas pela agência ou importadas de um SKILL.md (nome, descrição e instruções; scripts e arquivos extras não rodam), para todos os clientes ou exclusivas de um; versão imutável a cada alteração; execução pelo mesmo orquestrador (contexto do cliente, regras invioláveis, limite por pessoa, teto de custo, idempotência contra clique duplo, registro em `ai_runs` como `custom:<id>`); histórico por skill; resultado vira briefing de uma peça; exportação em SKILL.md; gestão só por proprietário/administrador, execução também pela criação |
+| Cores da marca | "Sugerir cores" no perfil da marca: lê logotipo, fotos ou um print do perfil (PNG, JPEG, GIF, SVG), agrupa as cores por proximidade perceptual (CIELAB) e propõe primária, secundária, destaque, fundo e texto com contraste mínimo de 4,5:1 entre texto e fundo; pelo @ do Instagram com a API oficial da Meta (Business Discovery: foto de perfil e até 9 posts; opcionalmente guarda a foto como logotipo). Só preenche o formulário: nada é salvo sem a pessoa revisar |
+| Exclusão definitiva | Peças (na página da peça ou em lote) e clientes (confirmação pelo nome, conferida no servidor), só proprietário e administrador; recusa o que está em geração; apaga versões, aprovações, comentários, arquivos (também do armazenamento), memória, tarefas e skills exclusivas; custos de IA continuam nos totais, sem o texto gerado; auditoria registra quem excluiu |
 | Fila | Tarefas no PostgreSQL com `SKIP LOCKED`, tentativas com backoff, renovação de reserva, recuperação de tarefas interrompidas, reprocessamento manual com histórico |
 | Motor de layout | 18 templates originais (6 famílias × 3), proporções 1:1, 4:5 e 9:16, SVG/PNG no servidor (Satori + resvg), texto medido com as fontes reais, limites de caracteres calibrados por layout |
 | Editor | Textos por campo com contadores do limite efetivo, tema, alinhamento, escala, foto com foco/zoom, template, cores, fontes, logotipo, lâminas (adicionar, duplicar, mover, remover), pré-visualização ao vivo, aviso de alterações não salvas |
@@ -36,6 +38,8 @@ Módulos das fases 3–6 (estratégias, calendário, automações, relatórios, 
 | `src/server/auth`, `src/server/authz`, `src/lib/safe-redirect.ts` | Senhas (scrypt), sessões, cookies, matriz de permissões, redirecionamento seguro |
 | `src/server/services` | Organizações, usuários, clientes, mídia, conteúdo (versões, aprovações, exportação), skills da agência, custos, dashboard, saúde, auditoria |
 | `src/lib/skills` | Leitura e escrita de SKILL.md e modelos de partida |
+| `src/server/brand/palette.ts`, `src/server/integrations/instagram.ts`, `src/server/services/brand-colors.ts` | Extração de paleta (resvg + CIELAB), consulta Business Discovery da Meta e sugestão de cores |
+| `src/server/services/deletion.ts`, `src/components/content-table.tsx` | Exclusão de peças (uma ou em lote) e de clientes; tabela de conteúdos com seleção |
 | `src/server/ai`, `src/server/orchestrator`, `src/server/skills` | Gateway, provedores, esquema JSON da saída estruturada, tarifas iniciais, orquestrador e skills |
 | `src/server/jobs`, `scripts/worker.ts` | Fila, worker, geração de conteúdo |
 | `src/server/render`, `src/lib/content/limits.ts` | Motor de layout, fontes, templates, calibração de capacidade |
@@ -49,6 +53,7 @@ Módulos das fases 3–6 (estratégias, calendário, automações, relatórios, 
 
 - **0001_foundation**: `organizations`, `users`, `memberships`, `sessions`, `login_attempts`, `clients`, `client_access`, `brand_profiles`, `client_memories`, `media_assets`, `content_items`, `content_versions`, `quality_reports`, `approvals`, `content_comments`, `provider_prices`, `ai_runs`, `client_budgets`, `jobs`, `job_attempts`, `audit_logs`; RLS em todas as tabelas; papel `prisma_app` sem posse das tabelas; versões e auditoria imutáveis (exclusão só com `app.allow_purge`).
 - **0002_review_hardening**: `memberships.deactivated_at` e `last_access_at` (ativação por organização; `app_org_role` passa a considerá-la), `users.password_set_at` (validade da senha temporária), `media_assets.orientation` (EXIF), `ai_runs.estimated_cost_usd` e `usage_breakdown` (custo por modelo e estimativa para o teto), limite de `jobs.max_attempts` ampliado para reprocessamentos, `job_attempts.duration_ms` em `bigint`, tarifas dos modelos de fallback para organizações existentes.
+- Sem migration nova para cores e exclusão: a exclusão usa as cascatas existentes e liga `app.allow_purge` só na transação que apaga; antes disso, desvincula as execuções de IA (`ai_runs`) da peça ou do cliente, para os custos continuarem nos totais.
 - **0003_custom_skills**: `custom_skills` (nome único por organização, sem diferenciar maiúsculas; escopo opcional por cliente com chave composta) e `custom_skill_versions` (somente inserção: o papel da aplicação não tem UPDATE/DELETE); RLS: leitura por membros (skill de cliente só para quem acessa o cliente), escrita por administradores.
 
 ## 4. Testes executados e resultados reais
@@ -59,11 +64,11 @@ Executados em 28/10/2026 neste ambiente (Node 22, PostgreSQL 16 local, Chromium 
 | --- | --- |
 | `npm run typecheck` | sem erros |
 | `npm run lint` | sem erros nem avisos |
-| `npm test` (Vitest: unitários + integração com PostgreSQL real) | **13 arquivos, 140 testes aprovados**, 0 falhas |
-| `npm run test:e2e` (Playwright, `next dev` + worker) | **3/3 aprovados** (ciclo completo, skills da agência e celular, inclusive a página da peça sem rolagem horizontal) |
-| `npm run build` + `npm run test:e2e:prod` (build de produção) | build concluído; **3/3 aprovados** (sem chave, o botão de executar skill fica desativado com o aviso) |
+| `npm test` (Vitest: unitários + integração com PostgreSQL real) | **17 arquivos, 165 testes aprovados**, 0 falhas |
+| `npm run test:e2e` (Playwright, `next dev` + worker) | **4/4 aprovados** (ciclo completo; cores pelo logotipo e exclusão de peças e cliente; skills da agência; celular, inclusive a página da peça sem rolagem horizontal) |
+| `npm run build` + `npm run test:e2e:prod` (build de produção) | build concluído; **4/4 aprovados** (sem chave, o botão de executar skill fica desativado com o aviso) |
 
-Destaques da cobertura: isolamento entre organizações e clientes (RLS efetivo, inserção cruzada recusada pelo banco); ciclo completo com versões e aprovação vinculada; invalidação da aprovação quando a peça muda; bloqueio por termo proibido; fila (backoff, recuperação, reserva perdida, reprocessamento com histórico); idempotência da IA (reaproveitamento, chamada simultânea não paga duas vezes); custo por modelo no fallback e estimativa sem tarifa no teto; contexto correto enviado à IA sem dados de outro cliente; login (limite em paralelo, senha temporária vencida, convite de e-mail existente, desativação por organização); redirecionamento seguro; provedor Anthropic contra API simulada (esquema com `enum`, esforço, recusa, erros recuperáveis); todos os 18 templates em todas as proporções sem texto cortado e com textos no limite efetivo; dashboard com filtros e isolamento; skills da agência (versões a cada alteração, edição simultânea recusada, nome repetido, permissões por papel, skill exclusiva invisível para quem não acessa o cliente e recusada em outro cliente, outra organização sem acesso, versões imutáveis no banco, contexto do cliente e regras invioláveis enviados à IA, custo com o nome da skill, clique duplo sem cobrança dupla, histórico filtrado pelo acesso, leitura e exportação de SKILL.md); origens aceitas no túnel do Codespaces só dentro de um Codespace. O E2E também confirma que um erro devolvido pelo servidor não apaga o formulário, que descartar alterações mantém o editor utilizável e que sair pelo menu com alterações pendentes pede confirmação.
+Destaques da cobertura: isolamento entre organizações e clientes (RLS efetivo, inserção cruzada recusada pelo banco); ciclo completo com versões e aprovação vinculada; invalidação da aprovação quando a peça muda; bloqueio por termo proibido; fila (backoff, recuperação, reserva perdida, reprocessamento com histórico); idempotência da IA (reaproveitamento, chamada simultânea não paga duas vezes); custo por modelo no fallback e estimativa sem tarifa no teto; contexto correto enviado à IA sem dados de outro cliente; login (limite em paralelo, senha temporária vencida, convite de e-mail existente, desativação por organização); redirecionamento seguro; provedor Anthropic contra API simulada (esquema com `enum`, esforço, recusa, erros recuperáveis); todos os 18 templates em todas as proporções sem texto cortado e com textos no limite efetivo; dashboard com filtros e isolamento; skills da agência (versões a cada alteração, edição simultânea recusada, nome repetido, permissões por papel, skill exclusiva invisível para quem não acessa o cliente e recusada em outro cliente, outra organização sem acesso, versões imutáveis no banco, contexto do cliente e regras invioláveis enviados à IA, custo com o nome da skill, clique duplo sem cobrança dupla, histórico filtrado pelo acesso, leitura e exportação de SKILL.md); origens aceitas no túnel do Codespaces só dentro de um Codespace; paleta (logotipo de duas cores, marca em preto e branco, fundo escuro com contraste, peso do logotipo sobre fotos, SVG, formatos não lidos), consulta à Meta contra API simulada (token só no cabeçalho, @ e link do perfil normalizados, só imagens do CDN da Meta com tipo e tamanho conferidos, erros traduzidos, configuração inválida sem derrubar o sistema), sugestão por imagens de outro cliente ou já excluídas recusada; exclusão (versões, aprovações, comentários e relatórios apagados, custos mantidos sem o texto gerado, peças em geração preservadas, lote ignorando outra organização, cliente só com o nome certo e sem gerações pendentes, todas as tabelas do cliente e os arquivos do armazenamento apagados, outro cliente intacto, permissões por papel). O E2E também confirma que um erro devolvido pelo servidor não apaga o formulário, que descartar alterações mantém o editor utilizável e que sair pelo menu com alterações pendentes pede confirmação.
 
 ### Testes de aceitação (seção 27)
 
@@ -101,7 +106,8 @@ Depois da primeira versão, uma revisão em várias frentes levantou **61 achado
 | Armazenamento local de arquivos | Conectado e testado |
 | Anthropic (Claude) | Implementada (`claude-opus-5-5`, saída estruturada, fallback do servidor); testada contra API simulada; **conexão real pendente de chave**. O botão "Testar conexão" em Integrações faz a verificação real assim que a chave for definida |
 | Provedor de demonstração | Ativo nos testes; bloqueado em produção e identificado como "Demonstração" |
-| Redes sociais, e-mail, n8n, Meta/Google Ads, Analytics, Drive, S3 | Não conectados (fases seguintes); nada é apresentado como conectado |
+| Meta (Instagram Business Discovery) | Implementada para sugerir cores pelo @ (foto de perfil e posts de contas comerciais ou de criador); testada contra API simulada; **conexão real pendente de token** (`META_ACCESS_TOKEN` e `META_IG_USER_ID`). Os domínios da Meta não estavam acessíveis neste ambiente, então a consulta segue a documentação pública da Graph API; a primeira consulta real confirma. Sem token, a tela de Integrações mostra o que falta e a sugestão funciona por imagens |
+| Redes sociais (publicação), e-mail, n8n, Meta/Google Ads, Analytics, Drive, S3 | Não conectados (fases seguintes); nada é apresentado como conectado |
 
 ## 6. Configurações pendentes
 
@@ -114,6 +120,7 @@ Depois da primeira versão, uma revisão em várias frentes levantou **61 achado
 3. Usuários de banco separados (migrations × aplicação) no ambiente de produção — ver OPERATIONS.md.
 4. Volume persistente para `STORAGE_LOCAL_DIR` e rotina de backup do banco + arquivos.
 5. Conferir as tarifas cadastradas com a tabela vigente da Anthropic antes do uso comercial.
+6. Opcional: `META_ACCESS_TOKEN` e `META_IG_USER_ID` para sugerir cores pelo @ do Instagram (passo a passo em OPERATIONS.md). Para o token não expirar, use um usuário do sistema do Gerenciador de Negócios.
 
 ## 7. Custos conhecidos ou estimados
 
@@ -130,7 +137,8 @@ Depois da primeira versão, uma revisão em várias frentes levantou **61 achado
 - Senhas temporárias são exibidas na tela (não há envio por e-mail ainda).
 - WebP é recusado no envio até haver conversão no servidor.
 - Fontes de clientes (TTF/OTF próprios) ainda não podem ser enviadas; só as fontes OFL empacotadas.
-- Exclusão completa de cliente só por procedimento administrativo (sem tela).
+- Consulta pelo @ do Instagram ainda não exercitada contra a Meta real: o app pode precisar de revisão ou de acesso avançado às permissões, e tokens de usuário expiram (cerca de 60 dias no de longa duração). Se o CDN da Meta entregar WebP, essa imagem é ignorada (o leitor de cores aceita PNG, JPEG, GIF e SVG).
+- A exclusão definitiva não tem lixeira: arquivar continua sendo o caminho reversível, e o backup é a única forma de recuperar algo excluído.
 - Dependência de desenvolvimento com alerta (`braces`, via `eslint-config-next`); `npm audit --omit=dev` não aponta vulnerabilidades.
 - Ferramentas de terceiros podem alterar APIs (Next.js 16, SDK da Anthropic, Satori): atualize uma por vez e rode toda a suíte.
 
@@ -141,4 +149,4 @@ Depois da primeira versão, uma revisão em várias frentes levantou **61 achado
 3. Fase 3: calendário editorial, workflows A/B/E com ativação, pausa e execução manual, notificações e controles de consumo ampliados.
 4. Armazenamento S3/Supabase Storage e envio de e-mail (convites e senhas).
 5. Novos formatos (anúncio, banner, capa, peça promocional) e upload de fontes próprias dos clientes.
-6. Seletor de organização para contas em mais de uma agência e tela de exclusão completa de cliente (LGPD).
+6. Seletor de organização para contas em mais de uma agência.

@@ -379,7 +379,7 @@ export async function listCustomSkillRuns(auth: AuthContext, skillId: string, li
       duration_ms: number | null; created_by_name: string | null;
     }>(
       tx,
-      `SELECT r.id, r.created_at, r.client_id, c.name AS client_name, r.skill_version, r.status, r.input_summary, r.output, r.is_demo,
+      `SELECT r.id, r.created_at, r.client_id, coalesce(c.name, (r.input_summary->>'deletedClient') || ' (excluído)') AS client_name, r.skill_version, r.status, r.input_summary, r.output, r.is_demo,
               r.cost_usd, r.estimated_cost_usd, r.duration_ms, u.name AS created_by_name
        FROM ai_runs r
        LEFT JOIN clients c ON c.id = r.client_id

@@ -17,6 +17,12 @@
     "ANTHROPIC_API_KEY": {
       "description": "Opcional. Chave da API Anthropic para gerar textos com IA. Sem ela, as peças são criadas pelos templates.",
       "documentationUrl": "https://platform.claude.com"
+    },
+    "META_ACCESS_TOKEN": {
+      "description": "Opcional. Token da API oficial da Meta (instagram_basic, pages_read_engagement) para sugerir cores da marca pelo @ do Instagram."
+    },
+    "META_IG_USER_ID": {
+      "description": "Opcional. ID numérico da conta comercial do Instagram da agência (usada para consultar os perfis)."
     }
   },
   "hostRequirements": { "cpus": 2, "memory": "8gb" },

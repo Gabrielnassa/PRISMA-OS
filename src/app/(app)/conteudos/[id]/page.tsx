@@ -20,7 +20,7 @@ import { ContentEditor } from "./editor";
 import { GenerationStatus } from "./generation-status";
 import { QualityPanel } from "./quality-panel";
 import { AiReviewPanel, ApprovalPanel, CommentsPanel, RetryPanel } from "./review-panels";
-import { archiveAction, restoreVersionAction } from "./actions";
+import { archiveAction, deleteContentAction, restoreVersionAction } from "./actions";
 
 export const metadata: Metadata = { title: "Conteúdo" };
 
@@ -291,6 +291,17 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
               tone="danger"
               className="text-right"
               confirmMessage="Arquivar este conteúdo? Ele sai das listas de trabalho e aprovações pendentes são canceladas."
+            />
+          ) : null}
+          {can(auth.role, "content.delete") && detail.status !== "generating" ? (
+            <InlineAction
+              action={deleteContentAction}
+              fields={{ contentId: id }}
+              label="Excluir definitivamente"
+              pendingText="Excluindo..."
+              tone="danger"
+              className="text-right"
+              confirmMessage="Excluir este conteúdo de vez? Todas as versões, aprovações e comentários serão apagados. Não dá para desfazer."
             />
           ) : null}
         </div>

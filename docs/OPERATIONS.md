@@ -37,6 +37,9 @@ Veja `.env.example`. As essenciais:
 | `AI_TIMEOUT_MS` | não | Tempo limite por chamada à IA (padrão 180000) |
 | `JOB_LOCK_TIMEOUT_MS` | não | Reserva de uma tarefa sem renovação antes de ser considerada abandonada (padrão 600000; o worker renova a cada ¼ desse valor) |
 | `GENERATION_RATE_PER_MINUTE` | não | Gerações e chamadas interativas de IA por pessoa por minuto (padrão 10) |
+| `META_ACCESS_TOKEN` | para o @ do Instagram | Token da Meta com `instagram_basic` e `pages_read_engagement` (veja abaixo). Sem ele, a sugestão de cores funciona só por imagens |
+| `META_IG_USER_ID` | para o @ do Instagram | ID numérico da conta comercial do Instagram **da agência** (quem faz a consulta) |
+| `META_GRAPH_VERSION` | não | Versão da Graph API (padrão `v23.0`) |
 
 Variáveis definidas com valor vazio (como no `.env.example`) valem como não definidas.
 
@@ -147,19 +150,45 @@ npx tsx scripts/calibrate-capacity.ts [filtro-de-id]
 npx vitest run --project unit tests/unit/capacity.test.ts
 ```
 
-## Exclusão completa de um cliente (LGPD)
+## Instagram: cores da marca pelo @
 
-Ainda sem tela. Procedimento administrativo, com backup prévio:
+Em Clientes → Perfil da marca → Identidade visual, "Sugerir cores" lê as cores de imagens do cliente (logotipo, fotos ou print do perfil; PNG, JPEG, GIF ou SVG) e, com a API da Meta configurada, também pelo @ do Instagram: foto de perfil e até 9 posts recentes. A sugestão só preenche o formulário; nada é salvo sem "Salvar perfil da marca".
+
+A consulta usa a API oficial ("Business Discovery" da Graph API com login do Facebook). Nada é raspado do site do Instagram. Funciona para contas **comerciais ou de criador**; contas pessoais e privadas não aparecem. Para configurar:
+
+1. A conta do Instagram **da agência** precisa ser profissional (comercial ou criador) e estar vinculada a uma Página do Facebook.
+2. Em developers.facebook.com, crie um app do tipo Empresa e adicione o produto do Instagram (API com login do Facebook).
+3. Gere um token de usuário com `instagram_basic` e `pages_read_engagement` (o Explorador da Graph API serve para o primeiro teste) e troque-o por um token de longa duração. Para não expirar, use um usuário do sistema no Gerenciador de Negócios.
+4. Descubra o ID da conta do Instagram da agência: `GET /me/accounts?fields=instagram_business_account` com o token.
+5. Defina `META_ACCESS_TOKEN` e `META_IG_USER_ID` no ambiente do servidor e reinicie. Em Integrações, o cartão "Instagram: cores da marca pelo @" mostra se está configurado.
+
+Onde definir: servidor → variáveis de ambiente; Mac → acrescente as duas linhas em `~/.prisma-os/config.env` e rode **Iniciar PRISMA OS**; Codespaces → secrets `META_ACCESS_TOKEN` e `META_IG_USER_ID` (mesmo caminho da chave da IA em `.devcontainer/COMO-USAR.md`).
+
+Mensagens de erro da Meta aparecem traduzidas (token expirado, sem permissão, conta não encontrada, limite de consultas). O token vai no cabeçalho `Authorization`, nunca na URL, e as imagens só são baixadas dos domínios da Meta (`fbcdn.net`, `cdninstagram.com`), com limite de 5 MB e tipo conferido. A integração foi testada contra uma API simulada; a primeira consulta real confirma a configuração.
+
+## Exclusão de conteúdos e de clientes
+
+Arquivar continua sendo o caminho reversível. A exclusão definitiva fica com proprietário e administrador:
+
+- **Peças**: na página da peça ("Excluir definitivamente", com confirmação) ou em lote em Conteúdos e na aba Conteúdos do cliente (seleção + confirmação na barra). Apaga versões, aprovações, comentários e relatórios de qualidade. Peças em geração ficam de fora até a geração terminar.
+- **Cliente**: Clientes → cliente → Visão geral → "Excluir cliente". A tela lista o que será apagado e só libera o botão com o nome do cliente digitado. Apaga perfil da marca, memória, arquivos (inclusive os já removidos da biblioteca e guardados para versões antigas), peças, limite de custos, tarefas e skills exclusivas dele. Recusa enquanto houver geração na fila ou em andamento.
+
+O que fica, de propósito:
+
+- **Custos**: as execuções de IA continuam nos totais de Custos e consumo (o provedor já cobrou), sem vínculo com a peça e sem o texto gerado. As de um cliente excluído aparecem como "Nome (excluído)".
+- **Auditoria**: é somente inserção. Registra a exclusão (quem, quando, nome e contagens) e mantém as entradas anteriores, que guardam ações e metadados (por exemplo, nomes de arquivos), não o conteúdo das peças.
+
+Se for preciso apagar também a auditoria de um cliente já excluído (pedido de titular, por exemplo), faça backup e rode:
 
 ```sql
 BEGIN;
 SET LOCAL app.system = 'on';
-SET LOCAL app.allow_purge = 'on';   -- libera exclusão de versões e auditoria
-DELETE FROM clients WHERE id = '<uuid>' AND organization_id = '<uuid>';
+SET LOCAL app.allow_purge = 'on';   -- libera a exclusão na tabela de auditoria
+DELETE FROM audit_logs WHERE client_id = '<uuid>' AND organization_id = '<uuid>';
 COMMIT;
 ```
 
-Em seguida remova `storage/org/<org>/client/<cliente>/`.
+A exclusão pela interface liga `app.allow_purge` só dentro da própria transação: fora dela, versões e auditoria continuam imutáveis.
 
 ## Testes
 

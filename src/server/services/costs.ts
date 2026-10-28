@@ -129,7 +129,7 @@ export async function getCostSummary(auth: AuthContext): Promise<CostSummary> {
       input_tokens: number; output_tokens: number; cost_usd: string | null; estimated_cost_usd: string | null; duration_ms: number | null; error_message: string | null;
     }>(
       tx,
-      `SELECT r.id, r.created_at, c.name AS client_name, r.skill_id, cs.name AS custom_name, r.model, r.status, r.is_demo, r.input_tokens, r.output_tokens,
+      `SELECT r.id, r.created_at, coalesce(c.name, (r.input_summary->>'deletedClient') || ' (excluído)') AS client_name, r.skill_id, cs.name AS custom_name, r.model, r.status, r.is_demo, r.input_tokens, r.output_tokens,
               r.cost_usd::text, r.estimated_cost_usd::text, r.duration_ms, r.error_message
        FROM ai_runs r LEFT JOIN clients c ON c.id = r.client_id
        LEFT JOIN custom_skills cs ON 'custom:' || cs.id::text = r.skill_id

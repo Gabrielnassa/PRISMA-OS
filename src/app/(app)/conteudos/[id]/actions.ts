@@ -1,6 +1,7 @@
 "use server";
 
 import { refresh } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireAuth } from "@/server/auth/next";
 import { runAction, str, type ActionState } from "@/server/actions";
 import {
@@ -13,6 +14,7 @@ import {
   saveVersion,
   submitForApproval,
 } from "@/server/services/content";
+import { deleteContent } from "@/server/services/deletion";
 import { runAiSkill } from "@/server/orchestrator";
 import { reviewerSkill, type ReviewOutput } from "@/server/skills/reviewer";
 import { assertCan } from "@/server/authz/permissions";
@@ -77,6 +79,14 @@ export async function archiveAction(_prev: ActionState, form: FormData): Promise
   return runAction(async () => {
     await archiveContent(auth, str(form, "contentId"));
     refresh();
+  });
+}
+
+export async function deleteContentAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const auth = await requireAuth();
+  return runAction(async () => {
+    await deleteContent(auth, str(form, "contentId"));
+    redirect("/conteudos?excluido=1");
   });
 }
 

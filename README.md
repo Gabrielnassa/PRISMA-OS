@@ -13,6 +13,8 @@ Central operacional de marketing com IA para agências que atendem vários clien
 | Login com sessões no banco, papéis e acesso por cliente | `/login`, Usuários e permissões |
 | Cadastro de clientes e perfil de marca completo (negócio, público, voz, identidade visual, canais, ofertas confirmadas) | Clientes → Perfil da marca |
 | Memória do cliente (fatos, preferências, hipóteses, sugestões) revisável e excluível | Clientes → Memória |
+| Sugestão de cores da marca a partir do logotipo, de fotos ou de um print do perfil; pelo @ do Instagram com a API oficial da Meta (opcional, precisa de token) | Clientes → Perfil da marca |
+| Exclusão definitiva de peças (uma a uma ou em lote) e de clientes (confirmação pelo nome), mantendo custos e auditoria | Conteúdos, Clientes → Visão geral |
 | Biblioteca de mídia com validação do tipo real do arquivo | Clientes → Arquivos, Biblioteca de mídia |
 | Pedido de conteúdo com briefing, sugestão de pautas e escolha de fotos | Central de criação |
 | Skills da agência: criar, importar um SKILL.md (formato das skills do Claude) ou partir de um modelo; versões; executar para um cliente com o contexto da marca; histórico; resultado vira briefing de uma peça; baixar SKILL.md | Agentes e skills |

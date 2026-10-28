@@ -53,7 +53,8 @@ A organização pode exigir que o aprovador seja diferente de quem enviou (Confi
 - Aprovação amarrada ao hash canônico da versão; qualquer edição exige nova aprovação.
 - Gerações de IA respeitam o teto mensal por cliente (interrupção configurável); execuções atendidas por modelo sem tarifa entram no teto por estimativa.
 - Chamadas de IA repetidas com a mesma chave não são cobradas duas vezes (reaproveitamento ou "já em execução"); chamadas interativas têm limite por pessoa por minuto.
-- Exclusões e arquivamentos pedem confirmação explícita na interface.
+- Exclusões e arquivamentos pedem confirmação explícita na interface. Excluir de vez (peças e clientes) é só para proprietário e administrador; excluir um cliente exige digitar o nome dele, conferido também no servidor.
+- Versões e auditoria são imutáveis no banco: a exclusão definitiva liga `app.allow_purge` só dentro da transação que apaga, depois de verificar papel, acesso e o que está em geração.
 - Auditoria somente inserção (`audit_logs`, gatilho bloqueia UPDATE/DELETE).
 
 ## CSRF e cabeçalhos
@@ -69,6 +70,7 @@ A organização pode exigir que o aprovador seja diferente de quem enviou (Confi
 - SVG com `<script>`, manipuladores `on*`, `javascript:`, `foreignObject`, `iframe`/`embed`/`object` ou referências externas é recusado; SVGs aceitos são servidos com CSP `sandbox`.
 - Limite de tamanho (`MAX_UPLOAD_MB`) e de dimensões (12.000 px).
 - Chaves de armazenamento geradas pelo servidor e validadas contra *path traversal*; download somente por rota autenticada com RLS.
+- Sugestão de cores pelo Instagram: a consulta vai só à Graph API da Meta, com o @ validado (letras, números, ponto e sublinhado); as imagens só são baixadas por `https` dos domínios da Meta (`fbcdn.net`, `cdninstagram.com`), inclusive após redirecionamento, com tipo (PNG, JPEG, GIF), tamanho (5 MB) e tempo limitados. A leitura de cores roda no servidor, sobre a imagem reduzida, sem guardar nada além do que a pessoa salvar.
 
 ## Injeção de prompt (seção 20)
 
@@ -81,13 +83,14 @@ A organização pode exigir que o aprovador seja diferente de quem enviou (Confi
 
 - Somente variáveis de ambiente (`.env` fora do Git; `.env.example` sem valores reais).
 - A chave da IA nunca chega ao navegador; a interface mostra apenas se há provedor configurado.
+- O token da Meta (`META_ACCESS_TOKEN`) também fica só no servidor e vai no cabeçalho `Authorization`, nunca na URL (que pode parar em logs).
 - Erros inesperados são registrados no servidor e o usuário recebe mensagem genérica.
 
 ## LGPD
 
 - Dados pessoais armazenados: nome e e-mail de usuários, IP e user-agent de sessões e tentativas de login (o e-mail das tentativas é guardado como hash), contatos/responsáveis informados no perfil do cliente.
 - Finalidade: autenticação, auditoria e operação dos serviços contratados pela agência.
-- Exclusão: memórias são excluíveis pela interface. A exclusão completa de um cliente usa `ON DELETE CASCADE` e exige `app.allow_purge = 'on'` para remover versões e auditoria (procedimento em [OPERATIONS.md](OPERATIONS.md)). Ainda não há tela de exclusão completa de cliente.
+- Exclusão: memórias, arquivos, peças e o cliente inteiro são excluíveis pela interface (cliente e peças: proprietário e administrador). Excluir o cliente apaga perfil, memória, arquivos (também do armazenamento), peças, tarefas e skills exclusivas. Ficam os custos de IA, sem o texto gerado, e a auditoria somente inserção; a remoção da auditoria de um cliente excluído é um procedimento administrativo ([OPERATIONS.md](OPERATIONS.md)).
 - Recomenda-se definir a política de retenção de `login_attempts`, `sessions` e `audit_logs` com o encarregado (DPO) da agência.
 - Provedor de IA: o contexto do cliente é enviado à API da Anthropic para gerar conteúdo. Verifique os termos de retenção de dados da conta antes de usar dados sensíveis.
 

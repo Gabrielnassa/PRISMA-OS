@@ -6,14 +6,15 @@ import { listContents } from "@/server/services/content";
 import { listClients } from "@/server/services/clients";
 import { can } from "@/server/authz/permissions";
 import { CONTENT_STATUSES, STATUS_LABELS, type ContentStatus } from "@/lib/content/status";
-import { FORMAT_LABELS } from "@/lib/content/document";
-import { Card, EmptyState, Input, LinkButton, PageHeader, Select, Table, Td, Th, formatDateTime } from "@/components/ui";
-import { StatusBadge } from "@/components/status";
+import { Alert, Card, EmptyState, Input, LinkButton, PageHeader, Select } from "@/components/ui";
+import { ContentTable } from "@/components/content-table";
+import { toContentRows } from "@/components/content-rows";
+import { deleteContentsAction } from "./actions";
 
 export const metadata: Metadata = { title: "Conteúdos" };
 const PAGE = 30;
 
-export default async function ContentsPage({ searchParams }: { searchParams: Promise<{ cliente?: string; status?: string; q?: string; pagina?: string }> }) {
+export default async function ContentsPage({ searchParams }: { searchParams: Promise<{ cliente?: string; status?: string; q?: string; pagina?: string; excluido?: string }> }) {
   const auth = await requireAuth();
   const sp = await searchParams;
   const clients = await listClients(auth, { includeArchived: true });
@@ -57,52 +58,32 @@ export default async function ContentsPage({ searchParams }: { searchParams: Pro
           Filtrar
         </button>
       </form>
+      {sp.excluido === "1" ? (
+        <div className="mb-6">
+          <Alert tone="success" title="Conteúdo excluído">
+            A peça, suas versões, aprovações e comentários foram apagados.
+          </Alert>
+        </div>
+      ) : null}
       {items.length === 0 ? (
         <EmptyState title="Nenhum conteúdo encontrado" description="Ajuste os filtros ou crie um novo conteúdo." />
       ) : (
         <Card>
-          <Table>
-            <thead>
-              <tr>
-                <Th>Título</Th>
-                <Th>Cliente</Th>
-                <Th>Formato</Th>
-                <Th>Status</Th>
-                <Th>Versão</Th>
-                <Th>Atualizado</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((c) => (
-                <tr key={c.id} className="transition-colors hover:bg-ink-850/50">
-                  <Td>
-                    <Link href={`/conteudos/${c.id}`} className="font-medium text-ink-50 underline-offset-4 hover:underline">
-                      {c.title}
-                    </Link>
-                  </Td>
-                  <Td>{c.clientName}</Td>
-                  <Td>{FORMAT_LABELS[c.format]}</Td>
-                  <Td>
-                    <StatusBadge status={c.status} />
-                  </Td>
-                  <Td>
-                    {c.currentVersion ? `v${c.currentVersion}` : "—"}
-                    {c.hasApprovedVersion ? <span className="ml-1 text-xs text-emerald-300">(aprovada)</span> : null}
-                  </Td>
-                  <Td className="whitespace-nowrap font-mono text-[12px] text-ink-400">{formatDateTime(c.updatedAt)}</Td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-          <div className="flex items-center justify-between px-5 py-3 text-sm text-ink-400">
-            <span>
-              {total} conteúdo(s) · página {page} de {Math.max(1, Math.ceil(total / PAGE))}
-            </span>
-            <span className="flex gap-3">
-              {page > 1 ? <Link href={qs(page - 1)} className="hover:text-ink-50">← Anterior</Link> : null}
-              {page * PAGE < total ? <Link href={qs(page + 1)} className="hover:text-ink-50">Próxima →</Link> : null}
-            </span>
-          </div>
+          <ContentTable
+            items={toContentRows(items)}
+            onDelete={can(auth.role, "content.delete") ? deleteContentsAction : undefined}
+            footer={
+              <div className="flex items-center justify-between px-5 py-3 text-sm text-ink-400">
+                <span>
+                  {total} conteúdo(s) · página {page} de {Math.max(1, Math.ceil(total / PAGE))}
+                </span>
+                <span className="flex gap-3">
+                  {page > 1 ? <Link href={qs(page - 1)} className="hover:text-ink-50">← Anterior</Link> : null}
+                  {page * PAGE < total ? <Link href={qs(page + 1)} className="hover:text-ink-50">Próxima →</Link> : null}
+                </span>
+              </div>
+            }
+          />
         </Card>
       )}
     </>

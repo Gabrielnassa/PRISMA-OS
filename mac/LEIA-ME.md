@@ -95,6 +95,17 @@ Por padrão, só este Mac acessa. Para outra pessoa da agência usar de outro lu
 
 Observações: com `PRISMA_BIND=0.0.0.0`, quem estiver na mesma rede Wi-Fi também enxerga a tela de login (o acesso continua exigindo usuário e senha). O sistema só funciona enquanto o seu Mac estiver ligado. Para uso contínuo da equipe, o próximo passo é um servidor (VPS).
 
+## Cores da marca pelo @ do Instagram (opcional)
+
+Sem configurar nada, o PRISMA OS já sugere as cores a partir do logotipo ou de um print do perfil do cliente. Para buscar direto pelo @, é preciso um token da API oficial da Meta (passo a passo em `docs/OPERATIONS.md`, seção "Instagram: cores da marca pelo @"). Com o token e o ID da conta do Instagram da agência em mãos, acrescente ao arquivo `~/.prisma-os/config.env`:
+
+```
+META_ACCESS_TOKEN=cole-o-token-aqui
+META_IG_USER_ID=17840000000000000
+```
+
+Depois rode **Iniciar PRISMA OS** de novo.
+
 ## Problemas comuns
 
 - **"O Docker Desktop não está instalado"**: faça o passo 1.

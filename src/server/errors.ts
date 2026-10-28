@@ -62,6 +62,13 @@ export class ProviderNotConfiguredError extends AppError {
   }
 }
 
+/** Integração externa ainda não configurada no servidor (nada é simulado no lugar dela). */
+export class IntegrationNotConfiguredError extends AppError {
+  constructor(message: string) {
+    super("integration_not_configured", message, 409);
+  }
+}
+
 export class IntegrationError extends AppError {
   constructor(
     message: string,

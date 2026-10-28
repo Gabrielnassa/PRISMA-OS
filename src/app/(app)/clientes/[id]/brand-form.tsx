@@ -8,8 +8,12 @@ import { contrastRatio } from "@/lib/color";
 import { Card, CardHeader, Field, Input, Select, Textarea, cx } from "@/components/ui";
 import { ActionForm, FormMessage, SubmitButton } from "@/components/form";
 import { saveBrandAction } from "../actions";
+import { ColorSuggest } from "./color-suggest";
+// Fontes das marcas, para a pré-visualização ficar fiel às peças.
+import "./brand-fonts";
 
 type LogoOption = { id: string; filename: string };
+type ImageOption = { id: string; filename: string; kind: string };
 
 const COLOR_FIELDS = [
   ["primary", "Primária"],
@@ -28,10 +32,29 @@ function Section({ title, description, children }: { title: string; description?
   );
 }
 
-export function BrandForm({ clientId, brand, revision, logos, canEdit }: { clientId: string; brand: BrandProfile; revision: number; logos: LogoOption[]; canEdit: boolean }) {
+export function BrandForm({
+  clientId,
+  brand,
+  revision,
+  logos,
+  images,
+  canEdit,
+  canUpload,
+  instagramReady,
+}: {
+  clientId: string;
+  brand: BrandProfile;
+  revision: number;
+  logos: LogoOption[];
+  images: ImageOption[];
+  canEdit: boolean;
+  canUpload: boolean;
+  instagramReady: boolean;
+}) {
   const [state, action] = useActionState(saveBrandAction, { status: "idle" });
   const [colors, setColors] = useState(brand.visual.colors);
   const [fonts, setFonts] = useState({ heading: brand.visual.headingFont, body: brand.visual.bodyFont });
+  const [logoId, setLogoId] = useState(brand.visual.logoAssetId ?? "");
   const err = (k: string) => (state.status === "error" ? state.fieldErrors?.[k] : undefined);
   const textContrast = contrastRatio(colors.text, colors.background);
 
@@ -95,6 +118,17 @@ export function BrandForm({ clientId, brand, revision, logos, canEdit }: { clien
           <CardHeader title="Identidade visual" description="Cores, fontes e logotipo aplicados às peças. A paleta do PRISMA OS não é imposta aos clientes." />
           <div className="grid gap-6 p-5 lg:grid-cols-[1fr_320px]">
             <div className="grid gap-4 md:grid-cols-2">
+              {canEdit ? (
+                <ColorSuggest
+                  clientId={clientId}
+                  images={images}
+                  initialHandle={brand.channels.instagram}
+                  instagramReady={instagramReady}
+                  canUpload={canUpload}
+                  onApply={(c) => setColors(c)}
+                  onLogoSaved={(id) => setLogoId(id)}
+                />
+              ) : null}
               <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3 md:col-span-2">
                 {COLOR_FIELDS.map(([key, label]) => (
                   <Field key={key} label={label} htmlFor={`c-${key}`} error={err(`visual.colors.${key}`)}>
@@ -137,7 +171,7 @@ export function BrandForm({ clientId, brand, revision, logos, canEdit }: { clien
                 </Select>
               </Field>
               <Field label="Logotipo" htmlFor="logo" hint={logos.length === 0 ? "Envie o logotipo na aba Arquivos (tipo Logotipo)." : undefined}>
-                <Select id="logo" name="visual.logoAssetId" defaultValue={brand.visual.logoAssetId ?? ""}>
+                <Select id="logo" name="visual.logoAssetId" value={logoId} onChange={(e) => setLogoId(e.target.value)}>
                   <option value="">Sem logotipo (usa o @ do Instagram)</option>
                   {logos.map((l) => (
                     <option key={l.id} value={l.id}>
@@ -150,7 +184,7 @@ export function BrandForm({ clientId, brand, revision, logos, canEdit }: { clien
                 <legend className="mb-2 text-sm font-medium text-ink-200">Famílias de layout preferidas</legend>
                 <div className="flex flex-wrap gap-2">
                   {TEMPLATE_FAMILIES.map((f) => (
-                    <label key={f} className="flex cursor-pointer items-center gap-2 rounded-md border border-ink-700 px-3 py-1.5 text-[13px] has-[:checked]:border-violet-400/70 has-[:checked]:bg-violet-400/[0.06] has-[:checked]:bg-violet-500/10">
+                    <label key={f} className="flex cursor-pointer items-center gap-2 rounded-md border border-ink-700 px-3 py-1.5 text-[13px] has-[:checked]:border-violet-400/70 has-[:checked]:bg-violet-400/[0.06]">
                       <input type="checkbox" name="visual.preferredFamilies" value={f} defaultChecked={brand.visual.preferredFamilies.includes(f)} className="accent-violet-400" />
                       {FAMILY_LABELS[f]}
                     </label>
@@ -213,7 +247,7 @@ export function BrandForm({ clientId, brand, revision, logos, canEdit }: { clien
               <p className={cx("mt-3 text-xs", textContrast >= 4.5 ? "text-emerald-300" : "text-amber-300")}>
                 Contraste texto/fundo: {textContrast.toFixed(1)}:1 {textContrast >= 4.5 ? "(adequado)" : "(abaixo de 4,5:1; o motor ajusta automaticamente)"}
               </p>
-              <p className="mt-2 text-xs text-ink-400">A pré-visualização usa fontes do navegador; as peças finais usam as fontes empacotadas.</p>
+              <p className="mt-2 text-xs text-ink-400">Prévia aproximada, com as mesmas fontes das peças finais.</p>
             </div>
           </div>
         </Card>

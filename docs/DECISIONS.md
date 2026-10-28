@@ -78,3 +78,11 @@ A chave efetiva inclui skill, versão, provedor/modelo e um resumo da entrada. A
 
 O resvg (renderizador das peças finais) não decodifica WebP: a foto apareceria na pré-visualização do navegador e sumiria do PNG exportado. Até haver conversão no servidor, o envio de WebP é recusado com orientação para enviar JPEG ou PNG.
 
+
+## 20. Cores pelo Instagram só pela API oficial
+
+Raspar o site do Instagram quebraria os termos de uso e mudaria sem aviso. A sugestão pelo @ usa a consulta "Business Discovery" da Graph API, com o token da própria agência em variável de ambiente; sem token, a tela diz o que falta e oferece o caminho que funciona sempre: ler as cores do logotipo, de fotos ou de um print do perfil. A leitura das cores é local (resvg reduz a imagem; as cores são agrupadas em CIELAB, que aproxima a percepção humana) e só preenche o formulário: quem decide é a pessoa, e "Identidade visual definida" continua sendo uma confirmação humana.
+
+## 21. Exclusão definitiva sem apagar custos nem auditoria
+
+Arquivar é o caminho reversível; excluir apaga de vez peças e clientes, só por proprietário e administrador, com confirmação (o nome do cliente é conferido no servidor). As execuções de IA ficam nos totais de custos, sem vínculo e sem o texto gerado, porque o provedor já cobrou e o relatório do mês precisa fechar. A auditoria continua somente inserção e registra a exclusão; apagá-la é um procedimento administrativo à parte (OPERATIONS.md). Alternativa descartada: lixeira com restauração, que manteria os dados do cliente guardados depois de a agência pedir a exclusão.

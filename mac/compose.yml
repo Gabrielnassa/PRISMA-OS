@@ -19,6 +19,9 @@ x-app: &app
     STORAGE_LOCAL_DIR: /app/storage
     ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     ANTHROPIC_EFFORT: ${ANTHROPIC_EFFORT:-}
+    # Opcional: cores da marca pelo @ do Instagram (API oficial da Meta).
+    META_ACCESS_TOKEN: ${META_ACCESS_TOKEN:-}
+    META_IG_USER_ID: ${META_IG_USER_ID:-}
   volumes:
     - storage:/app/storage
 

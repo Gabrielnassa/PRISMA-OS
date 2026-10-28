@@ -31,6 +31,10 @@ Sem a chave, você cria as peças pelos templates e escreve os textos no editor.
 
 O uso é cobrado na conta da Anthropic dona da chave. Crie a chave num workspace só para o PRISMA OS e defina um limite de gasto mensal no Console da Anthropic.
 
+## Cores pelo @ do Instagram (opcional)
+
+Sem isso, o sistema sugere as cores pelo logotipo ou por um print do perfil do cliente. Para buscar pelo @, crie mais dois secrets pelo mesmo caminho da chave da IA: `META_ACCESS_TOKEN` (token da API oficial da Meta) e `META_IG_USER_ID` (ID da conta do Instagram da agência). Como obter os dois: `docs/OPERATIONS.md`, seção "Instagram: cores da marca pelo @". Depois pare e abra o Codespace de novo.
+
 ## Uso no dia a dia
 
 - Para voltar ao sistema: em https://github.com/codespaces, abra este Codespace. O PRISMA OS liga sozinho em cerca de 30 segundos. Depois use o endereço salvo ou a aba **Portas**.

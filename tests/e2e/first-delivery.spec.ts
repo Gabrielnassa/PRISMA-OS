@@ -53,7 +53,7 @@ test("ciclo completo: briefing → texto → arte → revisão → aprovação �
   await page.locator("#c-text").fill("#0f172a");
   await page.getByLabel("Fonte dos títulos").selectOption("nunito");
   await page.getByLabel("Logotipo").selectOption({ label: "logo.png (logotipo)" });
-  await page.getByLabel("Instagram").fill("@bemviver");
+  await page.getByLabel("Instagram", { exact: true }).fill("@bemviver");
   await page.getByText("Identidade visual definida").click();
   await page.getByRole("button", { name: "Salvar perfil da marca" }).click();
   await expect(page.getByText("Perfil da marca salvo.")).toBeVisible();

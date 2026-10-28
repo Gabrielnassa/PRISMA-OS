@@ -5,18 +5,22 @@ import { notFound } from "next/navigation";
 import { requireAuth } from "@/server/auth/next";
 import { getClient, listMemories, MEMORY_KIND_LABELS } from "@/server/services/clients";
 import { listMedia } from "@/server/services/media";
+import { instagramStatus } from "@/server/integrations/instagram";
 import { listContents } from "@/server/services/content";
 import { getCostSummary } from "@/server/services/costs";
+import { getClientDeletionSummary } from "@/server/services/deletion";
 import { can } from "@/server/authz/permissions";
 import { NotFoundError } from "@/server/errors";
 import { brandCompleteness } from "@/lib/brand";
-import { FORMAT_LABELS } from "@/lib/content/document";
-import { Alert, Badge, Card, CardHeader, EmptyState, LinkButton, PageHeader, TabLinks, Table, Td, Th, formatDateTime, formatUsd } from "@/components/ui";
-import { StatusBadge } from "@/components/status";
+import { Alert, Badge, Card, CardHeader, EmptyState, LinkButton, PageHeader, TabLinks, formatDateTime, formatUsd } from "@/components/ui";
+import { ContentTable } from "@/components/content-table";
+import { toContentRows } from "@/components/content-rows";
 import { MediaUploader } from "@/components/media-uploader";
 import { MediaGrid } from "@/components/media-grid";
 import { deleteMediaAction } from "../../midia/actions";
 import { memoryStatusAction } from "../actions";
+import { deleteContentsAction } from "../../conteudos/actions";
+import { DeleteClientCard } from "./delete-client";
 import { BrandForm } from "./brand-form";
 import { AddMemoryForm } from "./memory-panel";
 import { BudgetForm, ClientSettingsForm } from "./settings-forms";
@@ -133,6 +137,7 @@ async function Overview({ auth, client, completeness }: { auth: Auth; client: Cl
             <BudgetForm clientId={client.id} budget={{ limitUsd: myCosts?.limitUsd ?? null, alertPct: myCosts?.alertPct ?? null, hardStop: myCosts?.hardStop ?? null }} />
           </Card>
         ) : null}
+        {can(auth.role, "client.delete") ? <DeleteClientCard clientId={client.id} summary={await getClientDeletionSummary(auth, client.id)} /> : null}
       </div>
     </div>
   );
@@ -146,7 +151,13 @@ async function BrandTab({ auth, client }: { auth: Auth; client: Client }) {
       brand={client.brand}
       revision={client.brandRevision}
       logos={logos.items.map((l) => ({ id: l.id, filename: `${l.filename}${l.kind === "logo" ? " (logotipo)" : ""}` }))}
+      images={logos.items
+        .filter((l) => /^image\/(png|jpe?g|gif|svg\+xml)$/.test(l.mimeType))
+        .sort((x, y) => Number(y.kind === "logo") - Number(x.kind === "logo"))
+        .map((l) => ({ id: l.id, filename: l.filename, kind: l.kind }))}
       canEdit={can(auth.role, "client.update")}
+      canUpload={can(auth.role, "media.upload")}
+      instagramReady={instagramStatus().configured}
     />
   );
 }
@@ -223,34 +234,7 @@ async function ContentsTab({ auth, clientId }: { auth: Auth; clientId: string })
   if (items.length === 0) return <EmptyState title="Nenhum conteúdo" description="Os conteúdos deste cliente aparecerão aqui." action={can(auth.role, "content.create") ? <LinkButton href={`/criar?cliente=${clientId}`}>Criar conteúdo</LinkButton> : undefined} />;
   return (
     <Card>
-      <Table>
-        <thead>
-          <tr>
-            <Th>Título</Th>
-            <Th>Formato</Th>
-            <Th>Situação</Th>
-            <Th>Versão</Th>
-            <Th>Atualizado</Th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((c) => (
-            <tr key={c.id} className="transition-colors hover:bg-ink-850/50">
-              <Td>
-                <Link className="font-medium text-ink-50 underline-offset-4 hover:underline" href={`/conteudos/${c.id}`}>
-                  {c.title}
-                </Link>
-              </Td>
-              <Td>{FORMAT_LABELS[c.format]}</Td>
-              <Td>
-                <StatusBadge status={c.status} />
-              </Td>
-              <Td>{c.currentVersion ? `v${c.currentVersion}` : "—"}</Td>
-              <Td className="whitespace-nowrap font-mono text-[12px] text-ink-400">{formatDateTime(c.updatedAt)}</Td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
+      <ContentTable items={toContentRows(items)} showClient={false} onDelete={can(auth.role, "content.delete") ? deleteContentsAction : undefined} />
     </Card>
   );
 }

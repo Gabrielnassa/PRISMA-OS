@@ -15,6 +15,9 @@ import {
 } from "@/server/services/clients";
 import { setClientBudget } from "@/server/services/costs";
 import type { BrandProfile, TemplateFamily } from "@/lib/brand";
+import { suggestColorsFromInstagram, suggestColorsFromMedia, type InstagramColors } from "@/server/services/brand-colors";
+import { deleteClient } from "@/server/services/deletion";
+import type { PaletteSuggestion } from "@/server/brand/palette";
 
 export async function createClientAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const auth = await requireAuth();
@@ -36,6 +39,14 @@ export async function updateClientAction(_prev: ActionState, form: FormData): Pr
     });
     refresh();
     return { message: "Dados do cliente atualizados." };
+  });
+}
+
+export async function deleteClientAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const auth = await requireAuth();
+  return runAction(async () => {
+    await deleteClient(auth, str(form, "clientId"), str(form, "confirmation"));
+    redirect("/clientes?excluido=1");
   });
 }
 
@@ -148,5 +159,21 @@ export async function budgetAction(_prev: ActionState, form: FormData): Promise<
     });
     refresh();
     return { message: "Limite de consumo salvo." };
+  });
+}
+
+// --- Sugestão de cores da marca (chamadas diretas do formulário do perfil) ---
+
+export async function suggestColorsFromMediaAction(clientId: string, mediaIds: string[]): Promise<ActionState<PaletteSuggestion>> {
+  const auth = await requireAuth();
+  return runAction(async () => ({ data: await suggestColorsFromMedia(auth, String(clientId), Array.isArray(mediaIds) ? mediaIds.map(String) : []) }));
+}
+
+export async function suggestColorsFromInstagramAction(clientId: string, handle: string, saveProfilePicture: boolean): Promise<ActionState<InstagramColors>> {
+  const auth = await requireAuth();
+  return runAction(async () => {
+    const data = await suggestColorsFromInstagram(auth, String(clientId), String(handle ?? ""), { saveProfilePicture: saveProfilePicture === true });
+    if (data.savedLogoId) refresh();
+    return { data };
   });
 }
