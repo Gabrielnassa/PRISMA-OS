@@ -52,8 +52,9 @@ test("cores pelo logotipo, exclusão de peças e do cliente", async ({ page }) =
   }
 
   // Pela página da peça: confirmação e volta para a lista.
-  page.once("dialog", (d) => void d.accept());
   await page.getByRole("button", { name: "Excluir definitivamente" }).click();
+  // Confirmação na janela própria do sistema.
+  await page.getByRole("dialog", { name: "Confirmação" }).getByRole("button", { name: "Excluir definitivamente" }).click();
   await expect(page).toHaveURL(/\/conteudos\?excluido=1$/);
   await expect(page.getByText("Conteúdo excluído")).toBeVisible();
   await expect(page.getByRole("link", { name: "Pão de queijo às sextas" })).toHaveCount(0);
@@ -66,6 +67,7 @@ test("cores pelo logotipo, exclusão de peças e do cliente", async ({ page }) =
   await expect(page.getByText(/Excluir 2 conteúdos de vez\?/)).toBeVisible();
   await shot(page, "09-exclusao-em-lote");
   await page.getByRole("button", { name: "Sim, excluir" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "2 conteúdos excluídos." })).toBeVisible();
   await expect(page.getByText("Nenhum conteúdo encontrado")).toBeVisible();
   await page.goto("/conteudos");
   await expect(page.locator("main table a").first()).toBeVisible();

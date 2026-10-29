@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { Button, Field, Input, Select } from "./ui";
+import { Button, Field, Input, Select, cx } from "./ui";
 import { Icon } from "./icons";
 
 type Result = { filename: string; id?: string; duplicate?: boolean; error?: string };
@@ -13,6 +13,10 @@ export function MediaUploader({ clientId, defaultKind = "image" }: { clientId: s
   const [busy, setBusy] = useState(false);
   const [results, setResults] = useState<Result[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [picked, setPicked] = useState<string[]>([]);
+  const [over, setOver] = useState(false);
+
+  const syncPicked = () => setPicked(Array.from(inputRef.current?.files ?? []).map((f) => f.name));
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -30,6 +34,7 @@ export function MediaUploader({ clientId, defaultKind = "image" }: { clientId: s
       if (!res.ok) throw new Error(json?.error?.message ?? "Falha no envio");
       setResults(json.results);
       if (inputRef.current) inputRef.current.value = "";
+      setPicked([]);
       router.refresh();
     } catch (err) {
       setError((err as Error).message);
@@ -42,15 +47,45 @@ export function MediaUploader({ clientId, defaultKind = "image" }: { clientId: s
     <form onSubmit={onSubmit} className="grid gap-4 p-5 md:grid-cols-[2fr_1fr_1fr_auto] md:items-end">
       <input type="hidden" name="clientId" value={clientId} />
       <Field label="Arquivos" htmlFor="files" hint="PNG, JPEG, GIF, SVG, PDF, MP4 ou MOV. O tipo real é verificado no servidor.">
-        <input
-          ref={inputRef}
-          id="files"
-          name="files"
-          type="file"
-          multiple
-          accept="image/png,image/jpeg,image/gif,image/svg+xml,application/pdf,video/mp4,video/quicktime"
-          className="block w-full text-sm text-ink-300 file:mr-3 file:rounded-lg file:border-0 file:bg-ink-700 file:px-3 file:py-2 file:text-sm file:text-ink-100 hover:file:bg-ink-600"
-        />
+        {/* Área de soltar: arraste fotos e vídeos ou clique para escolher. */}
+        <label
+          onDragOver={(e) => {
+            e.preventDefault();
+            setOver(true);
+          }}
+          onDragLeave={() => setOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setOver(false);
+            if (inputRef.current && e.dataTransfer.files.length) {
+              inputRef.current.files = e.dataTransfer.files;
+              syncPicked();
+            }
+          }}
+          className={cx(
+            "flex min-h-[76px] cursor-pointer flex-col items-center justify-center gap-1 rounded-[var(--radius-card)] border border-dashed px-4 py-3 text-center text-[13px] transition-colors has-[:focus-visible]:border-iris-400",
+            over ? "border-iris-400 bg-iris-400/[0.07] text-ink-50" : "border-ink-600 text-ink-300 hover:border-ink-400",
+          )}
+        >
+          <input
+            ref={inputRef}
+            id="files"
+            name="files"
+            type="file"
+            multiple
+            onChange={syncPicked}
+            accept="image/png,image/jpeg,image/gif,image/svg+xml,application/pdf,video/mp4,video/quicktime"
+            className="sr-only"
+          />
+          {picked.length ? (
+            <span className="text-ink-50">{picked.length === 1 ? picked[0] : `${picked.length} arquivos selecionados`}</span>
+          ) : (
+            <>
+              <span className="font-medium text-ink-100">Arraste fotos e vídeos aqui</span>
+              <span className="text-ink-400">ou clique para escolher</span>
+            </>
+          )}
+        </label>
       </Field>
       <Field label="Tipo" htmlFor="kind">
         <Select id="kind" name="kind" defaultValue={defaultKind}>

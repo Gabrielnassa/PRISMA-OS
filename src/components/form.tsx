@@ -1,7 +1,8 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-import { createContext, use, useEffect, useRef, useTransition, type ComponentProps } from "react";
+import { createContext, use, useEffect, useRef, useState, useTransition, type ComponentProps } from "react";
+import { ConfirmDialog } from "./confirm-dialog";
 import { buttonClass, cx } from "./ui";
 import type { ActionState } from "@/server/actions";
 
@@ -11,7 +12,8 @@ const PendingContext = createContext(false);
  * Formulário de Server Action que NÃO é limpo automaticamente pelo React 19 ao
  * terminar a ação: em caso de erro, tudo que a pessoa digitou continua no
  * formulário. Use `resetOnSuccess` para limpar depois de um envio bem-sucedido
- * e `confirmMessage` para pedir confirmação antes de ações irreversíveis.
+ * e `confirmMessage` para pedir confirmação (janela própria do sistema) antes
+ * de ações irreversíveis; `confirmLabel` e `danger` ajustam o botão dela.
  * Sem JavaScript, o envio continua funcionando pela própria Server Action.
  */
 export function ActionForm({
@@ -19,6 +21,8 @@ export function ActionForm({
   state,
   resetOnSuccess = false,
   confirmMessage,
+  confirmLabel,
+  danger,
   children,
   ...props
 }: Omit<ComponentProps<"form">, "action" | "onSubmit"> & {
@@ -26,8 +30,11 @@ export function ActionForm({
   state?: ActionState<unknown>;
   resetOnSuccess?: boolean;
   confirmMessage?: string;
+  confirmLabel?: string;
+  danger?: boolean;
 }) {
   const [pending, startTransition] = useTransition();
+  const [waiting, setWaiting] = useState<FormData | null>(null);
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (resetOnSuccess && state?.status === "ok") ref.current?.reset();
@@ -41,13 +48,30 @@ export function ActionForm({
         onSubmit={(e) => {
           e.preventDefault();
           if (pending) return;
-          if (confirmMessage && !window.confirm(confirmMessage)) return;
           const formData = new FormData(e.currentTarget, (e.nativeEvent as SubmitEvent).submitter);
+          if (confirmMessage) {
+            setWaiting(formData);
+            return;
+          }
           startTransition(() => action(formData));
         }}
       >
         {children}
       </form>
+      {confirmMessage ? (
+        <ConfirmDialog
+          open={waiting !== null}
+          message={confirmMessage}
+          confirmLabel={confirmLabel}
+          danger={danger}
+          onCancel={() => setWaiting(null)}
+          onConfirm={() => {
+            const data = waiting;
+            setWaiting(null);
+            if (data) startTransition(() => action(data));
+          }}
+        />
+      ) : null}
     </PendingContext>
   );
 }

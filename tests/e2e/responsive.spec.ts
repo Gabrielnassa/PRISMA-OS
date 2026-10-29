@@ -11,7 +11,7 @@ test("interface utilizável no celular, sem rolagem horizontal", async ({ page }
   }
   // Página de uma peça (editor, revisão e histórico): também sem rolagem horizontal.
   await page.goto("/conteudos");
-  await page.locator("main table a").first().click();
+  await page.locator('main a[href^="/conteudos/"]:visible').first().click();
   await expect(page).toHaveURL(/\/conteudos\/[0-9a-f-]+/);
   await expect(page.locator("main h1")).toBeVisible();
   const contentOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

@@ -7,7 +7,7 @@ import { listClients } from "@/server/services/clients";
 import { providerStatus } from "@/server/ai/gateway";
 import { can } from "@/server/authz/permissions";
 import { CONTENT_STATUSES, STATUS_LABELS, type ContentStatus } from "@/lib/content/status";
-import { Alert, Card, CardHeader, EmptyState, LinkButton, PageHeader, Select, Stat, StatGroup, Table, Td, Th, buttonClass, cx, formatDateTime, formatUsd } from "@/components/ui";
+import { Alert, Card, CardHeader, EmptyState, LinkButton, PageHeader, Select, Stat, StatGroup, Table, Td, Th, buttonClass, cx, formatDateTime, formatRelative, formatUsd } from "@/components/ui";
 import { StatusBadge } from "@/components/status";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -145,7 +145,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                           <div className="truncate text-[14px] font-medium text-ink-100">{r.title}</div>
                           <div className="mt-0.5 flex gap-2 text-[12.5px] text-ink-400">
                             <span className="truncate">{r.clientName}</span>
-                            <span className="shrink-0 tabular text-[11.5px] text-ink-400">{formatDateTime(r.updatedAt)}</span>
+                            <span className="shrink-0 text-[12px] text-ink-400" title={formatDateTime(r.updatedAt)}>{formatRelative(r.updatedAt)}</span>
                           </div>
                         </div>
                         <StatusBadge status={r.status} />

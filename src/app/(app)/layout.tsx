@@ -2,6 +2,7 @@ import { requireAuth } from "@/server/auth/next";
 import { providerStatus } from "@/server/ai/gateway";
 import { ROLE_LABELS } from "@/server/authz/permissions";
 import { Sidebar, type ShellInfo } from "@/components/shell/sidebar";
+import { ToastProvider } from "@/components/toast";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const auth = await requireAuth();
@@ -17,11 +18,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       : { state: "off", label: "IA não configurada", detail: provider.detail },
   };
   return (
-    <div className="min-h-dvh lg:flex">
-      <Sidebar info={info} />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <main className="mx-auto w-full max-w-[1320px] flex-1 px-4 pb-16 pt-7 sm:px-6 md:px-10 md:pt-10">{children}</main>
+    <ToastProvider>
+      <div className="min-h-dvh lg:flex">
+        <Sidebar info={info} />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <main className="mx-auto w-full max-w-[1320px] flex-1 px-4 pb-16 pt-7 sm:px-6 md:px-10 md:pt-10">{children}</main>
+        </div>
       </div>
-    </div>
+    </ToastProvider>
   );
 }

@@ -1,6 +1,6 @@
 import type { ContentListItem } from "@/server/services/content";
 import type { ContentRow } from "./content-table";
-import { formatDateTime } from "./ui";
+import { formatDateTime, formatRelative } from "./ui";
 
 /** Só o que a tabela de conteúdos precisa (vai para o navegador). */
 export function toContentRows(items: ContentListItem[]): ContentRow[] {
@@ -12,6 +12,7 @@ export function toContentRows(items: ContentListItem[]): ContentRow[] {
     status: c.status,
     currentVersion: c.currentVersion,
     hasApprovedVersion: c.hasApprovedVersion,
-    updatedLabel: formatDateTime(c.updatedAt),
+    updatedLabel: formatRelative(c.updatedAt),
+    updatedTitle: formatDateTime(c.updatedAt),
   }));
 }

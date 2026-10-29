@@ -4,7 +4,7 @@ import { requireAuth } from "@/server/auth/next";
 import { listPendingApprovals } from "@/server/services/content";
 import { can } from "@/server/authz/permissions";
 import { FORMAT_LABELS } from "@/lib/content/document";
-import { Badge, Card, EmptyState, PageHeader, formatDateTime } from "@/components/ui";
+import { Badge, Card, EmptyState, PageHeader, formatDateTime, formatRelative } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Aprovações" };
 
@@ -39,7 +39,7 @@ export default async function ApprovalsPage() {
                     {a.warningCount ? <Badge tone="warning">{a.warningCount} alerta(s) de qualidade</Badge> : null}
                   </div>
                   <p className="text-xs text-ink-400">
-                    Pedido por {a.requestedByName ?? "—"} em {formatDateTime(a.requestedAt)}
+                    Pedido por {a.requestedByName ?? "—"} <span title={formatDateTime(a.requestedAt)}>{formatRelative(a.requestedAt)}</span>
                   </p>
                   {a.requestNote ? <p className="text-sm text-ink-200">“{a.requestNote}”</p> : null}
                   <div className="mt-auto pt-2">
