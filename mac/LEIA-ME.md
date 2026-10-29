@@ -95,6 +95,10 @@ Por padrão, só este Mac acessa. Para outra pessoa da agência usar de outro lu
 
 Observações: com `PRISMA_BIND=0.0.0.0`, quem estiver na mesma rede Wi-Fi também enxerga a tela de login (o acesso continua exigindo usuário e senha). O sistema só funciona enquanto o seu Mac estiver ligado. Para uso contínuo da equipe, o próximo passo é um servidor (VPS).
 
+## Usar o ChatGPT no lugar do Claude (opcional)
+
+Rode **Configurar chave da IA**, escolha **2) ChatGPT (OpenAI)** e cole a chave criada em platform.openai.com > API keys. A assinatura do ChatGPT (Plus/Pro) não inclui chave de API: o uso da API é cobrado à parte, com saldo adicionado em Billing. Para voltar ao Claude, rode o atalho de novo e escolha 1.
+
 ## Cores da marca pelo @ do Instagram (opcional)
 
 Sem configurar nada, o PRISMA OS já sugere as cores a partir do logotipo ou de um print do perfil do cliente. Para buscar direto pelo @, é preciso um token da API oficial da Meta (passo a passo em `docs/OPERATIONS.md`, seção "Instagram: cores da marca pelo @"). Com o token e o ID da conta do Instagram da agência em mãos, acrescente ao arquivo `~/.prisma-os/config.env`:

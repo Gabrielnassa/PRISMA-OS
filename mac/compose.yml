@@ -19,6 +19,10 @@ x-app: &app
     STORAGE_LOCAL_DIR: /app/storage
     ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     ANTHROPIC_EFFORT: ${ANTHROPIC_EFFORT:-}
+    # Opcional: ChatGPT (OpenAI) no lugar do Claude. AI_PROVIDER escolhe quando houver as duas chaves.
+    OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    OPENAI_MODEL: ${OPENAI_MODEL:-gpt-6.1-sol}
+    AI_PROVIDER: ${AI_PROVIDER:-}
     # Opcional: cores da marca pelo @ do Instagram (API oficial da Meta).
     META_ACCESS_TOKEN: ${META_ACCESS_TOKEN:-}
     META_IG_USER_ID: ${META_IG_USER_ID:-}

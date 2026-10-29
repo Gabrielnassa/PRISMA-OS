@@ -18,6 +18,10 @@
       "description": "Opcional. Chave da API Anthropic para gerar textos com IA. Sem ela, as peças são criadas pelos templates.",
       "documentationUrl": "https://platform.claude.com"
     },
+    "OPENAI_API_KEY": {
+      "description": "Opcional. Chave da API OpenAI (ChatGPT), criada em platform.openai.com > API keys. Usada quando não há chave da Anthropic ou com AI_PROVIDER=openai.",
+      "documentationUrl": "https://platform.openai.com/api-keys"
+    },
     "META_ACCESS_TOKEN": {
       "description": "Opcional. Token da API oficial da Meta (instagram_basic, pages_read_engagement) para sugerir cores da marca pelo @ do Instagram."
     },

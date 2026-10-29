@@ -12,12 +12,16 @@ const EnvSchema = z.object({
   STORAGE_DRIVER: z.enum(["local"]).default("local"),
   STORAGE_LOCAL_DIR: z.string().default("./storage"),
   MAX_UPLOAD_MB: z.coerce.number().min(1).max(200).default(15),
-  AI_PROVIDER: z.enum(["anthropic", "demo", "none"]).optional(),
+  AI_PROVIDER: z.enum(["anthropic", "openai", "demo", "none"]).optional(),
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
   ANTHROPIC_MODEL: z.string().min(1).default("claude-opus-5-5"),
   // Opcional: substitui o esforço definido por skill (ideias "low", textos e revisão "medium").
   ANTHROPIC_EFFORT: z.enum(["low", "medium", "high", "xhigh", "max"]).optional(),
   ANTHROPIC_FALLBACKS: z.enum(["default", "off"]).default("default"),
+  // OpenAI (chave da API em platform.openai.com; a assinatura do ChatGPT não inclui API).
+  OPENAI_API_KEY: z.string().min(1).optional(),
+  OPENAI_MODEL: z.string().min(1).default("gpt-6.1-sol"),
+  OPENAI_EFFORT: z.enum(["low", "medium", "high", "xhigh", "max"]).optional(),
   AI_TIMEOUT_MS: z.coerce.number().int().min(5_000).max(600_000).default(180_000),
   GENERATION_RATE_PER_MINUTE: z.coerce.number().int().min(1).max(600).default(10),
   WORKER_POLL_MS: z.coerce.number().int().min(100).max(60_000).default(1_000),

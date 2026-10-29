@@ -49,7 +49,7 @@ export interface ProviderStatus {
 }
 
 export interface AiProvider {
-  readonly id: "anthropic" | "demo";
+  readonly id: "anthropic" | "openai" | "demo";
   readonly label: string;
   readonly model: string;
   readonly isDemo: boolean;

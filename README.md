@@ -28,6 +28,7 @@ Central operacional de marketing com IA para agências que atendem vários clien
 | Dashboard com dados reais e filtros por cliente, período, canal e status | Dashboard |
 | Auditoria de ações, custos por execução de IA (por modelo, inclusive fallback), tetos mensais por cliente | Histórico, Custos e consumo |
 | Saúde do sistema e teste real de conexão com a IA | Integrações, `GET /api/health` |
+| IA à escolha: Claude (Anthropic) ou ChatGPT (OpenAI), com custos por modelo nos dois | Integrações, `.env` |
 
 ## Rodar pelo GitHub (Codespaces)
 
@@ -56,7 +57,7 @@ docker compose up -d postgres                 # cria papéis e bancos automatica
 PGUSER=postgres ./scripts/setup-local-db.sh
 
 # 2. Configuração
-cp .env.example .env                          # ajuste senhas e, se tiver, ANTHROPIC_API_KEY
+cp .env.example .env                          # ajuste senhas e, se tiver, ANTHROPIC_API_KEY ou OPENAI_API_KEY
 
 # 3. Migrations (cria tabelas, políticas de RLS e concede o papel da aplicação)
 npm run db:migrate
@@ -68,7 +69,7 @@ npm run admin:create -- --org "Minha Agência" --name "Seu Nome" --email voce@ag
 npm run dev                                   # http://localhost:3000
 ```
 
-Sem `ANTHROPIC_API_KEY`, defina `AI_PROVIDER=demo` para testar o fluxo completo: os textos são montados a partir do próprio briefing, **sem IA**, e tudo fica identificado como "Demonstração" na interface e no banco. O modo demonstração é bloqueado quando `NODE_ENV=production`.
+Sem `ANTHROPIC_API_KEY` nem `OPENAI_API_KEY`, defina `AI_PROVIDER=demo` para testar o fluxo completo: os textos são montados a partir do próprio briefing, **sem IA**, e tudo fica identificado como "Demonstração" na interface e no banco. O modo demonstração é bloqueado quando `NODE_ENV=production`.
 
 ## Comandos
 

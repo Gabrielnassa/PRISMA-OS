@@ -31,9 +31,12 @@ Veja `.env.example`. As essenciais:
 | `ANTHROPIC_MODEL` | não | Padrão `claude-opus-5-5` |
 | `ANTHROPIC_EFFORT` | não | Vazio = esforço de cada skill (ideias `low`; textos e revisão `medium`). `low`…`max` força o mesmo esforço para todas |
 | `ANTHROPIC_FALLBACKS` | não | `default` (fallback do servidor em recusas por política) ou `off` |
+| `OPENAI_API_KEY` | para IA (alternativa) | Chave da API OpenAI (ChatGPT), criada em platform.openai.com → API keys. A assinatura do ChatGPT não inclui chave de API |
+| `OPENAI_MODEL` | não | Padrão `gpt-6.1-sol`. Outros da lista oficial do SDK: `gpt-6-astra` (topo, mais caro), `gpt-6.1-terra` (mais barato) |
+| `OPENAI_EFFORT` | não | Vazio = esforço de cada skill; `low`…`max` força o mesmo para todas |
 | `STORAGE_LOCAL_DIR` | não | Diretório dos arquivos (padrão `./storage`) — use volume persistente |
 | `TRUST_PROXY` | não | `true` somente atrás de **um** proxy confiável que acrescenta o IP do cliente ao `X-Forwarded-For` (usa-se o último valor). Sem isso, o limite de tentativas de login usa o e-mail e um limite global para IP desconhecido |
-| `AI_PROVIDER` | não | `anthropic`, `demo` (bloqueado em produção) ou `none` |
+| `AI_PROVIDER` | não | `anthropic`, `openai`, `demo` (bloqueado em produção) ou `none`. Sem ele: Claude se houver `ANTHROPIC_API_KEY`, senão OpenAI |
 | `AI_TIMEOUT_MS` | não | Tempo limite por chamada à IA (padrão 180000) |
 | `JOB_LOCK_TIMEOUT_MS` | não | Reserva de uma tarefa sem renovação antes de ser considerada abandonada (padrão 600000; o worker renova a cada ¼ desse valor) |
 | `GENERATION_RATE_PER_MINUTE` | não | Gerações e chamadas interativas de IA por pessoa por minuto (padrão 10) |
@@ -149,6 +152,16 @@ Ao criar ou alterar um template, recalibre a capacidade de texto e copie o resul
 npx tsx scripts/calibrate-capacity.ts [filtro-de-id]
 npx vitest run --project unit tests/unit/capacity.test.ts
 ```
+
+## ChatGPT (OpenAI) no lugar do Claude
+
+O sistema funciona com qualquer um dos dois provedores; as skills, a fila, o controle de qualidade e os custos são os mesmos. Para usar a OpenAI:
+
+1. Em platform.openai.com → API keys, crie uma chave e, em Billing, adicione saldo (a assinatura do ChatGPT Plus/Pro não serve para a API).
+2. Defina `OPENAI_API_KEY` (e `AI_PROVIDER=openai` se também houver chave da Anthropic). Servidor: variável de ambiente; Mac: atalho **Configurar chave da IA** → opção 2; Codespaces: secret `OPENAI_API_KEY`.
+3. Reinicie e use Integrações → "Testar conexão".
+
+Detalhes: Responses API com saída em JSON Schema estrito, esforço de raciocínio por skill e `store: false` (as respostas não ficam guardadas na conta da OpenAI). Tokens em cache são separados dos de entrada para cada parte ser cobrada pela sua tarifa. As tarifas iniciais (`gpt-6.1-sol`, `gpt-6.1-terra`, `gpt-6-astra`) vieram de agregadores porque o site da OpenAI não estava acessível na configuração: confira em openai.com/api/pricing e ajuste em Custos e consumo. Modelo sem tarifa cadastrada entra no teto por estimativa, como no fallback do Claude.
 
 ## Instagram: cores da marca pelo @
 

@@ -31,6 +31,10 @@ Sem a chave, você cria as peças pelos templates e escreve os textos no editor.
 
 O uso é cobrado na conta da Anthropic dona da chave. Crie a chave num workspace só para o PRISMA OS e defina um limite de gasto mensal no Console da Anthropic.
 
+### Prefere o ChatGPT?
+
+Crie o secret `OPENAI_API_KEY` pelo mesmo caminho, com uma chave de platform.openai.com > API keys (a assinatura do ChatGPT não inclui chave de API; o uso é cobrado à parte, em Billing). Se tiver as duas chaves, crie também `AI_PROVIDER` com o valor `openai` para escolher o ChatGPT.
+
 ## Cores pelo @ do Instagram (opcional)
 
 Sem isso, o sistema sugere as cores pelo logotipo ou por um print do perfil do cliente. Para buscar pelo @, crie mais dois secrets pelo mesmo caminho da chave da IA: `META_ACCESS_TOKEN` (token da API oficial da Meta) e `META_IG_USER_ID` (ID da conta do Instagram da agência). Como obter os dois: `docs/OPERATIONS.md`, seção "Instagram: cores da marca pelo @". Depois pare e abra o Codespace de novo.

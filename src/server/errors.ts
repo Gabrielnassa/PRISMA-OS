@@ -57,7 +57,7 @@ export class BudgetExceededError extends AppError {
 }
 
 export class ProviderNotConfiguredError extends AppError {
-  constructor(message = "Nenhum provedor de IA configurado. Defina ANTHROPIC_API_KEY (veja Integrações).") {
+  constructor(message = "Nenhum provedor de IA configurado. Defina ANTHROPIC_API_KEY ou OPENAI_API_KEY (veja Integrações).") {
     super("provider_not_configured", message, 503);
   }
 }

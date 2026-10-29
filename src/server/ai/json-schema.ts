@@ -37,3 +37,46 @@ export function toOutputJsonSchema(schema: z.ZodType): Record<string, unknown> {
   const json = z.toJSONSchema(schema, { io: "output", unrepresentable: "any" }) as Record<string, unknown>;
   return strict(json) as Record<string, unknown>;
 }
+
+/**
+ * Variante para a saída estruturada da OpenAI em modo estrito: todo campo de
+ * objeto precisa constar em `required`. Campos opcionais passam a aceitar
+ * `null`, e `nullsToUndefined` desfaz isso antes da validação Zod.
+ */
+export function toOpenAiJsonSchema(schema: z.ZodType): Record<string, unknown> {
+  return requireAll(toOutputJsonSchema(schema)) as Record<string, unknown>;
+}
+
+function requireAll(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(requireAll);
+  if (!node || typeof node !== "object") return node;
+  const src = node as Record<string, unknown>;
+  const out: Record<string, unknown> = { ...src };
+  if (src.items) out.items = requireAll(src.items);
+  if (src.anyOf) out.anyOf = requireAll(src.anyOf);
+  if (src.properties) {
+    const required = new Set((src.required as string[] | undefined) ?? []);
+    const props = src.properties as Record<string, unknown>;
+    out.properties = Object.fromEntries(
+      Object.entries(props).map(([k, v]) => {
+        const inner = requireAll(v) as Record<string, unknown>;
+        if (required.has(k)) return [k, inner];
+        const options = Array.isArray(inner.anyOf) ? inner.anyOf : [inner];
+        return [k, { anyOf: [...options, { type: "null" }] }];
+      }),
+    );
+    out.required = Object.keys(props);
+  }
+  return out;
+}
+
+/** Remove chaves com `null` (campos opcionais devolvidos vazios pela OpenAI). */
+export function nullsToUndefined(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(nullsToUndefined);
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>)
+      .filter(([, v]) => v !== null)
+      .map(([k, v]) => [k, nullsToUndefined(v)]),
+  );
+}

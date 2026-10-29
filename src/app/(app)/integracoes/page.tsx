@@ -38,8 +38,14 @@ export default async function IntegrationsPage() {
             {provider.configured && can(auth.role, "integrations.test") ? <TestProviderForm disabled={false} /> : null}
             {!provider.configured ? (
               <ol className="list-decimal space-y-1 pl-5 text-ink-300">
-                <li>Crie uma chave em console.anthropic.com.</li>
-                <li>Defina <code className="rounded-[4px] bg-ink-800 px-1 font-mono text-[12.5px] text-ink-100">ANTHROPIC_API_KEY</code> no ambiente do servidor e do worker (nunca no código).</li>
+                <li>
+                  Crie uma chave: Claude em console.anthropic.com ou ChatGPT em platform.openai.com (API keys). A assinatura do ChatGPT não inclui chave de API; o uso é cobrado à parte.
+                </li>
+                <li>
+                  Defina <code className="rounded-[4px] bg-ink-800 px-1 font-mono text-[12.5px] text-ink-100">ANTHROPIC_API_KEY</code> ou{" "}
+                  <code className="rounded-[4px] bg-ink-800 px-1 font-mono text-[12.5px] text-ink-100">OPENAI_API_KEY</code> no ambiente do servidor e do worker (nunca no código). Com as duas,{" "}
+                  <code className="rounded-[4px] bg-ink-800 px-1 font-mono text-[12.5px] text-ink-100">AI_PROVIDER</code> escolhe qual usar.
+                </li>
                 <li>Reinicie a aplicação e o worker e use “Testar conexão”.</li>
               </ol>
             ) : null}

@@ -34,4 +34,21 @@ export const DEFAULT_PRICES: Array<{
     cacheWriteUsdPerMtok: null,
     source: `Preços públicos Anthropic para ${model} (US$5 entrada / US$25 saída por milhão de tokens), usados quando o fallback do servidor atende uma solicitação recusada. Cache sem tarifa própria cadastrada: cobrado como entrada. Conferir em https://platform.claude.com/docs/en/about-claude/pricing`,
   })),
+  // OpenAI. A página oficial de preços não estava acessível ao cadastrar estas
+  // tarifas; os valores vêm de agregadores de outubro de 2026 e devem ser
+  // conferidos em https://openai.com/api/pricing (ajuste em Custos e consumo).
+  // Cache sem tarifa cadastrada: cobrado como entrada (estimativa conservadora).
+  ...([
+    ["gpt-6.1-sol", "2.00", "10.00", null],
+    ["gpt-6.1-terra", "1.00", "5.00", null],
+    ["gpt-6-astra", "10.00", "50.00", "1.00"],
+  ] as const).map(([model, input, output, cacheRead]) => ({
+    provider: "openai",
+    model,
+    inputUsdPerMtok: input,
+    outputUsdPerMtok: output,
+    cacheReadUsdPerMtok: cacheRead,
+    cacheWriteUsdPerMtok: null,
+    source: `Tarifa de ${model} publicada por agregadores em out/2026 (US$${input} entrada / US$${output} saída por milhão de tokens${cacheRead ? `; US$${cacheRead} entrada em cache` : ""}). Conferir em https://openai.com/api/pricing e ajustar aqui se diferir.`,
+  })),
 ];

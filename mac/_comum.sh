@@ -139,6 +139,26 @@ pedir_chave_anthropic() {
   printf '%s' "$chave"
 }
 
+pedir_chave_openai() {
+  local chave=""
+  if [ -n "${PRISMA_OPENAI_KEY+x}" ]; then
+    chave="$PRISMA_OPENAI_KEY"
+  elif interativo; then
+    {
+      info "Cole a chave da API OpenAI (começa com sk-) e tecle Enter. Ela é criada em"
+      info "platform.openai.com > API keys; a assinatura do ChatGPT não inclui chave de API."
+      info "A chave não aparece na tela enquanto você cola. Para remover, só tecle Enter."
+    } >&2
+    read -r -s -p "Chave: " chave || true
+    printf '\n' >&2
+  fi
+  chave="$(printf '%s' "$chave" | tr -d '[:space:]')"
+  if [ -n "$chave" ] && [ "${chave#sk-}" = "$chave" ]; then
+    aviso "Atenção: a chave não começa com sk-. Confira em platform.openai.com se copiou a chave certa." >&2
+  fi
+  printf '%s' "$chave"
+}
+
 primeira_configuracao() {
   if [ -f "$CONFIG" ]; then
     return 0
