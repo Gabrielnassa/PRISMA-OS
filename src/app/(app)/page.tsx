@@ -9,6 +9,10 @@ import { can } from "@/server/authz/permissions";
 import { CONTENT_STATUSES, STATUS_LABELS, type ContentStatus } from "@/lib/content/status";
 import { Alert, Card, CardHeader, EmptyState, LinkButton, PageHeader, Select, Stat, StatGroup, Table, Td, Th, buttonClass, cx, formatDateTime, formatRelative, formatUsd } from "@/components/ui";
 import { StatusBadge } from "@/components/status";
+import { MonthBoard } from "@/components/month-board";
+import { monthByClient } from "@/server/services/month";
+import { currentMonth } from "@/server/services/editorial";
+import { monthLabel } from "@/lib/content/editorial";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -38,7 +42,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const period: DashboardPeriod = oneOf(DASHBOARD_PERIODS, sp.periodo) ?? "month";
   const channel = oneOf<Channel>(CHANNELS, sp.canal);
   const status = oneOf<ContentStatus>(CONTENT_STATUSES, sp.status);
-  const data = await getDashboard(auth, { clientId, period, channel, status });
+  const month = currentMonth();
+  const [data, months] = await Promise.all([getDashboard(auth, { clientId, period, channel, status }), monthByClient(auth, month)]);
   const periodLabel = DASHBOARD_PERIOD_LABELS[period].toLowerCase();
   const provider = providerStatus();
 
@@ -128,6 +133,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               }
             />
           </StatGroup>
+
+          <div className="mt-6">
+            <MonthBoard rows={clientId ? months.filter((m) => m.clientId === clientId) : months} month={month} monthName={monthLabel(month)} />
+          </div>
 
           <div className="mt-6 grid gap-6 xl:grid-cols-3">
             <Card className="xl:col-span-2">

@@ -31,6 +31,9 @@ Central operacional de marketing com IA para agências que atendem vários clien
 | IA à escolha: Claude (Anthropic) ou ChatGPT (OpenAI), com custos por modelo nos dois | Integrações, `.env` |
 | Pacote mensal por cliente com custo de IA estimado e linha editorial do mês (IA propõe, equipe aprova, peças criadas com as fotos do cliente) | Clientes → Linha editorial |
 | Importação de fotos e vídeos da pasta do Google Drive de cada cliente | Clientes → Arquivos |
+| O mês de cada cliente no painel (produzido × contratado, linha editorial, o que está parado esperando alguém) e calendário com as pautas de todos os clientes | Dashboard, Calendário |
+| Entrega do mês num ZIP (todas as peças aprovadas, uma pasta por peça com imagens e legenda), copiar legenda e duplicar peça | Dashboard, Linha editorial, página da peça |
+| Primeiros passos de cada cliente (perfil, logotipo, fotos, pacote, linha editorial, IA) | Clientes → Visão geral |
 
 ## Rodar pelo GitHub (Codespaces)
 

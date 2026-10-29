@@ -25,6 +25,7 @@ Objetivo da etapa (seções 25, 26 e 30): fundação do PRISMA OS e o ciclo comp
 | Exportação e histórico | PNG/ZIP com legenda e textos alternativos (rascunhos identificados); versões imutáveis com comparação e restauração; auditoria somente inserção |
 | Pacote e linha editorial | Pacote mensal por cliente (posts, carrosséis, stories, vídeos), produzido × contratado no mês e custo de IA estimado (média real por peça quando houver; antes, tarifa × consumo típico, sempre identificado como estimativa); linha editorial do mês proposta pela IA (skill `planner.editorial`) ou montada sem IA, editada e aprovada pela equipe; na aprovação as pautas viram peças na fila com fotos do cliente em rodízio, sem duplicar ao repetir; vídeos ficam como itens a marcar |
 | Google Drive | Pasta do Drive por cliente; "Importar agora" traz fotos, vídeos e PDFs para a biblioteca (até 25 por clique, sem repetir), pela API oficial com conta de serviço (só leitura) |
+| Operação do mês | Painel com o mês de cada cliente (produzido × contratado, linha editorial, pendências com atalho), calendário das pautas de todos os clientes, entrega do mês em ZIP (só versões aprovadas), copiar legenda, duplicar peça, primeiros passos do cliente, filtro por cliente em Aprovações |
 | IA à escolha | Claude (Anthropic) ou ChatGPT (OpenAI) pelo mesmo gateway, skills, fila, qualidade e custos |
 | Gestão | Dashboard com dados reais e filtros por cliente, período, canal e status; custos por execução e por cliente, tarifas com fonte, tetos mensais; integrações com diagnóstico e teste real; usuários e permissões; configurações |
 
@@ -71,7 +72,7 @@ Executados em 29/10/2026 neste ambiente (Node 22, PostgreSQL 16 local, Chromium 
 | --- | --- |
 | `npm run typecheck` | sem erros |
 | `npm run lint` | sem erros nem avisos |
-| `npm test` (Vitest: unitários + integração com PostgreSQL real) | **23 arquivos, 185 testes aprovados**, 0 falhas |
+| `npm test` (Vitest: unitários + integração com PostgreSQL real) | **24 arquivos, 188 testes aprovados**, 0 falhas |
 | `npm run test:e2e` (Playwright, `next dev` + worker) | **5/5 aprovados** (ciclo completo; linha editorial do pacote às peças; cores pelo logotipo e exclusão de peças e cliente; skills da agência; celular, inclusive a página da peça sem rolagem horizontal) |
 | `npm run build` + `npm run test:e2e:prod` (build de produção) | build concluído; **5/5 aprovados** (sem chave: botão de executar skill desativado com o aviso e linha editorial montada sem IA) |
 

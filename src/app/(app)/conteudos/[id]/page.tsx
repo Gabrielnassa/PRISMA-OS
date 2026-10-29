@@ -20,7 +20,8 @@ import { ContentEditor } from "./editor";
 import { GenerationStatus } from "./generation-status";
 import { QualityPanel } from "./quality-panel";
 import { AiReviewPanel, ApprovalPanel, CommentsPanel, RetryPanel } from "./review-panels";
-import { archiveAction, deleteContentAction, restoreVersionAction } from "./actions";
+import { archiveAction, deleteContentAction, duplicateAction, restoreVersionAction } from "./actions";
+import { CopyButton } from "@/components/copy-button";
 
 export const metadata: Metadata = { title: "Conteúdo" };
 
@@ -99,6 +100,12 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
               <a href={`/api/contents/${id}/export?format=zip&version=${current.id}`} className={buttonClass("secondary", "sm")} title="Arquivo identificado como rascunho">
                 Baixar rascunho
               </a>
+            ) : null}
+            {current && (current.document.caption || current.document.hashtags.length) ? (
+              <CopyButton text={[current.document.caption, current.document.hashtags.join(" ")].filter(Boolean).join("\n\n")} label="Copiar legenda" />
+            ) : null}
+            {current && can(auth.role, "content.create") ? (
+              <InlineAction action={duplicateAction} fields={{ contentId: id }} label="Duplicar peça" pendingText="Duplicando..." />
             ) : null}
           </>
         }

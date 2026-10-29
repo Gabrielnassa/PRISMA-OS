@@ -17,6 +17,7 @@ const SECTIONS: Array<{ title: string; items: Item[] }> = [
       { href: "/", label: "Dashboard", icon: "dashboard" },
       { href: "/clientes", label: "Clientes", icon: "clients" },
       { href: "/criar", label: "Central de criação", icon: "create" },
+      { href: "/calendario", label: "Calendário", icon: "calendar" },
       { href: "/conteudos", label: "Conteúdos", icon: "contents" },
       { href: "/aprovacoes", label: "Aprovações", icon: "approvals" },
       { href: "/midia", label: "Biblioteca de mídia", icon: "media" },
@@ -40,7 +41,6 @@ const SECTIONS: Array<{ title: string; items: Item[] }> = [
 
 const PLANNED: Item[] = [
   { href: "#", label: "Estratégias", icon: "strategy", phase: "Fase 3" },
-  { href: "#", label: "Calendário editorial", icon: "calendar", phase: "Fase 3" },
   { href: "#", label: "Automações", icon: "automations", phase: "Fase 3" },
   { href: "#", label: "Relatórios", icon: "reports", phase: "Fase 4" },
   { href: "#", label: "Sites e landing pages", icon: "sites", phase: "Fase 5" },

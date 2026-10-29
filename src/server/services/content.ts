@@ -714,6 +714,44 @@ export async function addComment(auth: AuthContext, contentId: string, input: { 
   });
 }
 
+/**
+ * Duplica uma peça (para variações ou outro dia): nova peça em rascunho com o
+ * mesmo briefing e a versão atual como versão 1. A original não muda.
+ */
+export async function duplicateContent(auth: AuthContext, contentId: string): Promise<{ contentId: string }> {
+  assertCan(auth.role, "content.create");
+  return withTx(userCtx(auth.userId), async (tx) => {
+    const item = await lockItem(tx, auth, contentId);
+    if (!item.current_version_id) throw new ConflictError("A peça ainda não tem versão para duplicar.");
+    const client = await requireClient(tx, auth, item.client_id);
+    if (client.status === "archived") throw new ValidationError("Cliente arquivado não recebe novos conteúdos.");
+    const source = await one<{ document: ContentDocument; version_number: number }>(tx, "SELECT document, version_number FROM content_versions WHERE id = $1", [item.current_version_id]);
+    const title = `Cópia de ${item.title}`.slice(0, 200);
+    const created = await one<{ id: string }>(
+      tx,
+      `INSERT INTO content_items (organization_id, client_id, title, channel, format, objective, briefing, status, request_id, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9) RETURNING id`,
+      [auth.organizationId, item.client_id, title, item.channel, item.format, item.objective, JSON.stringify(item.briefing), crypto.randomUUID(), auth.userId],
+    );
+    const doc = ContentDocumentSchema.parse(source.document);
+    const version = await insertVersion(tx, auth, { id: created.id, client_id: item.client_id, current_version_id: null }, doc, {
+      source: "manual",
+      changeNote: `Duplicada de “${item.title.slice(0, 120)}” (v${source.version_number})`,
+    });
+    await tx.query("UPDATE content_items SET current_version_id = $2 WHERE id = $1", [created.id, version.id]);
+    await evaluateVersion(tx, auth, item.client_id, version.id, doc, item.briefing);
+    await audit(tx, userActor(auth), {
+      organizationId: auth.organizationId,
+      clientId: item.client_id,
+      action: "content.duplicated",
+      entityType: "content_item",
+      entityId: created.id,
+      metadata: { contentId, fromVersion: source.version_number },
+    });
+    return { contentId: created.id };
+  });
+}
+
 export async function archiveContent(auth: AuthContext, contentId: string): Promise<void> {
   assertCan(auth.role, "content.archive");
   await withTx(userCtx(auth.userId), async (tx) => {

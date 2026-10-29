@@ -12,6 +12,7 @@ import { getClientDeletionSummary } from "@/server/services/deletion";
 import { getPackageOverview } from "@/server/services/packages";
 import { currentMonth, getEditorialPlan, shiftMonth } from "@/server/services/editorial";
 import { getDriveLink } from "@/server/services/drive";
+import { approvedInMonth, clientChecklist } from "@/server/services/month";
 import { driveStatus } from "@/server/integrations/google-drive";
 import { getProvider } from "@/server/ai/gateway";
 import { EDITORIAL_FORMAT_LABELS, monthLabel } from "@/lib/content/editorial";
@@ -89,10 +90,37 @@ type Auth = Awaited<ReturnType<typeof requireAuth>>;
 type Client = Awaited<ReturnType<typeof getClient>>;
 
 async function Overview({ auth, client, completeness }: { auth: Auth; client: Client; completeness: ReturnType<typeof brandCompleteness> }) {
-  const costs = can(auth.role, "costs.view") ? await getCostSummary(auth) : null;
+  const [costs, steps] = await Promise.all([can(auth.role, "costs.view") ? getCostSummary(auth) : null, clientChecklist(auth, client.id, currentMonth(), completeness.percent)]);
+  const pendingSteps = steps.filter((s) => !s.done).length;
   const myCosts = costs?.byClient.find((c) => c.clientId === client.id);
   return (
     <div className="grid items-start gap-6 lg:grid-cols-3">
+      {pendingSteps > 0 && client.status !== "archived" ? (
+        <Card className="lg:col-span-3">
+          <CardHeader title="Primeiros passos" description={`${steps.length - pendingSteps} de ${steps.length} prontos. Com tudo pronto, a linha editorial do mês vira peças com um clique.`} />
+          <ol className="grid gap-px bg-ink-800 sm:grid-cols-2 xl:grid-cols-3 [&>*]:bg-ink-900">
+            {steps.map((st) => (
+              <li key={st.id}>
+                <Link href={st.href} className="flex h-full items-start gap-3 px-5 py-3.5 transition-colors hover:bg-ink-850">
+                  <span
+                    aria-hidden
+                    className={st.done ? "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-400/15 text-[11px] text-emerald-300" : "mt-0.5 size-5 shrink-0 rounded-full border border-ink-600"}
+                  >
+                    {st.done ? "✓" : null}
+                  </span>
+                  <span className="min-w-0">
+                    <span className={st.done ? "block text-[13.5px] text-ink-300" : "block text-[13.5px] font-medium text-ink-50"}>{st.label}</span>
+                    <span className="block text-[12.5px] text-ink-400">
+                      <span className="sr-only">{st.done ? "Pronto: " : "Pendente: "}</span>
+                      {st.hint}
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </Card>
+      ) : null}
       <Card className="lg:col-span-2">
         <CardHeader title="Perfil da marca" description={`${completeness.percent}% dos campos essenciais preenchidos`} actions={<LinkButton href={`/clientes/${client.id}?aba=marca`} size="sm" variant="secondary">Editar perfil</LinkButton>} />
         <div className="p-5">
@@ -268,7 +296,7 @@ async function ContentsTab({ auth, clientId }: { auth: Auth; clientId: string })
 
 async function EditorialTab({ auth, clientId, month: requested, archived }: { auth: Auth; clientId: string; month?: string; archived: boolean }) {
   const month = requested && /^\d{4}-(0[1-9]|1[0-2])$/.test(requested) ? requested : currentMonth();
-  const [overview, plan] = await Promise.all([getPackageOverview(auth, clientId), getEditorialPlan(auth, clientId, month)]);
+  const [overview, plan, delivered] = await Promise.all([getPackageOverview(auth, clientId), getEditorialPlan(auth, clientId, month), approvedInMonth(auth, clientId, month)]);
   const { pkg, estimate, produced } = overview;
   const total = pkg.posts + pkg.carousels + pkg.stories + pkg.videos;
   const canEdit = can(auth.role, "content.create") && !archived;
@@ -294,6 +322,14 @@ async function EditorialTab({ auth, clientId, month: requested, archived }: { au
           hint={estimate.totalUsd === null ? estimate.note : `${estimate.aiPieces} peças × ${formatUsd(estimate.perPieceUsd, 3)}${estimate.planUsd ? ` + pauta ${formatUsd(estimate.planUsd, 3)}` : ""} · ${estimate.basis === "measured" ? "média real" : "estimativa pela tarifa"}`}
         />
       </StatGroup>
+      {delivered.length ? (
+        <Alert tone="success" title={`${delivered.length === 1 ? "1 peça aprovada" : `${delivered.length} peças aprovadas`} em ${monthLabel(month).toLowerCase()}`}>
+          Baixe tudo de uma vez para postar: uma pasta por peça, com as imagens, a legenda com hashtags e os textos alternativos.{" "}
+          <a href={`/api/clients/${clientId}/delivery?mes=${month}`} className="font-medium text-iris-300 hover:underline">
+            Baixar entrega do mês (.zip)
+          </a>
+        </Alert>
+      ) : null}
       {estimate.totalUsd !== null ? <p className="-mt-3 text-[12.5px] text-ink-400">{estimate.note} Gasto real do cliente neste mês: {formatUsd(overview.monthSpendUsd, 2)}.</p> : null}
 
       {can(auth.role, "client.package") ? (

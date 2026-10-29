@@ -63,4 +63,12 @@ test("linha editorial do mês: do pacote às peças", async ({ page }) => {
 
   await page.goto(`${clientUrl}?aba=conteudos`);
   await expect(page.locator("main table a")).toHaveCount(2);
+
+  // Calendário do mês com as 3 pautas, e o painel com o andamento do pacote.
+  await page.goto("/calendario");
+  await expect(page.getByRole("link", { name: /Coli Loterias/ })).toHaveCount(3);
+  await shot(page, "12-calendario");
+  await page.goto("/");
+  await expect(page.getByText("Linha editorial aprovada")).toBeVisible();
+  await expect(page.getByText("3 de 3")).toBeVisible();
 });

@@ -2,21 +2,33 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { requireAuth } from "@/server/auth/next";
 import { listPendingApprovals } from "@/server/services/content";
+import { listClients } from "@/server/services/clients";
 import { can } from "@/server/authz/permissions";
 import { FORMAT_LABELS } from "@/lib/content/document";
 import { Badge, Card, EmptyState, PageHeader, formatDateTime, formatRelative } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Aprovações" };
 
-export default async function ApprovalsPage() {
+export default async function ApprovalsPage({ searchParams }: { searchParams: Promise<{ cliente?: string }> }) {
   const auth = await requireAuth();
-  const items = await listPendingApprovals(auth);
+  const { cliente } = await searchParams;
+  const clients = await listClients(auth);
+  const client = clients.find((c) => c.id === cliente);
+  const items = await listPendingApprovals(auth, client?.id);
   return (
     <>
       <PageHeader
         title="Aprovações"
         description={can(auth.role, "content.approve") ? "Peças aguardando sua decisão. Cada aprovação vale apenas para a versão exata enviada." : "Peças aguardando aprovação (seu papel permite acompanhar, não decidir)."}
       />
+      {client ? (
+        <p className="-mt-4 mb-6 text-[13.5px] text-ink-300">
+          Só de <span className="font-medium text-ink-50">{client.name}</span> ·{" "}
+          <Link href="/aprovacoes" className="text-iris-300 hover:underline">
+            ver de todos os clientes
+          </Link>
+        </p>
+      ) : null}
       {items.length === 0 ? (
         <EmptyState title="Nada aguardando aprovação" description="Quando a equipe enviar uma versão para aprovação, ela aparecerá aqui." />
       ) : (

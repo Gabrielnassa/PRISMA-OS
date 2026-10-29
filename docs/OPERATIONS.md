@@ -163,6 +163,14 @@ Na página do cliente, aba **Linha editorial**:
 - **Custo de IA estimado** do pacote: com execuções reais, usa a média real por peça (do cliente, com pelo menos 3 peças nos últimos 90 dias; senão, a média da agência); antes disso, a tarifa do modelo configurado × um consumo típico (6 mil tokens de entrada e 4 mil de saída por peça), mais a linha editorial do mês. Vídeos não entram (ainda são feitos fora do sistema). O valor é sempre identificado como estimativa; o gasto real fica em Custos e consumo.
 - **Linha editorial do mês**: a IA propõe uma pauta para cada peça do pacote (formatos intercalados e datas em dias úteis), usando o perfil e a memória da marca e evitando repetir títulos recentes; ou "Montar sem IA" cria os espaços para a equipe escrever. A equipe edita e aprova; na aprovação, cada pauta (menos vídeo) vira uma peça na fila, com fotos da biblioteca do cliente em rodízio. Se o limite por minuto ou o teto de custo interromper, o botão "Criar peças pendentes" continua de onde parou, sem duplicar (a pauta é a chave da peça). Vídeos ficam como itens a marcar como feitos. Excluir uma peça devolve a pauta para "planejada".
 
+## O mês da agência: painel, calendário e entrega
+
+- **Dashboard**: "<mês> por cliente" mostra o pacote produzido × contratado, a situação da linha editorial e o que está parado (aguardando aprovação, para revisar, em geração, com falha), cada item com atalho.
+- **Calendário** (menu Operação): as pautas das linhas editoriais de todos os clientes, dia a dia, com a cor da situação; filtro por cliente; no celular, lista por dia.
+- **Entrega do mês**: no dashboard ("Entrega (n)") e na aba Linha editorial, um ZIP com todas as peças aprovadas no mês, uma pasta por peça (PNGs, legenda com hashtags e textos alternativos), na ordem da linha editorial. Só entram versões aprovadas; cada download fica na auditoria da peça.
+- Na peça: **Copiar legenda** (legenda + hashtags) e **Duplicar peça** (novo rascunho com a versão atual).
+- Na visão geral do cliente: **Primeiros passos** até tudo estar pronto (perfil, logotipo, 3 fotos, pacote, linha editorial do mês, IA).
+
 ## Google Drive: fotos e vídeos de cada cliente
 
 Na aba **Arquivos** do cliente, cole o link da pasta do Drive e use **Importar agora**: fotos (PNG, JPEG, GIF, SVG), vídeos (MP4, MOV) e PDFs entram na biblioteca do cliente, até 25 por clique, sem repetir (pelo id do arquivo no Drive e pelo conteúdo). Documentos do Google (Docs, Planilhas) ficam de fora. Para configurar:

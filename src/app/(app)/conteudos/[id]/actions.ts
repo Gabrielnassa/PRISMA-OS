@@ -8,6 +8,7 @@ import {
   addComment,
   archiveContent,
   decideApproval,
+  duplicateContent,
   getContent,
   restoreVersion,
   retryGeneration,
@@ -87,6 +88,14 @@ export async function deleteContentAction(_prev: ActionState, form: FormData): P
   return runAction(async () => {
     await deleteContent(auth, str(form, "contentId"));
     redirect("/conteudos?excluido=1");
+  });
+}
+
+export async function duplicateAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const auth = await requireAuth();
+  return runAction(async () => {
+    const r = await duplicateContent(auth, str(form, "contentId"));
+    redirect(`/conteudos/${r.contentId}`);
   });
 }
 

@@ -163,4 +163,24 @@ test("ciclo completo: briefing → texto → arte → revisão → aprovação �
   await page.getByRole("button", { name: "Filtrar" }).click();
   await expect(page).toHaveURL(/canal=linkedin/);
   await expect(page.getByText("Aprovados", { exact: true }).first().locator("..")).toContainText("0");
+
+  // 12. Entrega do mês: a peça aprovada sai num ZIP só, numa pasta com imagens e legenda.
+  await page.goto("/");
+  const entrega = page.getByRole("link", { name: /Entrega \(1\)/ });
+  await expect(entrega).toBeVisible();
+  const zipRes = await page.request.get((await entrega.getAttribute("href"))!);
+  expect(zipRes.status()).toBe(200);
+  const delivery = await JSZip.loadAsync(await zipRes.body());
+  const names = Object.keys(delivery.files);
+  expect(names).toContain("LEIA-ME.txt");
+  expect(names.some((n) => /^01 .*\/01\.png$/.test(n))).toBe(true);
+  expect(names.some((n) => /^01 .*\/legenda\.txt$/.test(n))).toBe(true);
+
+  // 13. Duplicar a peça aprovada cria um rascunho novo, sem mexer na original.
+  await page.goto(contentUrl);
+  await page.getByRole("button", { name: "Duplicar peça" }).click();
+  await expect(page).toHaveURL(/\/conteudos\/[0-9a-f-]+$/);
+  await expect(page).not.toHaveURL(contentUrl);
+  await expect(page.getByRole("heading", { name: /^Cópia de / })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Copiar legenda" })).toBeVisible();
 });
