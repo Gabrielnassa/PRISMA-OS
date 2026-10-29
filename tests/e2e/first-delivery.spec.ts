@@ -82,7 +82,7 @@ test("ciclo completo: briefing → texto → arte → revisão → aprovação �
   // 5. Geração assíncrona pelo worker → Em revisão (ou rascunho manual)
   if (!prod) {
     await expect(page.getByText("Em revisão").first()).toBeVisible({ timeout: 90_000 });
-    await expect(page.getByText("Rascunho de demonstração")).toBeVisible();
+    await expect(page.getByText("Rascunho de demonstração", { exact: true })).toBeVisible();
   }
   await expect(page.getByAltText("Pré-visualização da lâmina 1")).toBeVisible({ timeout: 30_000 });
   await shot(page, "05-editor");
@@ -126,10 +126,29 @@ test("ciclo completo: briefing → texto → arte → revisão → aprovação �
   await page.getByRole("button", { name: "Solicitar aprovação" }).click();
   await expect(page.getByText("Aguardando aprovação da versão 2")).toBeVisible();
 
+  // 8a. Link para o cliente aprovar sem login: página pública com a peça.
+  await page.getByRole("button", { name: "Gerar link para o cliente" }).click();
+  const linkText = (await page.locator("code").filter({ hasText: "/aprovar/" }).textContent())!;
+  const publicPath = new URL(linkText).pathname;
+  await expect(page.getByRole("link", { name: "Enviar pelo WhatsApp" })).toHaveAttribute("href", /wa\.me/);
+  const visitor = await page.context().browser()!.newContext();
+  const client = await visitor.newPage();
+  await client.goto(`http://localhost:${process.env.E2E_PORT ?? 3100}${publicPath}`);
+  await expect(client.getByRole("heading", { name: "Cuidados com a saúde no inverno" })).toBeVisible();
+  await expect(client.getByRole("button", { name: "Aprovar" })).toBeVisible();
+  const slide = await client.request.get(`http://localhost:${process.env.E2E_PORT ?? 3100}/api/publico/aprovacao/${publicPath.split("/").pop()}/0`);
+  expect(slide.headers()["content-type"]).toBe("image/png");
+
   // 8. Aprovação vinculada à versão exata
   await page.getByLabel("Comentário da decisão").fill("Aprovado para publicação.");
   await page.getByRole("button", { name: "Aprovar versão 2" }).click();
   await expect(page.getByText("Versão aprovada", { exact: true })).toBeVisible();
+  // O cliente vê a decisão da equipe no mesmo link.
+  await client.reload();
+  await expect(client.getByText("Peça aprovada")).toBeVisible();
+  await visitor.close();
+  // Publicar: sem contas conectadas, a tela orienta a conectar.
+  await expect(page.getByText("Nenhuma conta conectada para este cliente.")).toBeVisible();
   await shot(page, "06-aprovado");
 
   // 9. Exportação da versão aprovada (PNGs reais + legenda)
@@ -151,7 +170,7 @@ test("ciclo completo: briefing → texto → arte → revisão → aprovação �
   await expect(page.getByText("Exportação da versão aprovada")).toBeVisible();
   await page.getByRole("link", { name: "Comparar com v1" }).click();
   await expect(page.getByText("Comparação: v1 → v2")).toBeVisible();
-  await expect(page.getByText(/Lâmina 1: title/).first()).toBeVisible();
+  await expect(page.getByText(/Lâmina 1: título/).first()).toBeVisible();
 
   // 11. Dashboard reflete os dados reais
   await page.goto("/");

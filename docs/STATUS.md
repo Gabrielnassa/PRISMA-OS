@@ -12,7 +12,7 @@ Objetivo da etapa (seções 25, 26 e 30): fundação do PRISMA OS e o ciclo comp
 | Multicliente | Isolamento por organização e por cliente no serviço **e** no banco (RLS com usuário de aplicação que não é dono das tabelas, chaves estrangeiras compostas) |
 | Clientes | Cadastro, perfil de marca completo (negócio, público, voz, identidade visual, canais, ofertas confirmadas, referências), memória com fatos/preferências/hipóteses/sugestões, arquivos |
 | Mídia | Upload com tipo detectado pelos bytes, SVG perigoso recusado, orientação EXIF aplicada, limites de tamanho e dimensões, permissão verificada antes de ler o corpo |
-| Central de criação | Pedido com cliente, canal, formato (post, carrossel, story), objetivo, briefing estruturado, fotos, template preferido; sugestão de pautas por IA; criação manual pelo template sem IA |
+| Criar | Pedido com cliente, canal, formato (post, carrossel, story), objetivo, briefing estruturado, fotos, template preferido; sugestão de pautas por IA; criação manual pelo template sem IA |
 | IA | Gateway de provedores (Anthropic + demonstração), 4 skills versionadas (`planner.ideas`, `copywriter.social`, `art-director.rules`, `quality.ai-review`), orquestrador com camadas de contexto, idempotência, limites, registro de custo por modelo |
 | Skills da agência | Skills escritas pela agência ou importadas de um SKILL.md (nome, descrição e instruções; scripts e arquivos extras não rodam), para todos os clientes ou exclusivas de um; versão imutável a cada alteração; execução pelo mesmo orquestrador (contexto do cliente, regras invioláveis, limite por pessoa, teto de custo, idempotência contra clique duplo, registro em `ai_runs` como `custom:<id>`); histórico por skill; resultado vira briefing de uma peça; exportação em SKILL.md; gestão só por proprietário/administrador, execução também pela criação |
 | Cores da marca | "Sugerir cores" no perfil da marca: lê logotipo, fotos ou um print do perfil (PNG, JPEG, GIF, SVG), agrupa as cores por proximidade perceptual (CIELAB) e propõe primária, secundária, destaque, fundo e texto com contraste mínimo de 4,5:1 entre texto e fundo; pelo @ do Instagram com a API oficial da Meta (Business Discovery: foto de perfil e até 9 posts; opcionalmente guarda a foto como logotipo). Só preenche o formulário: nada é salvo sem a pessoa revisar |
@@ -31,7 +31,7 @@ Objetivo da etapa (seções 25, 26 e 30): fundação do PRISMA OS e o ciclo comp
 
 Módulos das fases 3–6 (estratégias, calendário, automações, relatórios, sites, campanhas) aparecem no menu como "próximas fases", desabilitados — nada é simulado.
 
-**Interface (visual novo de 29/10/2026, referência em `docs/design/DESIGN-referencia.md`).** Grafite quase preto, cartões #111111 com borda fina, azul íris na ação principal e na navegação ativa, coral só como acento; Inter na interface e Sora em títulos de 28px ou mais; botões, etiquetas e navegação em pílula; o feixe de luz em degradê aparece só na tela de acesso, com um print real do sistema. O botão principal usa o íris #4a74c6 porque o #5683da da referência dá 3,7:1 com texto branco (abaixo do AA); o #5683da fica em indicadores. Acabamento: janela de confirmação própria (dialog modal acessível) no lugar de `window.confirm`, avisos rápidos de resultado, conteúdos em cartões no celular, datas relativas, envio de arquivos por arrastar e soltar. Textos informativos com contraste mínimo AA (4,5:1); só itens desativados ficam abaixo disso. No caminho: a caixinha invisível da foto na Central de criação ficava no canto recortado do cartão arredondado e o clique não chegava nela (corrigido; ela cobre a foto inteira).
+**Interface (visual novo de 29/10/2026, referência em `docs/design/DESIGN-referencia.md`).** Grafite quase preto, cartões #111111 com borda fina, azul íris na ação principal e na navegação ativa, coral só como acento; Inter na interface e Sora em títulos de 28px ou mais; botões, etiquetas e navegação em pílula; o feixe de luz em degradê aparece só na tela de acesso, com um print real do sistema. O botão principal usa o íris #4a74c6 porque o #5683da da referência dá 3,7:1 com texto branco (abaixo do AA); o #5683da fica em indicadores. Acabamento: janela de confirmação própria (dialog modal acessível) no lugar de `window.confirm`, avisos rápidos de resultado, conteúdos em cartões no celular, datas relativas, envio de arquivos por arrastar e soltar. Textos informativos com contraste mínimo AA (4,5:1); só itens desativados ficam abaixo disso. No caminho: a caixinha invisível da foto na Criar ficava no canto recortado do cartão arredondado e o clique não chegava nela (corrigido; ela cobre a foto inteira).
 
 Antes disso (28/10/2026), o redesenho sóbrio: Corrigidos no caminho: rolagem horizontal no celular na página da peça (já existia) e na de custos, status de execuções em inglês ("succeeded") nas telas de custos e da peça, e a dica de primeiro acesso da tela de login, que mostrava um comando técnico.
 
@@ -113,12 +113,20 @@ Depois da primeira versão, uma revisão em várias frentes levantou **61 achado
 | PostgreSQL | Conectado e testado (desenvolvimento, testes e E2E) |
 | Armazenamento local de arquivos | Conectado e testado |
 | Anthropic (Claude) | Implementada (`claude-opus-5-5`, saída estruturada, fallback do servidor); testada contra API simulada; **conexão real pendente de chave**. O botão "Testar conexão" em Integrações faz a verificação real assim que a chave for definida |
-| OpenAI (ChatGPT) | Implementada (Responses API, saída em JSON Schema estrito, esforço por skill, `store: false`, custos com cache separado e cobrança da versão datada pela tarifa do modelo pedido); testada contra API simulada no nível do SDK oficial (v7.45.1). **Conexão real pendente de chave**; o site da OpenAI não estava acessível daqui, então modelo padrão (`gpt-6.1-sol`) e lista de modelos vêm do SDK oficial, e as tarifas de agregadores (conferir em Custos e consumo) |
+| OpenAI (ChatGPT) | Implementada (Responses API, saída em JSON Schema estrito, esforço por skill, `store: false`, custos com cache separado e cobrança da versão datada pela tarifa do modelo pedido); testada contra API simulada no nível do SDK oficial (v7.45.1). **Conexão real pendente de chave**; o site da OpenAI não estava acessível daqui, então modelo padrão (`gpt-6.1-sol`) e lista de modelos vêm do SDK oficial, e as tarifas de agregadores (conferir em Custos) |
 | Provedor de demonstração | Ativo nos testes; bloqueado em produção e identificado como "Demonstração" |
 | Meta (Instagram Business Discovery) | Implementada para sugerir cores pelo @ (foto de perfil e posts de contas comerciais ou de criador); testada contra API simulada; **conexão real pendente de token** (`META_ACCESS_TOKEN` e `META_IG_USER_ID`). Os domínios da Meta não estavam acessíveis neste ambiente, então a consulta segue a documentação pública da Graph API; a primeira consulta real confirma. Sem token, a tela de Integrações mostra o que falta e a sugestão funciona por imagens |
 | Google Drive | Implementado (conta de serviço, JWT assinado, `drive.readonly`, listagem e download); testado contra API simulada que confere a assinatura. **Conexão real pendente da chave da conta de serviço**; os domínios do Google não estavam acessíveis neste ambiente |
-| Publicação no Instagram/Facebook | Não implementada: precisa de app da Meta com permissões revisadas e da conta de cada cliente conectada. Desenho em `docs/design/PUBLICACAO.md` |
-| E-mail, n8n, Meta/Google Ads, Analytics, S3 | Não conectados (fases seguintes); nada é apresentado como conectado |
+| Instagram e Facebook (publicação) | Implementada: login do Facebook por cliente (Página + Instagram profissional), post, carrossel, story e Reels no Instagram (imagens em JPEG por URL assinada de 3 h), foto, várias fotos, story e vídeo na Página, nova tentativa que continua do contêiner já criado, curtidas, comentários e alcance. Testada contra a Graph API simulada. **Conexão real pendente**: app da Meta com as permissões revisadas e o sistema num domínio com HTTPS (o Instagram baixa as imagens desse endereço) |
+| TikTok | Implementado: Login Kit v2, fotos (PULL_FROM_URL, exige domínio verificado no app) e vídeo (envio em partes), opções de privacidade consultadas na conta e confirmação de uso de música. Até a auditoria do app, os posts saem privados. Testado contra a API simulada |
+| YouTube | Implementado: login do Google com PKCE e acesso contínuo, envio de vídeo em sessão (resumable), visibilidade escolhida, visualizações e curtidas. Até a auditoria da API, os vídeos sobem privados. Testado contra a API simulada |
+| Aprovação pelo cliente | Implementada: link de 14 dias por pedido, página pública com a versão exata, decisão com o nome do cliente, WhatsApp e e-mail |
+| E-mail (SMTP) | Implementado com nodemailer; avisos de pedido de aprovação, decisão e publicação com falha; teste de envio na tela. Testado com envio simulado |
+| Webhooks (n8n, Zapier, Make) | Implementados: eventos de aprovação, linha editorial e publicação, assinatura HMAC-SHA256 com carimbo de tempo, bloqueio de endereços internos, novas tentativas |
+| Agenda (ICS) | Implementada: endereço privado por pessoa, pautas e publicações agendadas, respeita o acesso a clientes |
+| Meta/Google Ads, Analytics, S3 | Não conectados; nada é apresentado como conectado |
+
+Os domínios da Meta, da TikTok e do Google não estavam acessíveis deste ambiente: as integrações seguem a documentação pública vigente (consultada por busca) e foram testadas contra APIs simuladas. A primeira conexão real de cada uma confirma.
 
 ## 6. Configurações pendentes
 
@@ -131,14 +139,16 @@ Depois da primeira versão, uma revisão em várias frentes levantou **61 achado
 3. Usuários de banco separados (migrations × aplicação) no ambiente de produção — ver OPERATIONS.md.
 4. Volume persistente para `STORAGE_LOCAL_DIR` e rotina de backup do banco + arquivos.
 5. Conferir as tarifas cadastradas com a tabela vigente da Anthropic antes do uso comercial.
-6. Opcional: `OPENAI_API_KEY` (e `AI_PROVIDER=openai` se houver as duas chaves) para usar o ChatGPT; conferir as tarifas da OpenAI em Custos e consumo.
+6. Opcional: `OPENAI_API_KEY` (e `AI_PROVIDER=openai` se houver as duas chaves) para usar o ChatGPT; conferir as tarifas da OpenAI em Custos.
 7. Opcional: `GOOGLE_SERVICE_ACCOUNT_JSON` para importar das pastas do Drive dos clientes.
-8. Opcional: `META_ACCESS_TOKEN` e `META_IG_USER_ID` para sugerir cores pelo @ do Instagram (passo a passo em OPERATIONS.md). Para o token não expirar, use um usuário do sistema do Gerenciador de Negócios.
+8. `APP_SECRET_KEY` (32+ caracteres aleatórios): criptografa as chaves dos apps, as conexões das redes e a senha do e-mail. Os scripts do Mac e do Codespaces geram sozinhos; num servidor próprio, gere com `openssl rand -hex 32` e guarde junto com o backup.
+9. Para publicar nas redes: apps da Meta, TikTok e Google criados e revisados (passo a passo em Integrações e em `docs/REDES-SOCIAIS.md`) e o sistema num domínio com HTTPS.
+10. Opcional: `META_ACCESS_TOKEN` e `META_IG_USER_ID` para sugerir cores pelo @ do Instagram (passo a passo em OPERATIONS.md). Para o token não expirar, use um usuário do sistema do Gerenciador de Negócios.
 
 ## 7. Custos conhecidos ou estimados
 
 - **Tarifas cadastradas** (fonte: tabela pública da Anthropic): Claude Opus 5.5 — US$ 4 por milhão de tokens de entrada, US$ 20 de saída, US$ 0,20 de leitura de cache, US$ 5 de escrita de cache. Modelos de fallback (Claude Opus 5 e Claude Opus 4.8) — US$ 5 entrada / US$ 25 saída (cache cobrado como entrada, por não haver tarifa própria cadastrada).
-- **Custo real** é medido por execução (tokens informados pela API × tarifa vigente) e aparece em Custos e consumo, por cliente e por skill.
+- **Custo real** é medido por execução (tokens informados pela API × tarifa vigente) e aparece em Custos, por cliente e por skill.
 - **Estimativa ilustrativa, não medida**: uma geração de carrossel com ~6 mil tokens de entrada e ~4 mil de saída (incluindo o raciocínio do modelo) custaria cerca de 6.000 × 4/10⁶ + 4.000 × 20/10⁶ ≈ **US$ 0,10**. O valor real depende do tamanho do briefing e do perfil, do esforço e do aproveitamento de cache; confirme com as primeiras execuções reais.
 - Infraestrutura: PostgreSQL e um processo web + um worker; sem outros serviços pagos nesta fase.
 

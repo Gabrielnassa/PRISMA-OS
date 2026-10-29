@@ -36,6 +36,12 @@ import { DrivePanel } from "./drive-panel";
 import { BrandForm } from "./brand-form";
 import { AddMemoryForm } from "./memory-panel";
 import { BudgetForm, ClientSettingsForm } from "./settings-forms";
+import { ChoosePageForm } from "./redes-panel";
+import { disconnectAccountAction } from "../actions";
+import { listAccounts, NETWORK_LABELS, pendingPages, type Network, type SocialAccount } from "@/server/services/social-accounts";
+import { APP_PROVIDERS, appCredentials, type AppProvider } from "@/server/services/integration-apps";
+import { listPublications, PUBLICATION_STATUS_LABELS } from "@/server/services/publications";
+import { buttonClass } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Cliente" };
 
@@ -45,13 +51,14 @@ const TABS = [
   ["editorial", "Linha editorial"],
   ["memoria", "Memória"],
   ["arquivos", "Arquivos"],
+  ["redes", "Redes"],
   ["conteudos", "Conteúdos"],
 ] as const;
 
-export default async function ClientPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ aba?: string; novo?: string; mes?: string }> }) {
+export default async function ClientPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ aba?: string; novo?: string; mes?: string; ok?: string; erro?: string; escolher?: string }> }) {
   const auth = await requireAuth();
   const { id } = await params;
-  const { aba, novo, mes } = await searchParams;
+  const { aba, novo, mes, ok, erro, escolher } = await searchParams;
   const tab = TABS.some(([t]) => t === aba) ? aba! : "visao";
   const client = await getClient(auth, id).catch((err) => {
     if (err instanceof NotFoundError) notFound();
@@ -84,6 +91,7 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
       {tab === "memoria" ? <MemoryTab auth={auth} clientId={client.id} /> : null}
       {tab === "arquivos" ? <FilesTab auth={auth} clientId={client.id} /> : null}
       {tab === "conteudos" ? <ContentsTab auth={auth} clientId={client.id} /> : null}
+      {tab === "redes" ? <RedesTab auth={auth} clientId={client.id} ok={ok} erro={erro} escolher={escolher} archived={client.status === "archived"} /> : null}
       {tab === "editorial" ? <EditorialTab auth={auth} clientId={client.id} month={mes} archived={client.status === "archived"} /> : null}
     </>
   );
@@ -384,6 +392,125 @@ async function EditorialTab({ auth, clientId, month: requested, archived }: { au
           </div>
         ) : null}
         {!plan && !canEdit ? <p className="p-5 text-[13.5px] text-ink-400">Sem linha editorial neste mês.</p> : null}
+      </Card>
+    </div>
+  );
+}
+
+const PROVIDER_GROUPS: Array<{ provider: AppProvider; title: string; networks: Network[]; note: string }> = [
+  { provider: "meta", title: "Instagram e Facebook", networks: ["instagram", "facebook"], note: "Um login conecta a Página do Facebook e o Instagram profissional ligado a ela." },
+  { provider: "tiktok", title: "TikTok", networks: ["tiktok"], note: "Fotos e vídeos. Até a auditoria do app na TikTok, os posts ficam privados." },
+  { provider: "google", title: "YouTube", networks: ["youtube"], note: "Só vídeos (Shorts entram automaticamente quando verticais e curtos)." },
+];
+
+function AccountRow({ a, canConnect }: { a: SocialAccount; canConnect: boolean }) {
+  return (
+    <li className="flex flex-wrap items-center gap-3 px-5 py-3">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {a.avatarUrl ? <img src={a.avatarUrl} alt="" className="size-9 rounded-full object-cover ring-1 ring-ink-700" /> : <span className="size-9 rounded-full bg-ink-800" />}
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2 text-[14px] font-medium text-ink-50">
+          {NETWORK_LABELS[a.network]}
+          {a.status === "active" ? <Badge tone="success">Conectada</Badge> : <Badge tone="danger">Reconectar</Badge>}
+        </div>
+        <div className="truncate text-[12.5px] text-ink-400">
+          {a.profileUrl ? (
+            <a href={a.profileUrl} target="_blank" rel="noreferrer" className="hover:text-ink-100 hover:underline">
+              {a.username ? `@${a.username.replace(/^@/, "")}` : a.displayName}
+            </a>
+          ) : (
+            a.displayName
+          )}
+          {a.connectedByName ? ` · conectada por ${a.connectedByName} ${formatRelative(a.connectedAt)}` : ""}
+        </div>
+        {a.status !== "active" && a.lastError ? <div className="mt-0.5 text-[12px] text-red-300">{a.lastError}</div> : null}
+      </div>
+      {canConnect ? (
+        <InlineAction
+          action={disconnectAccountAction}
+          fields={{ accountId: a.id }}
+          label="Desconectar"
+          tone="danger"
+          confirmMessage={`Desconectar ${NETWORK_LABELS[a.network]} deste cliente? Publicações agendadas nessa conta vão falhar até ela ser conectada de novo.`}
+        />
+      ) : null}
+    </li>
+  );
+}
+
+async function RedesTab({ auth, clientId, ok, erro, escolher, archived }: { auth: Auth; clientId: string; ok?: string; erro?: string; escolher?: string; archived: boolean }) {
+  const canConnect = can(auth.role, "social.connect") && !archived;
+  const [accounts, ready, pubs, pending] = await Promise.all([
+    listAccounts(auth, clientId),
+    Promise.all(APP_PROVIDERS.map(async (p) => [p, Boolean(await appCredentials(auth.organizationId, p).catch(() => null))] as const)),
+    listPublications(auth, { clientId, limit: 8 }),
+    escolher ? pendingPages(auth, escolher).catch(() => null) : null,
+  ]);
+  const configured = Object.fromEntries(ready) as Record<AppProvider, boolean>;
+  return (
+    <div className="flex flex-col gap-6">
+      {ok ? <Alert tone="success">{ok}</Alert> : null}
+      {erro ? <Alert tone="danger">{erro}</Alert> : null}
+      {pending && pending.clientId === clientId ? (
+        <Card>
+          <CardHeader title="Escolha a Página do Facebook" />
+          <ChoosePageForm stateId={escolher!} pages={pending.pages} />
+        </Card>
+      ) : null}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {PROVIDER_GROUPS.map((g) => {
+          const mine = accounts.filter((a) => g.networks.includes(a.network));
+          return (
+            <Card key={g.provider} className="flex flex-col">
+              <CardHeader title={g.title} description={g.note} />
+              {mine.length ? (
+                <ul className="divide-y divide-ink-800">
+                  {mine.map((a) => (
+                    <AccountRow key={a.id} a={a} canConnect={canConnect} />
+                  ))}
+                </ul>
+              ) : (
+                <p className="px-5 py-4 text-[13.5px] text-ink-400">Nenhuma conta conectada.</p>
+              )}
+              {canConnect ? (
+                <div className="mt-auto border-t border-ink-800 px-5 py-4">
+                  {configured[g.provider] ? (
+                    <a href={`/api/conexoes/${g.provider}/iniciar?cliente=${clientId}`} className={buttonClass(mine.length ? "secondary" : "primary", "sm")}>
+                      {mine.length ? "Conectar de novo" : `Conectar ${g.title}`}
+                    </a>
+                  ) : (
+                    <p className="text-[12.5px] text-ink-400">
+                      Falta cadastrar as chaves do app em{" "}
+                      <Link href="/integracoes" className="text-iris-300 hover:underline">
+                        Integrações
+                      </Link>
+                      .
+                    </p>
+                  )}
+                </div>
+              ) : null}
+            </Card>
+          );
+        })}
+      </div>
+      <Card>
+        <CardHeader title="Publicações recentes" actions={<LinkButton href={`/publicacoes?cliente=${clientId}`} variant="ghost" size="sm">Ver todas</LinkButton>} />
+        {pubs.length ? (
+          <ul className="divide-y divide-ink-800">
+            {pubs.map((p) => (
+              <li key={p.id} className="flex flex-wrap items-center gap-3 px-5 py-3 text-[13.5px]">
+                <span className="min-w-0 flex-1 truncate text-ink-100">{p.contentTitle ?? p.title}</span>
+                <span className="text-ink-400">
+                  {NETWORK_LABELS[p.network]} · {p.accountLabel}
+                </span>
+                <Badge tone={p.status === "published" ? "success" : p.status === "failed" ? "danger" : p.status === "cancelled" ? "neutral" : "info"}>{PUBLICATION_STATUS_LABELS[p.status]}</Badge>
+                <span className="tabular text-[12px] text-ink-400">{formatDateTime(p.publishedAt ?? p.scheduledAt)}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="px-5 py-4 text-[13.5px] text-ink-400">Nada publicado ainda. Peças aprovadas têm o botão Publicar.</p>
+        )}
       </Card>
     </div>
   );

@@ -1,6 +1,8 @@
-# Publicação no Instagram e no Facebook depois da aprovação (desenho)
+# Publicação no Instagram e no Facebook depois da aprovação (desenho original)
 
-Pedido do sócio: "aprovou, já pode postar". Este documento descreve como fazer isso com segurança. Ainda **não está implementado**: depende de credenciais e de uma aprovação da Meta que não dá para obter nem testar daqui, e o princípio do sistema é não mostrar botões que não funcionam.
+> **Implementado** em 29/10/2026, junto com TikTok e YouTube. O guia de uso está em [docs/REDES-SOCIAIS.md](../REDES-SOCIAIS.md); este documento fica como registro do desenho.
+
+Pedido do sócio: "aprovou, já pode postar". Este documento descreve como fazer isso com segurança.
 
 ## O que a Meta exige
 

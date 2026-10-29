@@ -20,6 +20,10 @@ import { ContentEditor } from "./editor";
 import { GenerationStatus } from "./generation-status";
 import { QualityPanel } from "./quality-panel";
 import { AiReviewPanel, ApprovalPanel, CommentsPanel, RetryPanel } from "./review-panels";
+import { PublishForm } from "@/components/publish-form";
+import { PublicationList } from "@/components/publication-list";
+import { compatibility, listPublications, needsPublicUrl, publicUrlProblem, type PublicationKind } from "@/server/services/publications";
+import { listAccounts, NETWORK_LABELS } from "@/server/services/social-accounts";
 import { archiveAction, deleteContentAction, duplicateAction, restoreVersionAction } from "./actions";
 import { CopyButton } from "@/components/copy-button";
 
@@ -55,6 +59,33 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
     listMedia(auth, { clientId: detail.clientId, imagesOnly: true, limit: 200 }),
   ]);
   const provider = providerStatus();
+  const approvedVersion = detail.status === "approved" ? detail.versions.find((v) => v.id === detail.approvedVersionId) : undefined;
+  const [publications, accounts, approvedDoc] = await Promise.all([
+    listPublications(auth, { contentId: id }),
+    approvedVersion && can(auth.role, "social.publish") ? listAccounts(auth, detail.clientId) : Promise.resolve([]),
+    approvedVersion && can(auth.role, "social.publish") ? getVersionDocument(auth, id, approvedVersion.id) : Promise.resolve(null),
+  ]);
+  const publish = approvedDoc && approvedVersion
+    ? (() => {
+        const kind: PublicationKind = detail.format === "carousel" && approvedDoc.document.slides.length > 1 ? "carousel" : detail.format === "story" ? "story" : "image";
+        const urlProblem = publicUrlProblem();
+        return {
+          versionNumber: approvedVersion.number,
+          caption: [approvedDoc.document.caption, approvedDoc.document.hashtags.join(" ")].filter(Boolean).join("\n\n"),
+          accounts: accounts.map((a) => ({
+            id: a.id,
+            network: a.network,
+            networkLabel: NETWORK_LABELS[a.network],
+            label: a.username ? `@${a.username.replace(/^@/, "")}` : a.displayName,
+            privacyOptions: Array.isArray(a.details.privacyOptions) ? (a.details.privacyOptions as string[]) : [],
+            blocked:
+              a.status !== "active"
+                ? "Conecte a conta de novo na aba Redes do cliente."
+                : (compatibility(a.network, kind, approvedDoc.document.aspect) ?? (needsPublicUrl(a.network, kind) && urlProblem ? "Disponível depois de hospedar com domínio e HTTPS." : null)),
+          })),
+        };
+      })()
+    : null;
   const canEdit = can(auth.role, "content.edit") && ["draft", "in_review", "awaiting_approval", "approved", "rejected", "failed"].includes(detail.status) && Boolean(detail.current);
   const current = detail.current;
   const brandStyle: DocumentStyle = {
@@ -181,7 +212,22 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
               approvals={detail.approvals}
               canSubmit={can(auth.role, "content.submit")}
               canApprove={can(auth.role, "content.approve")}
+              canShare={can(auth.role, "approval.share")}
             />
+          ) : null}
+          {publish ? (
+            <Card>
+              <CardHeader title="Publicar" description={`Versão ${publish.versionNumber}, a aprovada`} />
+              <div className="p-5">
+                <PublishForm target={{ contentId: id }} accounts={publish.accounts} defaultCaption={publish.caption} defaultTitle={detail.title} isVideo={false} />
+              </div>
+            </Card>
+          ) : null}
+          {publications.length ? (
+            <Card>
+              <CardHeader title="Publicações desta peça" />
+              <PublicationList items={publications} showClient={false} showContent={false} canAct={can(auth.role, "social.publish")} />
+            </Card>
           ) : null}
           <CommentsPanel contentId={id} comments={detail.comments} canComment={can(auth.role, "content.comment")} />
           {current && can(auth.role, "content.edit") ? <AiReviewPanel contentId={id} enabled={provider.configured} /> : null}
@@ -195,7 +241,7 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
                   <span className="font-semibold text-ink-100">v{v.number}</span>
                   <SourceBadge source={v.source} />
                   {v.id === detail.approvedVersionId ? <Badge tone="success">Aprovada</Badge> : null}
-                  {v.qualityPassed === false ? <Badge tone="danger">{v.criticalCount} crítico(s)</Badge> : null}
+                  {v.qualityPassed === false ? <Badge tone="danger">{v.criticalCount === 1 ? "1 crítico" : `${v.criticalCount} críticos`}</Badge> : null}
                   <span className="min-w-0 flex-1 truncate text-xs text-ink-400">
                     {v.createdByName ?? "—"} · {formatDateTime(v.createdAt)}
                     {v.changeNote ? ` · ${v.changeNote}` : ""}

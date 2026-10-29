@@ -4,36 +4,43 @@
 
 Central operacional de marketing com IA para agências que atendem vários clientes: perfil de marca estruturado, criação de posts e carrosséis com IA, peças realmente renderizadas e editáveis, controle de qualidade, aprovação vinculada à versão exata, exportação, histórico e custos — com isolamento de dados por cliente no backend **e** no banco.
 
-> Estado atual: **Fase 1 (fundação) + primeira entrega obrigatória** (seção 30 da especificação). Calendário, automações, publicação em redes, vídeo, sites e anúncios estão planejados para as fases 3–6 e aparecem na interface como "próximas fases", nunca simulados. Veja [docs/STATUS.md](docs/STATUS.md).
+> Estado atual: produção de conteúdo completa (marca, linha editorial, criação, aprovação pela equipe ou pelo cliente) e publicação nas redes pelas APIs oficiais (Instagram, Facebook, TikTok e YouTube), com e-mail, webhooks e agenda. Geração de vídeo, sites e anúncios ainda não existem e não aparecem na interface. Veja [docs/STATUS.md](docs/STATUS.md).
 
 ## O que já funciona
 
 | Fluxo | Onde |
 | --- | --- |
-| Login com sessões no banco, papéis e acesso por cliente | `/login`, Usuários e permissões |
+| Login com sessões no banco, papéis e acesso por cliente | `/login`, Equipe |
 | Cadastro de clientes e perfil de marca completo (negócio, público, voz, identidade visual, canais, ofertas confirmadas) | Clientes → Perfil da marca |
 | Memória do cliente (fatos, preferências, hipóteses, sugestões) revisável e excluível | Clientes → Memória |
 | Sugestão de cores da marca a partir do logotipo, de fotos ou de um print do perfil; pelo @ do Instagram com a API oficial da Meta (opcional, precisa de token) | Clientes → Perfil da marca |
 | Exclusão definitiva de peças (uma a uma ou em lote) e de clientes (confirmação pelo nome), mantendo custos e auditoria | Conteúdos, Clientes → Visão geral |
-| Biblioteca de mídia com validação do tipo real do arquivo | Clientes → Arquivos, Biblioteca de mídia |
-| Pedido de conteúdo com briefing, sugestão de pautas e escolha de fotos | Central de criação |
-| Skills da agência: criar, importar um SKILL.md (formato das skills do Claude) ou partir de um modelo; versões; executar para um cliente com o contexto da marca; histórico; resultado vira briefing de uma peça; baixar SKILL.md | Agentes e skills |
+| Mídia com validação do tipo real do arquivo | Clientes → Arquivos, Mídia |
+| Pedido de conteúdo com briefing, sugestão de pautas e escolha de fotos | Criar |
+| Skills da agência: criar, importar um SKILL.md (formato das skills do Claude) ou partir de um modelo; versões; executar para um cliente com o contexto da marca; histórico; resultado vira briefing de uma peça; baixar SKILL.md | Skills |
 | Geração assíncrona (fila no PostgreSQL + worker) com direção de arte por regras e copy por IA | Conteúdos |
-| 18 templates originais (6 famílias × 3) renderizados em SVG/PNG nas proporções 1:1, 4:5 e 9:16 | Biblioteca de layouts |
+| 18 templates originais (6 famílias × 3) renderizados em SVG/PNG nas proporções 1:1, 4:5 e 9:16 | Layouts |
 | Editor visual: textos com limite por campo ajustado ao layout, tema, alinhamento, escala, foto com foco/zoom, template, cores, fontes, logotipo | Conteúdos → editor |
 | Controle de qualidade automático (texto cortado, contraste WCAG, marca, termos proibidos, CTA, números sem fonte, ofertas não confirmadas) | Painel de qualidade |
 | Versões imutáveis, comparação e restauração | Conteúdos → Versões |
 | Aprovação vinculada ao hash da versão; alteração exige nova aprovação; reprovação vira sugestão revisável na memória | Aprovações |
 | Exportação PNG/ZIP (com legenda e textos alternativos) da versão aprovada; rascunhos identificados | Conteúdos → Exportar |
-| Dashboard com dados reais e filtros por cliente, período, canal e status | Dashboard |
-| Auditoria de ações, custos por execução de IA (por modelo, inclusive fallback), tetos mensais por cliente | Histórico, Custos e consumo |
+| Dashboard com dados reais e filtros por cliente, período, canal e status | Início |
+| Auditoria de ações, custos por execução de IA (por modelo, inclusive fallback), tetos mensais por cliente | Histórico, Custos |
 | Saúde do sistema e teste real de conexão com a IA | Integrações, `GET /api/health` |
 | IA à escolha: Claude (Anthropic) ou ChatGPT (OpenAI), com custos por modelo nos dois | Integrações, `.env` |
 | Pacote mensal por cliente com custo de IA estimado e linha editorial do mês (IA propõe, equipe aprova, peças criadas com as fotos do cliente) | Clientes → Linha editorial |
 | Importação de fotos e vídeos da pasta do Google Drive de cada cliente | Clientes → Arquivos |
-| O mês de cada cliente no painel (produzido × contratado, linha editorial, o que está parado esperando alguém) e calendário com as pautas de todos os clientes | Dashboard, Calendário |
-| Entrega do mês num ZIP (todas as peças aprovadas, uma pasta por peça com imagens e legenda), copiar legenda e duplicar peça | Dashboard, Linha editorial, página da peça |
+| O mês de cada cliente no painel (produzido × contratado, linha editorial, o que está parado esperando alguém) e calendário com as pautas de todos os clientes | Início, Calendário |
+| Entrega do mês num ZIP (todas as peças aprovadas, uma pasta por peça com imagens e legenda), copiar legenda e duplicar peça | Início, Linha editorial, página da peça |
 | Primeiros passos de cada cliente (perfil, logotipo, fotos, pacote, linha editorial, IA) | Clientes → Visão geral |
+| Chaves dos apps da Meta, TikTok e Google salvas criptografadas (ou na configuração do servidor) | Integrações |
+| Contas de cada cliente conectadas pelo login oficial: Página do Facebook + Instagram profissional, TikTok, canal do YouTube | Clientes → Redes |
+| Publicar ou agendar a versão aprovada no Instagram (post, carrossel, story), Facebook e TikTok, e vídeos da biblioteca no Reels, TikTok, YouTube e Facebook; nova tentativa automática; curtidas, comentários e alcance | Peça → Publicar, Publicações |
+| Link para o cliente aprovar sem login (copiar, WhatsApp ou e-mail), com o nome de quem decidiu | Peça → Aprovação |
+| E-mails para a equipe (pedido de aprovação, decisão, publicação com falha) pelo SMTP da agência | Integrações → E-mail |
+| Webhooks assinados (HMAC) para n8n, Zapier e Make | Integrações → Webhooks |
+| Agenda privada (ICS) com pautas e publicações para Google Agenda, Apple Calendário ou Outlook | Calendário |
 
 ## Rodar pelo GitHub (Codespaces)
 

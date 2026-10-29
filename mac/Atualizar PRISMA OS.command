@@ -4,6 +4,7 @@ source "$(cd "$(dirname "$0")" && pwd)/_comum.sh"
 
 titulo "PRISMA OS — atualizar"
 exigir_configuracao
+garantir_chave_secreta
 garantir_docker
 
 info "Fazendo backup antes de atualizar..."

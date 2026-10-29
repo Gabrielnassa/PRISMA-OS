@@ -6,6 +6,8 @@ import { calendarEntries, type CalendarEntry } from "@/server/services/month";
 import { currentMonth, shiftMonth } from "@/server/services/editorial";
 import { EDITORIAL_FORMAT_LABELS, monthLabel } from "@/lib/content/editorial";
 import { STATUS_LABELS } from "@/lib/content/status";
+import { calendarFeedStatus } from "@/server/services/calendar-feed";
+import { FeedPanel } from "./feed-panel";
 import { Card, EmptyState, LinkButton, PageHeader, Select, buttonClass, cx } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Calendário" };
@@ -149,6 +151,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
           </ol>
         </>
       )}
+      <FeedPanel active={(await calendarFeedStatus(auth)).active} />
     </>
   );
 }

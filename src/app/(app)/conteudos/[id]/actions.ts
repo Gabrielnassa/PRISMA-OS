@@ -20,6 +20,8 @@ import { runAiSkill } from "@/server/orchestrator";
 import { reviewerSkill, type ReviewOutput } from "@/server/skills/reviewer";
 import { assertCan } from "@/server/authz/permissions";
 import { ValidationError } from "@/server/errors";
+import { createApprovalLink } from "@/server/services/approval-links";
+import { queueEmail } from "@/server/services/email";
 import type { QualityReport } from "@/server/quality/checks";
 
 export async function saveVersionAction(
@@ -132,5 +134,27 @@ export async function aiReviewAction(_prev: ActionState<ReviewOutput>, form: For
     });
     refresh();
     return { data: out.output, message: out.isDemo ? "Revisão de demonstração." : out.reused ? "Esta versão já tinha sido revisada (sem nova cobrança)." : undefined };
+  });
+}
+
+export async function approvalLinkAction(_prev: ActionState<{ url: string; expiresAt: string; clientName: string; title: string }>, form: FormData): Promise<ActionState<{ url: string; expiresAt: string; clientName: string; title: string }>> {
+  const auth = await requireAuth();
+  return runAction(async () => ({ data: await createApprovalLink(auth, str(form, "approvalId")) }));
+}
+
+export async function emailApprovalLinkAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const auth = await requireAuth();
+  return runAction(async () => {
+    const email = str(form, "email").trim();
+    if (!/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email)) throw new ValidationError("Informe um e-mail válido.");
+    const link = await createApprovalLink(auth, str(form, "approvalId"));
+    const sent = await queueEmail(auth.organizationId, {
+      to: [email],
+      replyTo: auth.email,
+      subject: `Aprovação: ${link.title}`,
+      text: `Olá!\n\n${auth.userName}, da ${auth.organizationName}, enviou "${link.title}" para a sua aprovação.\n\nVeja a peça e responda por aqui (sem login): ${link.url}\n\nO link vale até ${new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeZone: "America/Sao_Paulo" }).format(new Date(link.expiresAt))}.`,
+    });
+    if (!sent) throw new ValidationError("O e-mail ainda não está configurado em Integrações. Copie o link ou envie pelo WhatsApp.");
+    return { message: `Link enviado para ${email}.` };
   });
 }

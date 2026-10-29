@@ -3,10 +3,18 @@ import { claimNextJob, completeJob, failJob, heartbeatJob, recoverStaleJobs, wor
 import { handleGenerateContent } from "./generate-content";
 import { workerAuth } from "./worker-auth";
 import { GENERATE_JOB, markGenerationFailed } from "../services/content";
+import { METRICS_JOB, PUBLISH_JOB, handleMetrics, handlePublish, markPublicationFailed } from "../services/publications";
+import { WEBHOOK_JOB, handleWebhook } from "../services/webhooks";
+import { EMAIL_JOB, handleEmail } from "../services/email";
 
 type Handler = (job: Job, auth: NonNullable<Awaited<ReturnType<typeof workerAuth>>>) => Promise<Record<string, unknown>>;
 
-const HANDLERS: Record<string, { run: Handler; onFinalFailure?: FinalFailureHook }> = {
+/** `system`: tarefa interna sem pessoa por trás (ex.: entrega de webhook); roda sem contexto de usuário. */
+const HANDLERS: Record<string, { run: Handler; onFinalFailure?: FinalFailureHook; system?: boolean }> = {
+  [PUBLISH_JOB]: { run: handlePublish, onFinalFailure: markPublicationFailed },
+  [METRICS_JOB]: { run: (job) => handleMetrics(job), system: true },
+  [WEBHOOK_JOB]: { run: (job) => handleWebhook(job), system: true },
+  [EMAIL_JOB]: { run: (job) => handleEmail(job), system: true },
   [GENERATE_JOB]: {
     run: handleGenerateContent,
     // Roda na mesma transação que encerra a tarefa (contexto de sistema).
@@ -33,7 +41,7 @@ function isRetryable(err: unknown): boolean {
 function userMessageFor(err: unknown): string {
   if (err instanceof AppError) return err.message;
   if (typeof err === "object" && err !== null && (err as { userSafe?: boolean }).userSafe && err instanceof Error) return err.message;
-  return "Falha interna ao gerar o conteúdo. O detalhe técnico foi registrado; tente novamente ou avise o administrador.";
+  return "Falha interna. O detalhe técnico foi registrado; tente novamente ou avise o administrador.";
 }
 
 /** Processa uma tarefa, se houver. Retorna se algo foi processado. */
@@ -53,9 +61,9 @@ export async function processNextJob(worker = workerId(), opts: { heartbeatMs?: 
   }, opts.heartbeatMs ?? 30_000);
   try {
     if (!handler) throw Object.assign(new Error(`Tipo de tarefa desconhecido: ${job.type}`), { retryable: false });
-    const auth = await workerAuth(job.organization_id, job.created_by);
-    if (!auth) throw Object.assign(new Error("O solicitante não tem mais acesso à organização."), { retryable: false, userSafe: true });
-    const result = await handler.run(job, auth);
+    const auth = handler.system ? null : await workerAuth(job.organization_id, job.created_by);
+    if (!handler.system && !auth) throw Object.assign(new Error("O solicitante não tem mais acesso à organização."), { retryable: false, userSafe: true });
+    const result = await handler.run(job, auth!);
     const owned = await completeJob(job, result);
     log(owned ? "info" : "warn", owned ? "job.succeeded" : "job.lock_lost", { jobId: job.id, type: job.type, durationMs: Date.now() - started });
   } catch (err) {

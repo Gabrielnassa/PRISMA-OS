@@ -20,6 +20,7 @@ const SECTIONS: Array<{ title: string; items: Item[] }> = [
       { href: "/calendario", label: "Calendário", icon: "calendar" },
       { href: "/conteudos", label: "Conteúdos", icon: "contents" },
       { href: "/aprovacoes", label: "Aprovações", icon: "approvals" },
+      { href: "/publicacoes", label: "Publicações", icon: "send" },
     ],
   },
   {

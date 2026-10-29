@@ -5,7 +5,9 @@ import { Badge, Button, Card, CardHeader, Field, Textarea, formatDateTime } from
 import { ActionForm, FormMessage, SubmitButton } from "@/components/form";
 import type { ApprovalRecord } from "@/server/services/content";
 import type { ReviewOutput } from "@/server/skills/reviewer";
-import { aiReviewAction, commentAction, decideApprovalAction, retryGenerationAction, submitApprovalAction } from "./actions";
+import { aiReviewAction, approvalLinkAction, commentAction, decideApprovalAction, emailApprovalLinkAction, retryGenerationAction, submitApprovalAction } from "./actions";
+import { CopyButton } from "@/components/copy-button";
+import { Input } from "@/components/ui";
 
 const APPROVAL_STATUS: Record<ApprovalRecord["status"], { label: string; tone: "warning" | "success" | "danger" | "neutral" }> = {
   pending: { label: "Pendente", tone: "warning" },
@@ -24,6 +26,7 @@ export function ApprovalPanel({
   approvals,
   canSubmit,
   canApprove,
+  canShare = false,
 }: {
   contentId: string;
   currentVersionId: string | null;
@@ -33,6 +36,7 @@ export function ApprovalPanel({
   approvals: ApprovalRecord[];
   canSubmit: boolean;
   canApprove: boolean;
+  canShare?: boolean;
 }) {
   const [submitState, submit] = useActionState(submitApprovalAction, { status: "idle" });
   const [decideState, decide] = useActionState(decideApprovalAction, { status: "idle" });
@@ -69,6 +73,7 @@ export function ApprovalPanel({
             ) : (
               <p className="mt-3 text-xs text-ink-400">A decisão cabe a quem aprova.</p>
             )}
+            {canShare ? <ShareApprovalLink approvalId={pending.id} /> : null}
           </div>
         ) : submittable ? (
           <ActionForm action={submit} state={submitState} resetOnSuccess className="flex flex-col gap-3">
@@ -205,5 +210,52 @@ export function AiReviewPanel({ contentId, enabled }: { contentId: string; enabl
         ) : null}
       </ActionForm>
     </Card>
+  );
+}
+
+/** Link para o cliente aprovar sem login: copiar, WhatsApp ou e-mail. */
+function ShareApprovalLink({ approvalId }: { approvalId: string }) {
+  const [link, create, creating] = useActionState(approvalLinkAction, { status: "idle" });
+  const [mail, send] = useActionState(emailApprovalLinkAction, { status: "idle" });
+  const data = link.status === "ok" ? link.data : undefined;
+  const message = data ? `Olá! Segue a peça "${data.title}" para aprovação. É só abrir o link, conferir e responder por lá: ${data.url}` : "";
+  return (
+    <div className="mt-4 border-t border-amber-500/20 pt-4">
+      <div className="text-[13px] font-medium text-amber-50">Aprovação pelo cliente</div>
+      {data ? (
+        <div className="mt-2 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <code className="select-all break-all rounded-[4px] bg-ink-950 px-2 py-1 font-mono text-[12px] text-ink-100 ring-1 ring-ink-700">{data.url}</code>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <CopyButton text={data.url} label="Copiar link" />
+            <a href={`https://wa.me/?text=${encodeURIComponent(message)}`} target="_blank" rel="noreferrer" className="inline-flex h-8 items-center rounded-full border border-emerald-400/40 px-3.5 text-[13px] font-medium text-emerald-200 hover:bg-emerald-400/10">
+              Enviar pelo WhatsApp
+            </a>
+          </div>
+          <ActionForm action={send} state={mail} resetOnSuccess className="flex flex-wrap items-center gap-2">
+            <input type="hidden" name="approvalId" value={approvalId} />
+            <Input name="email" type="email" placeholder="e-mail do cliente" aria-label="E-mail do cliente" className="w-56" required />
+            <SubmitButton size="sm" variant="secondary" pendingText="Enviando...">
+              Enviar por e-mail
+            </SubmitButton>
+          </ActionForm>
+          <FormMessage state={mail} />
+          <p className="text-[12px] text-amber-100/60">O link vale 14 dias e só para esta versão.</p>
+        </div>
+      ) : (
+        <form
+          action={create}
+          className="mt-2 flex flex-wrap items-center gap-3"
+        >
+          <input type="hidden" name="approvalId" value={approvalId} />
+          <Button type="submit" size="sm" variant="secondary" disabled={creating}>
+            {creating ? "Gerando..." : "Gerar link para o cliente"}
+          </Button>
+          <span className="text-[12px] text-amber-100/70">O cliente vê a peça e aprova ou pede ajuste, sem login.</span>
+          {link.status === "error" ? <span className="text-[12.5px] text-red-300">{link.message}</span> : null}
+        </form>
+      )}
+    </div>
   );
 }

@@ -29,17 +29,19 @@ export interface EnqueueInput {
   idempotencyKey: string;
   createdBy: string | null;
   maxAttempts?: number;
+  /** Não executa antes deste momento (publicações agendadas). */
+  runAfter?: Date;
 }
 
 /** Enfileira uma tarefa; a mesma chave de idempotência nunca gera duas tarefas. */
 export async function enqueueJob(tx: Queryable, input: EnqueueInput): Promise<{ job: Job; created: boolean }> {
   const inserted = await maybeOne<Job>(
     tx,
-    `INSERT INTO jobs (organization_id, client_id, type, payload, idempotency_key, created_by, max_attempts)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `INSERT INTO jobs (organization_id, client_id, type, payload, idempotency_key, created_by, max_attempts, run_after)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, coalesce($8::timestamptz, now()))
      ON CONFLICT (organization_id, idempotency_key) DO NOTHING
      RETURNING *`,
-    [input.organizationId, input.clientId, input.type, JSON.stringify(input.payload), input.idempotencyKey, input.createdBy, input.maxAttempts ?? 3],
+    [input.organizationId, input.clientId, input.type, JSON.stringify(input.payload), input.idempotencyKey, input.createdBy, input.maxAttempts ?? 3, input.runAfter?.toISOString() ?? null],
   );
   if (inserted) return { job: inserted, created: true };
   const existing = await one<Job>(tx, "SELECT * FROM jobs WHERE organization_id = $1 AND idempotency_key = $2", [input.organizationId, input.idempotencyKey]);

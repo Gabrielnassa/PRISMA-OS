@@ -39,5 +39,6 @@ export const Icon = {
   chevron: (p: SVGProps<SVGSVGElement>) => (<svg {...base(p)}><path d="M9 6l6 6-6 6" /></svg>),
   plus: (p: SVGProps<SVGSVGElement>) => (<svg {...base(p)}><path d="M12 5v14M5 12h14" /></svg>),
   upload: (p: SVGProps<SVGSVGElement>) => (<svg {...base(p)}><path d="M12 16V4M7 9l5-5 5 5M4 20h16" /></svg>),
+  send: (p: SVGProps<SVGSVGElement>) => (<svg {...base(p)}><path d="M21 3L10 14" /><path d="M21 3l-7 18-4-7-7-4z" /></svg>),
   download: (p: SVGProps<SVGSVGElement>) => (<svg {...base(p)}><path d="M12 4v12M7 11l5 5 5-5M4 20h16" /></svg>),
 };

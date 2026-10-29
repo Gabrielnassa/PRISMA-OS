@@ -11,6 +11,15 @@ trap '' HUP
 export NODE_ENV=production
 APP_URL="$(bash .devcontainer/endereco.sh)"
 export APP_URL
+# Chave que criptografa as chaves dos apps e as conexões no banco: criada uma
+# vez e guardada fora do Git (perder o arquivo obriga a salvar as chaves de novo).
+if [ -z "${APP_SECRET_KEY:-}" ]; then
+  if [ ! -s .devcontainer/.chave-secreta ]; then
+    (umask 077; head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n' >.devcontainer/.chave-secreta)
+  fi
+  APP_SECRET_KEY="$(cat .devcontainer/.chave-secreta)"
+  export APP_SECRET_KEY
+fi
 
 # Encerra só os processos que este script iniciou antes (grupo de cada um).
 for nome in web worker; do

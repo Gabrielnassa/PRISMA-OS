@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { z } from "zod";
-import { many, maybeOne, one, userCtx, withTx, type Queryable } from "../db";
+import { many, maybeOne, one, systemCtx, userCtx, withTx, type Queryable } from "../db";
 import { assertCan } from "../authz/permissions";
 import type { AuthContext } from "../auth/types";
 import { ConflictError, ForbiddenError, NotFoundError, ProviderNotConfiguredError, RateLimitError, ValidationError } from "../errors";
@@ -27,6 +27,8 @@ import { loadBrandProfile, requireClient } from "./clients";
 import { loadImagesForRender } from "./media";
 import { OrgSettingsSchema } from "./organizations";
 import { assertWithinBudget } from "./costs";
+import { emitEvent } from "./webhooks";
+import { notifyApprovalDecided, notifyApprovalRequested } from "./notifications";
 
 export const GENERATE_JOB = "content.generate";
 
@@ -378,7 +380,7 @@ export async function getContent(auth: AuthContext, contentId: string): Promise<
     }>(
       tx,
       `SELECT a.id, a.content_version_id, v.version_number, a.status, a.request_note, ru.name AS requested_by_name, a.requested_at,
-              du.name AS decided_by_name, a.decided_at, a.decision_note
+              coalesce(du.name, a.decided_by_name || ' (cliente)') AS decided_by_name, a.decided_at, a.decision_note
        FROM approvals a
        JOIN content_versions v ON v.id = a.content_version_id
        LEFT JOIN users ru ON ru.id = a.requested_by
@@ -544,7 +546,7 @@ export async function rerunQuality(auth: AuthContext, contentId: string): Promis
 
 export async function submitForApproval(auth: AuthContext, contentId: string, input: { versionId: string; note?: string }): Promise<{ approvalId: string }> {
   assertCan(auth.role, "content.submit");
-  return withTx(userCtx(auth.userId), async (tx) => {
+  const r = await withTx(userCtx(auth.userId), async (tx) => {
     const item = await lockItem(tx, auth, contentId);
     if (!["draft", "in_review", "rejected"].includes(item.status)) {
       throw new ConflictError("Este conteúdo não pode ser enviado para aprovação no estado atual.");
@@ -577,8 +579,16 @@ export async function submitForApproval(auth: AuthContext, contentId: string, in
       entityId: approval.id,
       metadata: { contentId, version: version.version_number, hash: version.document_hash },
     });
-    return { approvalId: approval.id };
+    return { approvalId: approval.id, clientId: item.client_id, title: item.title, versionNumber: version.version_number };
   });
+  await emitEvent(auth.organizationId, "approval.requested", { approvalId: r.approvalId, contentId, clientId: r.clientId, version: r.versionNumber, by: auth.userName });
+  const clientName = await clientNameOf(r.clientId);
+  await notifyApprovalRequested({ organizationId: auth.organizationId, clientId: r.clientId, contentId, title: r.title, clientName, requestedBy: auth.userId, requestedByName: auth.userName, versionNumber: r.versionNumber, note: input.note ?? "" });
+  return { approvalId: r.approvalId };
+}
+
+async function clientNameOf(clientId: string): Promise<string> {
+  return withTx(systemCtx("content.client_name"), async (tx) => (await one<{ name: string }>(tx, "SELECT name FROM clients WHERE id = $1", [clientId])).name);
 }
 
 export async function decideApproval(
@@ -590,7 +600,7 @@ export async function decideApproval(
   if (!z.string().uuid().safeParse(approvalId).success) throw new NotFoundError("Solicitação de aprovação não encontrada.");
   const note = (input.note ?? "").trim();
   if (input.decision === "rejected" && note.length < 3) throw new ValidationError("Explique o motivo da reprovação para orientar o ajuste.");
-  return withTx(userCtx(auth.userId), async (tx) => {
+  const r = await withTx(userCtx(auth.userId), async (tx) => {
     const target = await maybeOne<{ content_item_id: string }>(tx, "SELECT content_item_id FROM approvals WHERE id = $1 AND organization_id = $2", [approvalId, auth.organizationId]);
     if (!target) throw new NotFoundError("Solicitação de aprovação não encontrada.");
     // Mesma ordem de bloqueio de saveVersion/archiveContent (conteúdo, depois aprovação): evita deadlock.
@@ -640,8 +650,19 @@ export async function decideApproval(
       entityId: approvalId,
       metadata: { contentId: item.id, version: version.version_number, hash: approval.document_hash, note },
     });
-    return { contentId: item.id, status };
+    return { contentId: item.id, status, clientId: item.client_id, title: item.title, requestedBy: approval.requested_by };
   });
+  await emitEvent(auth.organizationId, "approval.decided", { approvalId, contentId: r.contentId, clientId: r.clientId, decision: input.decision, by: auth.userName, via: "team", note });
+  await notifyApprovalDecided(auth.organizationId, {
+    requestedBy: r.requestedBy === auth.userId ? null : r.requestedBy,
+    contentId: r.contentId,
+    title: r.title,
+    clientName: await clientNameOf(r.clientId),
+    decision: input.decision,
+    by: auth.userName,
+    note,
+  });
+  return { contentId: r.contentId, status: r.status };
 }
 
 export interface ApprovalQueueItem {

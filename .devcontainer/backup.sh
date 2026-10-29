@@ -14,5 +14,7 @@ while [ -e "$destino" ]; do n=$((n + 1)); destino="backups/$(date '+%Y-%m-%d_%H%
 mkdir -p "$destino" storage
 PGPASSWORD="$PRISMA_DB_SUPERUSER_PASSWORD" pg_dump -U postgres -Fc prisma_os >"$destino/banco.dump"
 tar -czf "$destino/arquivos.tgz" -C storage .
+# Sem a chave, as chaves dos apps e as conexões das redes do backup não abrem.
+[ -s .devcontainer/.chave-secreta ] && (umask 077; cp .devcontainer/.chave-secreta "$destino/chave-secreta.txt")
 echo "Backup salvo em $destino"
 echo "Para baixar: no painel de arquivos à esquerda, clique com o botão direito na pasta e escolha Download."

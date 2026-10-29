@@ -99,6 +99,8 @@ export function productionNotes(copy: CopyOutput | null, art: ArtDirection, isDe
 }
 
 /** Diferenças legíveis entre duas versões (para histórico e comparação). */
+const FIELD_SHORT: Record<(typeof FIELD_KEYS)[number], string> = { kicker: "sobretítulo", title: "título", body: "texto", highlight: "destaque", footer: "rodapé" };
+
 export function diffDocuments(a: ContentDocument, b: ContentDocument): string[] {
   const changes: string[] = [];
   if (a.templateId !== b.templateId) changes.push(`Template: ${a.templateId} → ${b.templateId}`);
@@ -109,7 +111,7 @@ export function diffDocuments(a: ContentDocument, b: ContentDocument): string[] 
   for (let i = 0; i < n; i++) {
     const sa = a.slides[i]!;
     const sb = b.slides[i]!;
-    for (const k of FIELD_KEYS) if (sa.fields[k] !== sb.fields[k]) changes.push(`Lâmina ${i + 1}: ${k}`);
+    for (const k of FIELD_KEYS) if (sa.fields[k] !== sb.fields[k]) changes.push(`Lâmina ${i + 1}: ${FIELD_SHORT[k]}`);
     if (sa.imageAssetId !== sb.imageAssetId) changes.push(`Lâmina ${i + 1}: imagem`);
     if (JSON.stringify(sa.imageFocus) !== JSON.stringify(sb.imageFocus) || sa.imageZoom !== sb.imageZoom) changes.push(`Lâmina ${i + 1}: recorte da imagem`);
     if (sa.theme !== sb.theme || sa.align !== sb.align || sa.textScale !== sb.textScale) changes.push(`Lâmina ${i + 1}: aparência`);

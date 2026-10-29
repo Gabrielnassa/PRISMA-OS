@@ -30,9 +30,9 @@ test("cores pelo logotipo, exclusão de peças e do cliente", async ({ page }) =
   // Pelo @ só com a API oficial da Meta configurada; pela imagem funciona já.
   await page.goto(`${clientUrl}?aba=marca`);
   await expect(page.getByRole("button", { name: "Buscar cores" })).toBeDisabled();
-  await expect(page.getByText(/conecte a API oficial da Meta/)).toBeVisible();
+  await expect(page.getByText(/conecte a Meta em Integrações/)).toBeVisible();
   await page.getByRole("button", { name: "Extrair cores (1)" }).click();
-  await expect(page.getByText("1 imagem(ns) da biblioteca")).toBeVisible();
+  await expect(page.getByText("1 imagem da biblioteca")).toBeVisible();
   await page.getByRole("button", { name: "Usar estas cores" }).click();
   await expect(page.getByText("Cores aplicadas abaixo.", { exact: false })).toBeVisible();
   await expect(page.locator("#c-primary")).toHaveValue(/^#c[0-9a-f]4[0-9a-f]0[0-9a-f]$/i);

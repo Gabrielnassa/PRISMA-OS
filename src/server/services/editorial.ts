@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { emitEvent } from "./webhooks";
 import { many, maybeOne, one, userCtx, withTx, type Queryable } from "../db";
 import { assertCan } from "../authz/permissions";
 import type { AuthContext } from "../auth/types";
@@ -317,12 +318,13 @@ export async function approveEditorialPlan(auth: AuthContext, planId: string): P
   assertCan(auth.role, "content.approve");
   assertCan(auth.role, "content.create");
   if (!z.string().uuid().safeParse(planId).success) throw new NotFoundError("Linha editorial não encontrada.");
-  const { clientId, items, photos } = await withTx(userCtx(auth.userId), async (tx) => {
+  const { clientId, items, photos, justApproved } = await withTx(userCtx(auth.userId), async (tx) => {
     const plan = await maybeOne<{ id: string; client_id: string; status: string }>(tx, "SELECT id, client_id, status FROM editorial_plans WHERE id = $1 AND organization_id = $2 FOR UPDATE", [planId, auth.organizationId]);
     if (!plan) throw new NotFoundError("Linha editorial não encontrada.");
     const blank = await one<{ n: number }>(tx, "SELECT count(*)::int AS n FROM editorial_items WHERE plan_id = $1 AND status = 'planned' AND (title = $2 OR length(trim(brief)) < 10) AND format <> 'video'", [planId, BLANK_TITLE]);
     if (blank.n > 0) throw new ValidationError(`Complete ${blank.n === 1 ? "1 pauta" : `${blank.n} pautas`} (título e briefing com pelo menos 10 caracteres) antes de aprovar.`);
-    if (plan.status === "draft") {
+    const justApproved = plan.status === "draft";
+    if (justApproved) {
       await tx.query("UPDATE editorial_plans SET status = 'approved', approved_by = $2, approved_at = now() WHERE id = $1", [planId, auth.userId]);
       await audit(tx, userActor(auth), { organizationId: auth.organizationId, clientId: plan.client_id, action: "editorial.approved", entityType: "editorial_plan", entityId: planId });
     }
@@ -331,8 +333,9 @@ export async function approveEditorialPlan(auth: AuthContext, planId: string): P
       "SELECT id, format, objective, title, brief, cta FROM editorial_items WHERE plan_id = $1 AND status = 'planned' ORDER BY position",
       [planId],
     );
-    return { clientId: plan.client_id, items, photos: await photoRotation(tx, plan.client_id) };
+    return { clientId: plan.client_id, items, photos: await photoRotation(tx, plan.client_id), justApproved };
   });
+  if (justApproved) await emitEvent(auth.organizationId, "editorial.approved", { planId, clientId, items: items.length, by: auth.userName });
 
   const mode = getProvider() ? "ai" : "manual";
   let created = 0;

@@ -18,4 +18,5 @@ next-env.d.ts
 
 # Codespaces
 /.devcontainer/.env
+/.devcontainer/.chave-secreta
 /backups/

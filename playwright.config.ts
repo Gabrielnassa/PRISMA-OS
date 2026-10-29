@@ -6,6 +6,7 @@ export const E2E_ENV = {
   MIGRATION_DATABASE_URL: process.env.E2E_MIGRATION_DATABASE_URL ?? "postgres://prisma_owner:prisma_owner_dev@localhost:5432/prisma_os_e2e",
   STORAGE_LOCAL_DIR: process.env.E2E_STORAGE_DIR ?? "./.e2e-storage",
   AI_PROVIDER: "demo",
+  APP_SECRET_KEY: "chave-de-teste-e2e-com-mais-de-32-caracteres-000",
   APP_URL: `http://localhost:${PORT}`,
   WORKER_POLL_MS: "300",
   NEXT_TELEMETRY_DISABLED: "1",

@@ -45,6 +45,10 @@ Veja `.env.example`. As essenciais:
 | `META_ACCESS_TOKEN` | para o @ do Instagram | Token da Meta com `instagram_basic` e `pages_read_engagement` (veja abaixo). Sem ele, a sugestão de cores funciona só por imagens |
 | `META_IG_USER_ID` | para o @ do Instagram | ID numérico da conta comercial do Instagram **da agência** (quem faz a consulta) |
 | `META_GRAPH_VERSION` | não | Versão da Graph API (padrão `v23.0`) |
+| `APP_SECRET_KEY` | para redes, e-mail e webhooks | Chave mestra (32+ caracteres) que criptografa as credenciais guardadas no banco |
+| `META_APP_ID`, `META_APP_SECRET` | não | App da Meta (alternativa a salvar em Integrações; tem prioridade) |
+| `TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET` | não | App da TikTok (idem) |
+| `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` | não | Cliente OAuth do Google para o YouTube (idem) |
 
 Variáveis definidas com valor vazio (como no `.env.example`) valem como não definidas.
 
@@ -76,7 +80,7 @@ CREATE DATABASE prisma_os OWNER prisma_owner;
 npm run admin:create -- --org "Nome da Agência" --name "Nome" --email admin@agencia.com
 ```
 
-A senha é pedida no terminal sem eco (ou lida de `ADMIN_PASSWORD` em automações). O script cria a organização, o proprietário e as tarifas iniciais documentadas (modelo padrão e modelos de fallback). Os demais usuários são criados em **Usuários e permissões**: a senha temporária é exibida uma única vez, expira em 7 dias e precisa ser trocada no primeiro acesso (a pessoa é levada a `/trocar-senha` antes de qualquer outra tela). Administradores podem gerar uma nova senha temporária para quem pertence só à sua organização.
+A senha é pedida no terminal sem eco (ou lida de `ADMIN_PASSWORD` em automações). O script cria a organização, o proprietário e as tarifas iniciais documentadas (modelo padrão e modelos de fallback). Os demais usuários são criados em **Equipe**: a senha temporária é exibida uma única vez, expira em 7 dias e precisa ser trocada no primeiro acesso (a pessoa é levada a `/trocar-senha` antes de qualquer outra tela). Administradores podem gerar uma nova senha temporária para quem pertence só à sua organização.
 
 ### Pessoa que já tem conta em outra organização
 
@@ -160,7 +164,7 @@ npx vitest run --project unit tests/unit/capacity.test.ts
 Na página do cliente, aba **Linha editorial**:
 
 - **Pacote mensal** (proprietário e administrador): quantos posts, carrosséis, stories e vídeos o cliente contratou.
-- **Custo de IA estimado** do pacote: com execuções reais, usa a média real por peça (do cliente, com pelo menos 3 peças nos últimos 90 dias; senão, a média da agência); antes disso, a tarifa do modelo configurado × um consumo típico (6 mil tokens de entrada e 4 mil de saída por peça), mais a linha editorial do mês. Vídeos não entram (ainda são feitos fora do sistema). O valor é sempre identificado como estimativa; o gasto real fica em Custos e consumo.
+- **Custo de IA estimado** do pacote: com execuções reais, usa a média real por peça (do cliente, com pelo menos 3 peças nos últimos 90 dias; senão, a média da agência); antes disso, a tarifa do modelo configurado × um consumo típico (6 mil tokens de entrada e 4 mil de saída por peça), mais a linha editorial do mês. Vídeos não entram (ainda são feitos fora do sistema). O valor é sempre identificado como estimativa; o gasto real fica em Custos.
 - **Linha editorial do mês**: a IA propõe uma pauta para cada peça do pacote (formatos intercalados e datas em dias úteis), usando o perfil e a memória da marca e evitando repetir títulos recentes; ou "Montar sem IA" cria os espaços para a equipe escrever. A equipe edita e aprova; na aprovação, cada pauta (menos vídeo) vira uma peça na fila, com fotos da biblioteca do cliente em rodízio. Se o limite por minuto ou o teto de custo interromper, o botão "Criar peças pendentes" continua de onde parou, sem duplicar (a pauta é a chave da peça). Vídeos ficam como itens a marcar como feitos. Excluir uma peça devolve a pauta para "planejada".
 
 ## O mês da agência: painel, calendário e entrega
@@ -181,9 +185,14 @@ Na aba **Arquivos** do cliente, cole o link da pasta do Drive e use **Importar a
 
 O acesso é só leitura (`drive.readonly`), pelo fluxo oficial de conta de serviço (JWT assinado). A integração foi testada contra uma API simulada; os domínios do Google não estavam acessíveis neste ambiente.
 
-## Publicação no Instagram e no Facebook
+## Redes sociais, aprovação pelo cliente e avisos
 
-Ainda não implementada (precisa de app da Meta revisado e da conta de cada cliente conectada). O desenho está em `docs/design/PUBLICACAO.md`.
+- **Chave de criptografia**: `APP_SECRET_KEY` (32+ caracteres aleatórios, `openssl rand -hex 32`) protege, com AES-256-GCM, as chaves dos apps, os tokens das contas e a senha do e-mail guardados no banco. Os scripts do Mac (`~/.prisma-os/config.env`) e do Codespaces (`.devcontainer/.chave-secreta`, também copiada para cada backup) geram sozinhos. Trocar ou perder a chave obriga a cadastrar de novo as chaves dos apps, reconectar as contas e salvar o e-mail.
+- **Publicação**: guia completo em [REDES-SOCIAIS.md](REDES-SOCIAIS.md). A fila usa as tarefas `social.publish` (com `run_after` para agendamentos e até 6 tentativas que continuam do estado salvo em `publications.provider_state`) e `social.metrics` (um dia depois). As imagens para Instagram e TikTok ficam em `storage/publish/<id>/` só durante o envio, servidas por `/api/publico/publicacao/<id>/<arquivo>` com assinatura HMAC válida por 3 horas.
+- **Aprovação pelo cliente**: `/aprovar/<token>` (token de 192 bits, guardado só como hash, vale 14 dias e apenas para o pedido em que foi gerado). A decisão grava `approvals.decided_via = 'client_link'` e o nome informado, e confere o hash da versão como a aprovação da equipe.
+- **E-mail**: SMTP salvo em Integrações (Hostinger: `smtp.hostinger.com`, porta 465 com SSL). Tarefa `email.send`; sem SMTP, os avisos não são enfileirados.
+- **Webhooks**: POST JSON com `X-Prisma-Event`, `X-Prisma-Timestamp` e `X-Prisma-Signature: sha256=HMAC(segredo, "<timestamp>.<corpo>")`. Só `https` para endereços públicos; até 4 tentativas.
+- **Agenda**: `/api/agenda/<token>.ics`, por pessoa, com as pautas do mês anterior a dois meses à frente e as publicações agendadas.
 
 ## ChatGPT (OpenAI) no lugar do Claude
 
@@ -193,7 +202,7 @@ O sistema funciona com qualquer um dos dois provedores; as skills, a fila, o con
 2. Defina `OPENAI_API_KEY` (e `AI_PROVIDER=openai` se também houver chave da Anthropic). Servidor: variável de ambiente; Mac: atalho **Configurar chave da IA** → opção 2; Codespaces: secret `OPENAI_API_KEY`.
 3. Reinicie e use Integrações → "Testar conexão".
 
-Detalhes: Responses API com saída em JSON Schema estrito, esforço de raciocínio por skill e `store: false` (as respostas não ficam guardadas na conta da OpenAI). Tokens em cache são separados dos de entrada para cada parte ser cobrada pela sua tarifa. As tarifas iniciais (`gpt-6.1-sol`, `gpt-6.1-terra`, `gpt-6-astra`) vieram de agregadores porque o site da OpenAI não estava acessível na configuração: confira em openai.com/api/pricing e ajuste em Custos e consumo. Modelo sem tarifa cadastrada entra no teto por estimativa, como no fallback do Claude.
+Detalhes: Responses API com saída em JSON Schema estrito, esforço de raciocínio por skill e `store: false` (as respostas não ficam guardadas na conta da OpenAI). Tokens em cache são separados dos de entrada para cada parte ser cobrada pela sua tarifa. As tarifas iniciais (`gpt-6.1-sol`, `gpt-6.1-terra`, `gpt-6-astra`) vieram de agregadores porque o site da OpenAI não estava acessível na configuração: confira em openai.com/api/pricing e ajuste em Custos. Modelo sem tarifa cadastrada entra no teto por estimativa, como no fallback do Claude.
 
 ## Instagram: cores da marca pelo @
 
@@ -220,7 +229,7 @@ Arquivar continua sendo o caminho reversível. A exclusão definitiva fica com p
 
 O que fica, de propósito:
 
-- **Custos**: as execuções de IA continuam nos totais de Custos e consumo (o provedor já cobrou), sem vínculo com a peça e sem o texto gerado. As de um cliente excluído aparecem como "Nome (excluído)".
+- **Custos**: as execuções de IA continuam nos totais de Custos (o provedor já cobrou), sem vínculo com a peça e sem o texto gerado. As de um cliente excluído aparecem como "Nome (excluído)".
 - **Auditoria**: é somente inserção. Registra a exclusão (quem, quando, nome e contagens) e mantém as entradas anteriores, que guardam ações e metadados (por exemplo, nomes de arquivos), não o conteúdo das peças.
 
 Se for preciso apagar também a auditoria de um cliente já excluído (pedido de titular, por exemplo), faça backup e rode:

@@ -92,14 +92,14 @@ Problemas críticos bloqueiam o envio para aprovação. A revisão por IA (skill
 ## IA: gateway, skills e orquestrador
 
 - **Gateway** (`src/server/ai/gateway.ts`): único ponto que instancia provedores. Provedores: `AnthropicProvider` (SDK oficial, `claude-opus-5-5` por padrão, esforço definido por skill e substituível por `ANTHROPIC_EFFORT`, saída estruturada com esquema JSON próprio que preserva `enum` — `src/server/ai/json-schema.ts` — e validação Zod da resposta, fallback do servidor em caso de recusa por política com consumo lido por tentativa em `usage.iterations`) e `DemoProvider` (sem IA, bloqueado em produção).
-- **Skills** (`src/server/skills`): módulos versionados com identificador, descrição, instruções, esquemas de entrada e saída, ferramentas autorizadas (nenhuma), critérios de qualidade, tratamento de erros e testes. Implementadas: `planner.ideas`, `copywriter.social`, `art-director.rules`, `quality.ai-review`. As demais da seção 9 estão listadas como previstas em Agentes e skills.
+- **Skills** (`src/server/skills`): módulos versionados com identificador, descrição, instruções, esquemas de entrada e saída, ferramentas autorizadas (nenhuma), critérios de qualidade, tratamento de erros e testes. Implementadas: `planner.ideas`, `copywriter.social`, `art-director.rules`, `quality.ai-review`. As demais da seção 9 estão listadas como previstas em Skills.
 - **Orquestrador** (`src/server/orchestrator`): valida a entrada, verifica acesso, teto de consumo e limite por pessoa (chamadas interativas), monta as **camadas de contexto** (global da agência, cliente, memória — hipóteses rotuladas como hipóteses), chama o provedor fora de transação, valida a saída e registra `ai_runs` com tokens, custo por modelo, duração e erro. O registro do resultado roda em contexto de sistema: se a pessoa perder o acesso durante a chamada, o consumo cobrado continua registrado.
 - **Idempotência da IA**: a chave efetiva combina a chave pedida, a skill e sua versão, o provedor/modelo (demonstração ≠ IA real) e um resumo da entrada. Execução concluída com a mesma chave é **reaproveitada sem nova cobrança**; execução ainda em andamento faz a segunda chamada falhar com "já em execução" (recuperável na fila), em vez de pagar duas vezes; execução abandonada há mais de `2 × AI_TIMEOUT_MS + 60 s` pode ser assumida.
 - **Prompts**: todo dado fornecido por usuários (perfil, memória, briefing, título, títulos recentes, peça em revisão) vai dentro de blocos declarados como dados nas regras compartilhadas, com sequências que pareçam marcação neutralizadas (`escapeData`).
 
 ## Fluxo de geração (seção 10)
 
-1. A Central de criação grava `content_items` (status *Em geração*) e enfileira `content.generate` com chave `content:<id>:generate`.
+1. A Criar grava `content_items` (status *Em geração*) e enfileira `content.generate` com chave `content:<id>:generate`.
 2. O worker reserva a tarefa (`SKIP LOCKED`), registra a tentativa e reconstrói o contexto do solicitante.
 3. Diretor de arte (regras) escolhe template, proporção e estilo; copywriter (IA) escreve respeitando os limites de cada campo **já ajustados ao layout real** (veja "Limites de texto" abaixo).
 4. O documento é composto, salvo como versão (fonte `ai` ou `demo`), renderizado e avaliado pelo controle de qualidade; status → *Em revisão*.
@@ -112,7 +112,7 @@ Cada template declara limites-base de caracteres por tipo de lâmina e um fator 
 
 ## Estados do conteúdo (seção 14)
 
-Rascunho → Em geração → Em revisão → Aguardando aprovação → Aprovado (→ Agendado → Publicado, fase 4) · Reprovado · Falhou · Arquivado.
+Rascunho → Em geração → Em revisão → Aguardando aprovação → Aprovado (→ publicação agendada ou imediata nas redes conectadas) · Reprovado · Falhou · Arquivado.
 
 - Envio para aprovação exige a versão atual e controle de qualidade sem críticos.
 - Qualquer alteração cria nova versão, marca aprovações pendentes como *substituídas* e volta o conteúdo para *Em revisão*.

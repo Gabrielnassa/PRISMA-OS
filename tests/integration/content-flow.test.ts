@@ -84,7 +84,7 @@ describe("primeira entrega: briefing → texto → arte → revisão → aprova�
     edited.slides[0]!.fields.kicker = "Guia rápido";
     const v2 = await saveVersion(owner, created.contentId, { document: edited, baseVersionId: detail.current!.id, changeNote: "Título ajustado" });
     expect(v2).toMatchObject({ number: 2, unchanged: false });
-    expect(v2.changes).toContain("Lâmina 1: title");
+    expect(v2.changes).toContain("Lâmina 1: título");
 
     // Salvar sobre versão desatualizada é recusado.
     await expect(saveVersion(owner, created.contentId, { document: edited, baseVersionId: detail.current!.id })).rejects.toBeInstanceOf(ConflictError);

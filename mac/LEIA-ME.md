@@ -65,7 +65,7 @@ Com o Docker aberto, o PRISMA OS continua rodando mesmo se você fechar a janela
 - Crie a chave no Console da Anthropic (platform.claude.com). Recomendado: um workspace só para o PRISMA OS e um **limite de gasto mensal**.
 - O uso é cobrado na conta dona da chave, separado da assinatura do Claude.
 - Gastam créditos: "Gerar com IA", "Sugerir pautas", "Revisar com IA" e "Testar conexão". Editar, renderizar, exportar, o controle de qualidade e criar pelo template não gastam.
-- O custo de cada geração aparece em **Custos e consumo**. Dá para definir um teto mensal por cliente.
+- O custo de cada geração aparece em **Custos**. Dá para definir um teto mensal por cliente.
 - Depois de configurar a chave, confirme em **Integrações > Testar conexão**.
 
 ## Backups
@@ -76,7 +76,7 @@ Com o Docker aberto, o PRISMA OS continua rodando mesmo se você fechar a janela
 
 ## Onde ficam as coisas
 
-- **Configuração e senhas do banco**: `~/.prisma-os/config.env` (pasta oculta na sua pasta pessoal). Não apague. Sem ela, o banco atual não abre (os backups continuam restauráveis numa instalação nova).
+- **Configuração e senhas do banco**: `~/.prisma-os/config.env` (pasta oculta na sua pasta pessoal). Não apague. Sem ela, o banco atual não abre (os backups continuam restauráveis numa instalação nova). Ele também guarda a `APP_SECRET_KEY`, que protege as chaves das redes sociais e do e-mail salvas em Integrações; ao levar um backup para outro computador ou servidor, copie essa linha junto, ou cadastre as chaves e reconecte as contas de novo.
 - **Dados**: dentro do Docker, nos volumes `prisma-os_pgdata` (banco) e `prisma-os_storage` (arquivos).
 
 > **Cuidado no Docker Desktop:** não apague esses volumes e não use "Clean / Purge data" nem "Reset to factory defaults" sem antes fazer backup. Essas opções apagam todos os dados do PRISMA OS.
@@ -91,7 +91,7 @@ Por padrão, só este Mac acessa. Para outra pessoa da agência usar de outro lu
    PRISMA_BIND=0.0.0.0
    PRISMA_APP_URL=http://nome-do-seu-mac.sua-rede.ts.net:3000
    ```
-3. Rode **Iniciar PRISMA OS** de novo e crie o acesso da pessoa em **Usuários e permissões**.
+3. Rode **Iniciar PRISMA OS** de novo e crie o acesso da pessoa em **Equipe**.
 
 Observações: com `PRISMA_BIND=0.0.0.0`, quem estiver na mesma rede Wi-Fi também enxerga a tela de login (o acesso continua exigindo usuário e senha). O sistema só funciona enquanto o seu Mac estiver ligado. Para uso contínuo da equipe, o próximo passo é um servidor (VPS).
 

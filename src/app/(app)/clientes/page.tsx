@@ -12,9 +12,9 @@ export const metadata: Metadata = { title: "Clientes" };
 
 const STATUS = { active: { label: "Ativo", tone: "success" }, paused: { label: "Pausado", tone: "warning" }, archived: { label: "Arquivado", tone: "neutral" } } as const;
 
-export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ arquivados?: string; excluido?: string }> }) {
+export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ arquivados?: string; excluido?: string; erro?: string }> }) {
   const auth = await requireAuth();
-  const { arquivados, excluido } = await searchParams;
+  const { arquivados, excluido, erro } = await searchParams;
   const [clients, months] = await Promise.all([listClients(auth, { includeArchived: arquivados === "1" }), monthByClient(auth, currentMonth())]);
   const month = new Map(months.map((m) => [m.clientId, m]));
   return (
@@ -27,6 +27,13 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
           </Link>
         }
       />
+      {erro ? (
+        <div className="mb-6">
+          <Alert tone="danger" title="A conexão não foi concluída">
+            {erro.slice(0, 400)}
+          </Alert>
+        </div>
+      ) : null}
       {excluido === "1" ? (
         <div className="mb-6">
           <Alert tone="success" title="Cliente excluído">

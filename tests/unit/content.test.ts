@@ -30,7 +30,7 @@ describe("documento de conteúdo", () => {
     const b = structuredClone(a);
     b.slides[1]!.fields.body = "outro texto";
     b.caption = "nova";
-    expect(diffDocuments(a, b)).toEqual(["Lâmina 2: body", "Legenda"]);
+    expect(diffDocuments(a, b)).toEqual(["Lâmina 2: texto", "Legenda"]);
   });
 });
 

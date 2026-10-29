@@ -179,9 +179,20 @@ primeira_configuracao() {
       echo "PRISMA_APP_PASSWORD=$(gerar_senha)"
       echo "PRISMA_PORT=$porta_escolhida"
       echo "ANTHROPIC_API_KEY=$chave"
+      echo "APP_SECRET_KEY=$(openssl rand -hex 32)"
     } >"$CONFIG"
   )
   ok "Configuração salva em $CONFIG"
+}
+
+# Chave que criptografa as chaves dos apps e as conexões guardadas no banco.
+# Instalações antigas ganham a chave na próxima vez que o sistema inicia.
+garantir_chave_secreta() {
+  [ -f "$CONFIG" ] || return 0
+  if ! grep -q '^APP_SECRET_KEY=' "$CONFIG"; then
+    (umask 077; echo "APP_SECRET_KEY=$(openssl rand -hex 32)" >>"$CONFIG")
+    info "Chave de criptografia criada (APP_SECRET_KEY em $CONFIG). Ela entra no backup da configuração; não apague."
+  fi
 }
 
 exigir_configuracao() {

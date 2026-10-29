@@ -20,6 +20,7 @@ import { deleteClient } from "@/server/services/deletion";
 import { setPackage } from "@/server/services/packages";
 import { approveEditorialPlan, proposeEditorialPlan, setEditorialItemStatus, updateEditorialItem } from "@/server/services/editorial";
 import { importFromDrive, setDriveFolder } from "@/server/services/drive";
+import { choosePage, disconnectAccount } from "@/server/services/social-accounts";
 import type { EditorialFormat } from "@/server/skills/editorial";
 import type { Objective } from "@/lib/content/document";
 import type { PaletteSuggestion } from "@/server/brand/palette";
@@ -271,4 +272,23 @@ export async function driveImportAction(_prev: ActionState, form: FormData): Pro
     if (r.remaining) parts.push(`Faltam ${r.remaining}: clique de novo para continuar.`);
     return { message: parts.join(" ") };
   });
+}
+
+export async function disconnectAccountAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const auth = await requireAuth();
+  return runAction(async () => {
+    await disconnectAccount(auth, str(form, "accountId"));
+    refresh();
+    return { message: "Conta desconectada." };
+  });
+}
+
+export async function choosePageAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const auth = await requireAuth();
+  const r = await runAction(async () => {
+    const out = await choosePage(auth, str(form, "stateId"), str(form, "pageId"));
+    return { data: out };
+  });
+  if (r.status === "ok" && r.data) redirect(`/clientes/${r.data.clientId}?aba=redes&ok=${encodeURIComponent(r.data.message)}`);
+  return r.status === "error" ? r : { status: "idle" };
 }

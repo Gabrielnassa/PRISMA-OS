@@ -6,6 +6,7 @@ source "$(cd "$(dirname "$0")" && pwd)/_comum.sh"
 titulo "PRISMA OS — iniciar"
 garantir_docker
 primeira_configuracao
+garantir_chave_secreta
 info "Iniciando. Na primeira vez a preparação leva alguns minutos; nas próximas, segundos."
 compose up -d
 aguardar_site
