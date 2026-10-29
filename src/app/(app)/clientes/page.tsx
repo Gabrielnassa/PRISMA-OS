@@ -70,7 +70,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
                   </Td>
                   <Td className="text-right">{c.contentCount}</Td>
                   <Td className="text-right">{c.pendingApprovals}</Td>
-                  <Td className="whitespace-nowrap font-mono text-[12px] text-ink-400">{formatDateTime(c.createdAt)}</Td>
+                  <Td className="whitespace-nowrap tabular text-[12px] text-ink-400">{formatDateTime(c.createdAt)}</Td>
                 </tr>
               ))}
             </tbody>

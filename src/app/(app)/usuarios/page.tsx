@@ -53,7 +53,7 @@ export default async function UsersPage() {
             <li key={r} className="px-5 py-3 text-sm">
               <div className="font-medium text-ink-100">{ROLE_LABELS[r]}</div>
               <div className="text-ink-400">{ROLE_DESCRIPTIONS[r]}</div>
-              <div className="mt-1 font-mono text-[11px] text-ink-400">{permissionsFor(r).join(" · ")}</div>
+              <div className="mt-1 tabular text-[11px] text-ink-400">{permissionsFor(r).join(" · ")}</div>
             </li>
           ))}
         </ul>

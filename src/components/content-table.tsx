@@ -20,7 +20,7 @@ export interface ContentRow {
   updatedLabel: string;
 }
 
-const checkbox = "size-4 cursor-pointer accent-violet-400 disabled:cursor-not-allowed disabled:opacity-40";
+const checkbox = "size-4 cursor-pointer accent-iris-400 disabled:cursor-not-allowed disabled:opacity-40";
 
 /**
  * Tabela de conteúdos. Com `onDelete` (só para quem pode excluir), ganha
@@ -125,7 +125,7 @@ export function ContentTable({
           {items.map((c) => {
             const on = chosen.includes(c.id);
             return (
-              <tr key={c.id} className={cx("transition-colors hover:bg-ink-850/50", on && "bg-violet-400/[0.05]")}>
+              <tr key={c.id} className={cx("transition-colors hover:bg-ink-850/50", on && "bg-iris-400/[0.05]")}>
                 {onDelete ? (
                   <Td className="w-10 pr-0">
                     <input
@@ -153,7 +153,7 @@ export function ContentTable({
                   {c.currentVersion ? `v${c.currentVersion}` : "—"}
                   {c.hasApprovedVersion ? <span className="ml-1 text-xs text-emerald-300">(aprovada)</span> : null}
                 </Td>
-                <Td className="whitespace-nowrap font-mono text-[12px] text-ink-400">{c.updatedLabel}</Td>
+                <Td className="whitespace-nowrap tabular text-[12px] text-ink-400">{c.updatedLabel}</Td>
               </tr>
             );
           })}

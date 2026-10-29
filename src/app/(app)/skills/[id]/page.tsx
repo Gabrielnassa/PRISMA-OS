@@ -57,7 +57,7 @@ export default async function SkillPage({
         <Badge tone="accent">versão {skill.version}</Badge>
         <Badge>{skill.clientName ? `Só ${skill.clientName}` : "Todos os clientes"}</Badge>
         <Badge>esforço {EFFORT_LABEL[skill.effort]}</Badge>
-        {skill.source === "skill_md" ? <Badge tone="teal">importada de SKILL.md</Badge> : null}
+        {skill.source === "skill_md" ? <Badge tone="ember">importada de SKILL.md</Badge> : null}
         {skill.status === "archived" ? <Badge tone="warning">arquivada</Badge> : null}
       </div>
       {nova === "1" ? (

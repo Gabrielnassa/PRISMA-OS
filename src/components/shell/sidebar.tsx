@@ -68,7 +68,7 @@ function Nav({ pathname, onNavigate }: { pathname: string; onNavigate?: () => vo
     <nav aria-label="Navegação principal" className="flex flex-col gap-6">
       {SECTIONS.map((section) => (
         <div key={section.title}>
-          <div className="mb-1.5 px-2.5 text-[11.5px] font-medium text-ink-400">{section.title}</div>
+          <div className="mb-1.5 px-3 text-[11.5px] font-medium text-ink-400">{section.title}</div>
           <ul className="flex flex-col gap-px">
             {section.items.map((item) => {
               const IconCmp = Icon[item.icon];
@@ -80,12 +80,11 @@ function Nav({ pathname, onNavigate }: { pathname: string; onNavigate?: () => vo
                     onClick={onNavigate}
                     aria-current={active ? "page" : undefined}
                     className={cx(
-                      "relative flex h-8 items-center gap-2.5 rounded-md px-2.5 text-[13.5px] transition-colors",
-                      active ? "bg-ink-850 font-medium text-ink-50" : "text-ink-300 hover:bg-ink-900 hover:text-ink-100",
+                      "relative flex h-9 items-center gap-2.5 rounded-full px-3 text-[14px] transition-colors",
+                      active ? "bg-white/[0.07] font-medium text-ink-50" : "text-ink-300 hover:bg-white/[0.04] hover:text-ink-100",
                     )}
                   >
-                    {active ? <span aria-hidden className="absolute -left-3 top-1.5 bottom-1.5 w-[2px] rounded-r bg-violet-400" /> : null}
-                    <IconCmp width={16} height={16} className={active ? "text-violet-300" : "text-ink-400"} />
+                    <IconCmp width={16} height={16} className={active ? "text-iris-400" : "text-ink-400"} />
                     {item.label}
                   </Link>
                 </li>
@@ -95,10 +94,10 @@ function Nav({ pathname, onNavigate }: { pathname: string; onNavigate?: () => vo
         </div>
       ))}
       <details className="group">
-        <summary className="flex cursor-pointer list-none items-center gap-1.5 px-2.5 text-[11.5px] font-medium text-ink-400 hover:text-ink-200 [&::-webkit-details-marker]:hidden">
+        <summary className="flex cursor-pointer list-none items-center gap-1.5 px-3 text-[11.5px] font-medium text-ink-400 hover:text-ink-200 [&::-webkit-details-marker]:hidden">
           <Icon.chevron width={12} height={12} className="transition-transform group-open:rotate-90" />
           Próximas fases
-          <span className="ml-auto font-mono text-[10.5px] text-ink-400">{PLANNED.length}</span>
+          <span className="ml-auto tabular text-[10.5px] text-ink-400">{PLANNED.length}</span>
         </summary>
         <ul className="mt-1.5 flex flex-col gap-px">
           {PLANNED.map((item) => {
@@ -106,13 +105,13 @@ function Nav({ pathname, onNavigate }: { pathname: string; onNavigate?: () => vo
             return (
               <li key={item.label}>
                 <span
-                  className="flex h-8 cursor-not-allowed items-center gap-2.5 rounded-md px-2.5 text-[13px] text-ink-500"
+                  className="flex h-8 cursor-not-allowed items-center gap-2.5 rounded-full px-3 text-[13px] text-ink-500"
                   title={`Módulo previsto para a ${item.phase}; ainda não implementado.`}
                   aria-disabled="true"
                 >
                   <IconCmp width={16} height={16} />
                   <span className="flex-1 truncate">{item.label}</span>
-                  <span className="font-mono text-[10.5px] text-ink-600">{item.phase?.replace("Fase ", "F")}</span>
+                  <span className="tabular text-[10.5px] text-ink-600">{item.phase?.replace("Fase ", "F")}</span>
                 </span>
               </li>
             );
@@ -123,12 +122,12 @@ function Nav({ pathname, onNavigate }: { pathname: string; onNavigate?: () => vo
   );
 }
 
-const AI_DOT = { ready: "bg-teal-400", demo: "bg-amber-400", off: "bg-red-400" } as const;
+const AI_DOT = { ready: "bg-emerald-400", demo: "bg-amber-400", off: "bg-red-400" } as const;
 
 function Footer({ info }: { info: ShellInfo }) {
   return (
     <div className="mt-auto border-t border-ink-800 px-3 pb-3 pt-3">
-      <Link href="/integracoes" title={info.ai.detail} className="mb-2 flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[12px] text-ink-400 hover:bg-ink-900 hover:text-ink-200">
+      <Link href="/integracoes" title={info.ai.detail} className="mb-2 flex items-center gap-2 rounded-full px-3 py-1.5 text-[12px] text-ink-400 hover:bg-white/[0.04] hover:text-ink-200">
         <span aria-hidden className={cx("size-1.5 shrink-0 rounded-full", AI_DOT[info.ai.state])} />
         <span className="truncate">{info.ai.label}</span>
       </Link>
@@ -141,7 +140,7 @@ function Footer({ info }: { info: ShellInfo }) {
           <div className="truncate text-[11.5px] text-ink-400">{info.roleLabel}</div>
         </div>
         <form action={logoutAction}>
-          <button type="submit" className="inline-flex size-8 items-center justify-center rounded-md text-ink-400 hover:bg-ink-850 hover:text-ink-50" title="Sair" aria-label="Sair">
+          <button type="submit" className="inline-flex size-8 items-center justify-center rounded-full text-ink-400 hover:bg-ink-850 hover:text-ink-50" title="Sair" aria-label="Sair">
             <Icon.logout width={16} height={16} />
           </button>
         </form>
@@ -195,7 +194,7 @@ export function Sidebar({ info }: { info: ShellInfo }) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex size-9 items-center justify-center rounded-md text-ink-200 hover:bg-ink-850"
+          className="inline-flex size-9 items-center justify-center rounded-full text-ink-200 hover:bg-ink-850"
           aria-label="Abrir menu"
           aria-expanded={open}
         >
@@ -216,7 +215,7 @@ export function Sidebar({ info }: { info: ShellInfo }) {
           <div className="relative flex h-full w-72 max-w-[85vw] flex-col border-r border-ink-800 bg-ink-950">
             <div className="flex h-14 shrink-0 items-center justify-between border-b border-ink-800 px-5">
               <PrismaWordmark />
-              <button type="button" onClick={() => setOpen(false)} className="-mr-2 inline-flex size-9 items-center justify-center rounded-md hover:bg-ink-850" aria-label="Fechar menu">
+              <button type="button" onClick={() => setOpen(false)} className="-mr-2 inline-flex size-9 items-center justify-center rounded-full hover:bg-ink-850" aria-label="Fechar menu">
                 <Icon.close />
               </button>
             </div>

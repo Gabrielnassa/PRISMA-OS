@@ -83,8 +83,8 @@ export function ColorSuggest({
             Pelo @ do Instagram
           </label>
           <div className="mt-1.5 flex gap-2">
-            <div className="flex min-w-0 flex-1 items-center rounded-md border border-ink-700 bg-ink-950/60 focus-within:border-violet-400/60">
-              <span className="pl-3 font-mono text-[13px] text-ink-400">@</span>
+            <div className="flex min-w-0 flex-1 items-center rounded-md border border-ink-700 bg-ink-950/60 focus-within:border-iris-400/60">
+              <span className="pl-3 tabular text-[13px] text-ink-400">@</span>
               <input
                 id="ig-handle"
                 value={handle.replace(/^@/, "")}
@@ -129,11 +129,11 @@ export function ColorSuggest({
                       onClick={() => toggle(img.id)}
                       aria-pressed={on}
                       title={img.filename}
-                      className={cx("relative size-14 overflow-hidden rounded-md border bg-ink-850", on ? "border-violet-400" : "border-ink-700 hover:border-ink-500")}
+                      className={cx("relative size-14 overflow-hidden rounded-md border bg-ink-850", on ? "border-iris-400" : "border-ink-700 hover:border-ink-500")}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={`/api/media/${img.id}`} alt={img.filename} className="h-full w-full object-contain" loading="lazy" />
-                      {img.kind === "logo" ? <span className="absolute bottom-0 left-0 right-0 bg-ink-950/80 text-center font-mono text-[9px] text-ink-200">logo</span> : null}
+                      {img.kind === "logo" ? <span className="absolute bottom-0 left-0 right-0 bg-ink-950/80 text-center tabular text-[9px] text-ink-200">logo</span> : null}
                     </button>
                   );
                 })}
@@ -159,14 +159,14 @@ export function ColorSuggest({
         <div className="border-t border-ink-800 p-4" aria-live="polite">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <div className="text-[13px] font-medium text-ink-100">Sugestão</div>
-            <div className="font-mono text-[11.5px] text-ink-400">{result.origin}</div>
+            <div className="tabular text-[11.5px] text-ink-400">{result.origin}</div>
           </div>
           <div className="mt-3 grid grid-cols-5 gap-2">
             {ROLES.map(([k, label]) => (
               <div key={k} className="min-w-0">
                 <div className="h-10 rounded-md ring-1 ring-inset ring-white/10" style={{ backgroundColor: result.colors[k] }} />
                 <div className="mt-1 truncate text-[12px] text-ink-300">{label}</div>
-                <div className="font-mono text-[11px] text-ink-400">{result.colors[k]}</div>
+                <div className="tabular text-[11px] text-ink-400">{result.colors[k]}</div>
               </div>
             ))}
           </div>

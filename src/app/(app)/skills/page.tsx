@@ -53,7 +53,7 @@ export default async function SkillsPage({ searchParams }: { searchParams: Promi
                     <p className="line-clamp-3 text-sm text-ink-300">{s.description || "Sem descrição."}</p>
                     <div className="flex flex-wrap gap-1.5">
                       <Badge>{s.clientName ? `Só ${s.clientName}` : "Todos os clientes"}</Badge>
-                      {s.source === "skill_md" ? <Badge tone="teal">SKILL.md</Badge> : null}
+                      {s.source === "skill_md" ? <Badge tone="ember">SKILL.md</Badge> : null}
                       {s.status === "archived" ? <Badge tone="warning">arquivada</Badge> : null}
                       {s.runsThisMonth ? <Badge tone="info">{s.runsThisMonth} uso(s) no mês</Badge> : null}
                     </div>
@@ -74,7 +74,7 @@ export default async function SkillsPage({ searchParams }: { searchParams: Promi
               <CardHeader
                 title={s.name}
                 description={`${s.id} · v${s.version} · seção ${s.specSection}`}
-                actions={<Badge tone={s.kind === "ai" ? "accent" : "teal"}>{s.kind === "ai" ? "IA" : "Regras"}</Badge>}
+                actions={<Badge tone={s.kind === "ai" ? "accent" : "ember"}>{s.kind === "ai" ? "IA" : "Regras"}</Badge>}
               />
               <div className="space-y-3 p-5 text-sm">
                 <p className="text-ink-200">{s.description}</p>

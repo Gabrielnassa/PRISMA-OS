@@ -154,7 +154,7 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
               <div className="border-t border-ink-700 p-5 text-sm">
                 <div className="text-[12px] font-medium text-ink-400">Legenda</div>
                 <p className="mt-1 whitespace-pre-wrap text-ink-100">{current.document.caption || "—"}</p>
-                <p className="mt-2 text-violet-300">{current.document.hashtags.join(" ")}</p>
+                <p className="mt-2 text-iris-300">{current.document.hashtags.join(" ")}</p>
               </div>
             </Card>
             <QualityPanel report={detail.quality} />
@@ -194,7 +194,7 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
                     {v.changeNote ? ` · ${v.changeNote}` : ""}
                   </span>
                   {detail.versions[i + 1] ? (
-                    <Link href={`/conteudos/${id}?comparar=${detail.versions[i + 1]!.id}&com=${v.id}#comparacao`} className="text-xs text-violet-300 hover:underline">
+                    <Link href={`/conteudos/${id}?comparar=${detail.versions[i + 1]!.id}&com=${v.id}#comparacao`} className="text-xs text-iris-300 hover:underline">
                       Comparar com v{detail.versions[i + 1]!.number}
                     </Link>
                   ) : null}
@@ -274,7 +274,7 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
                       {r.status === "succeeded" ? "Concluída" : r.status === "running" ? "Em andamento" : r.status === "refused" ? "Recusada pela IA" : "Falhou"}
                     </Dot>
                     {r.isDemo ? <Badge tone="warning">demo</Badge> : null}
-                    <span className="basis-full font-mono text-[11.5px] text-ink-400">
+                    <span className="basis-full tabular text-[11.5px] text-ink-400">
                       {r.model} · {r.isDemo ? "sem custo" : r.costUsd === null ? "tarifa não cadastrada" : formatUsd(r.costUsd, 4)} · {formatDateTime(r.createdAt)}
                     </span>
                   </li>

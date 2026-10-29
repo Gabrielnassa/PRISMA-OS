@@ -17,7 +17,7 @@ export function LoginForm({ next }: { next: string }) {
         <Input id="password" name="password" type="password" autoComplete="current-password" required />
       </Field>
       <FormMessage state={state} />
-      <SubmitButton pendingText="Entrando..." className="mt-1 h-10 w-full">
+      <SubmitButton variant="light" pendingText="Entrando..." className="mt-1 h-10 w-full">
         Entrar
       </SubmitButton>
     </ActionForm>

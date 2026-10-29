@@ -23,7 +23,7 @@ export function MediaGrid({
               // eslint-disable-next-line @next/next/no-img-element
               <img src={`/api/media/${m.id}`} alt={m.altText || m.filename} loading="lazy" className="h-full w-full object-contain" />
             ) : (
-              <div className="flex h-full items-center justify-center font-mono text-xs text-ink-400">{m.mimeType.split("/")[1]}</div>
+              <div className="flex h-full items-center justify-center tabular text-xs text-ink-400">{m.mimeType.split("/")[1]}</div>
             )}
           </a>
           <div className="space-y-1 p-2.5">

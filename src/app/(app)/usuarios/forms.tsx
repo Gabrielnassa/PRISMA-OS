@@ -65,7 +65,7 @@ export function MemberForm({
         </Select>
         {isSelf ? <input type="hidden" name="role" value={member.role} /> : null}
         <label className="flex items-center gap-2 text-sm text-ink-200">
-          <input type="checkbox" name="isActive" defaultChecked={member.isActive} disabled={isSelf} className="accent-violet-400" />
+          <input type="checkbox" name="isActive" defaultChecked={member.isActive} disabled={isSelf} className="accent-iris-400" />
           Ativo
         </label>
         {isSelf ? <input type="hidden" name="isActive" value="on" /> : null}
@@ -75,8 +75,8 @@ export function MemberForm({
           <legend className="mb-1 text-xs text-ink-400">Clientes com acesso</legend>
           <div className="flex flex-wrap gap-2">
             {clients.map((c) => (
-              <label key={c.id} className="flex items-center gap-1.5 rounded-md border border-ink-700 px-2 py-1 text-xs text-ink-200 has-[:checked]:border-violet-400/70 has-[:checked]:bg-violet-400/[0.06]">
-                <input type="checkbox" name="clientIds" value={c.id} defaultChecked={member.clientIds.includes(c.id)} className="accent-violet-400" />
+              <label key={c.id} className="flex items-center gap-1.5 rounded-md border border-ink-700 px-2 py-1 text-xs text-ink-200 has-[:checked]:border-iris-400/70 has-[:checked]:bg-iris-400/[0.06]">
+                <input type="checkbox" name="clientIds" value={c.id} defaultChecked={member.clientIds.includes(c.id)} className="accent-iris-400" />
                 {c.name}
               </label>
             ))}

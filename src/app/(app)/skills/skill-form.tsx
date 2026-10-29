@@ -163,7 +163,7 @@ export function SkillForm({
               required
               minLength={10}
               maxLength={SKILL_LIMITS.instructions}
-              className="min-h-80 font-mono text-[13px]"
+              className="min-h-80 tabular text-[13px]"
             />
           </Field>
           <Field label="Nível de esforço da IA" htmlFor="effort" error={fe("effort")} hint="Mais esforço costuma dar resultados melhores em tarefas complexas, mas demora e custa mais.">

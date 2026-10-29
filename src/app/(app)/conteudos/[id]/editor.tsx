@@ -267,7 +267,7 @@ export function ContentEditor({
                     role="tab"
                     aria-selected={i === selected}
                     onClick={() => setSelected(i)}
-                    className={cx("relative w-20 shrink-0 overflow-hidden rounded-lg border-2 bg-ink-850", i === selected ? "border-violet-400" : "border-ink-700 hover:border-ink-500")}
+                    className={cx("relative w-20 shrink-0 overflow-hidden rounded-lg border-2 bg-ink-850", i === selected ? "border-iris-400" : "border-ink-700 hover:border-ink-500")}
                     style={{ aspectRatio: `${ASPECTS[doc.aspect].width} / ${ASPECTS[doc.aspect].height}` }}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -523,7 +523,7 @@ export function ContentEditor({
               </Field>
             </div>
             <label className="flex items-center gap-2 text-sm text-ink-200">
-              <input type="checkbox" checked={doc.style.showLogo} onChange={(e) => setStyle({ showLogo: e.target.checked })} className="accent-violet-400" />
+              <input type="checkbox" checked={doc.style.showLogo} onChange={(e) => setStyle({ showLogo: e.target.checked })} className="accent-iris-400" />
               Exibir logotipo / assinatura
             </label>
             <Field label="Assinatura (quando não há logotipo)" htmlFor="handle">

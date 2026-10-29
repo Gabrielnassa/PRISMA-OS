@@ -66,7 +66,7 @@ export function SubmitButton({
   className,
   disabled,
   ...props
-}: Omit<ComponentProps<"button">, "type"> & { pendingText?: string; variant?: "primary" | "secondary" | "ghost" | "danger"; size?: "sm" | "md" }) {
+}: Omit<ComponentProps<"button">, "type"> & { pendingText?: string; variant?: "primary" | "secondary" | "ghost" | "danger" | "light"; size?: "sm" | "md" }) {
   const pending = useFormPending();
   return (
     <button {...props} type="submit" disabled={pending || disabled} aria-busy={pending} className={cx(buttonClass(variant, size), className)}>

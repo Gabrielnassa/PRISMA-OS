@@ -1,70 +1,49 @@
 import type { ReactNode } from "react";
+import Image from "next/image";
 import { PrismaWordmark } from "@/components/brand/logo";
 
-/** Ilustração do painel de acesso: um feixe de luz atravessando o prisma e se abrindo em cor. */
-function PrismDiagram() {
-  return (
-    <svg viewBox="0 0 560 420" className="h-auto w-full max-w-[560px]" aria-hidden>
-      <defs>
-        <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse">
-          <path d="M28 0H0V28" fill="none" stroke="#14171d" strokeWidth="1" />
-        </pattern>
-      </defs>
-      <rect width="560" height="420" fill="url(#grid)" />
-      {/* feixe de entrada */}
-      <path d="M0 262 L214 214" stroke="#c9cdd6" strokeWidth="1.25" />
-      {/* prisma */}
-      <path d="M280 70 L170 330 H390 Z" fill="#0b0c0f" stroke="#4a5060" strokeWidth="1.25" strokeLinejoin="round" />
-      <path d="M280 70 L304 330" stroke="#2e3340" strokeWidth="1" />
-      <path d="M287.4 74 L390 330 H307.6 Z" fill="#8b5cf6" fillOpacity="0.16" />
-      {/* percurso interno */}
-      <path d="M214 214 L338 196" stroke="#7a8191" strokeWidth="1" strokeDasharray="2 4" />
-      {/* feixes de saída */}
-      <path d="M338 196 L560 132" stroke="#a78bfa" strokeWidth="1.25" />
-      <path d="M338 196 L560 176" stroke="#c9cdd6" strokeWidth="1" strokeOpacity="0.55" />
-      <path d="M338 196 L560 222" stroke="#2dd4bf" strokeWidth="1.25" />
-      {/* marcações de desenho técnico */}
-      <g fontFamily="IBM Plex Mono, monospace" fontSize="10" fill="#4a5060">
-        <text x="20" y="236">briefing</text>
-        <text x="482" y="140">texto</text>
-        <text x="482" y="174">arte</text>
-        <text x="482" y="232">aprovação</text>
-      </g>
-      <g stroke="#4a5060" strokeWidth="1">
-        <path d="M170 352 V362 M390 352 V362 M170 357 H390" />
-      </g>
-    </svg>
-  );
-}
-
-const COLOPHON: Array<[string, string]> = [
+const HIGHLIGHTS: Array<[string, string]> = [
   ["Conteúdo", "Briefing, texto, arte, revisão e aprovação no mesmo fluxo"],
   ["Marca", "Perfil, memória e arquivos isolados por cliente"],
-  ["Controle", "Versões imutáveis, aprovação por versão e auditoria"],
+  ["Controle", "Versões, aprovação por versão e custos de IA por cliente"],
 ];
 
-/** Moldura das telas de acesso: formulário à esquerda e painel da marca à direita (desktop). */
+/**
+ * Moldura das telas de acesso: formulário à esquerda e, no desktop, a vitrine
+ * da marca. É o único lugar com o feixe de luz (íris → coral → branco): um
+ * risco vertical estreito, nunca o fundo inteiro.
+ */
 export function AuthShell({ children }: { children: ReactNode }) {
   return (
-    <main className="grid min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+    <main className="grid min-h-dvh bg-ink-950 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
       <div className="flex flex-col px-6 py-8 sm:px-12">
         <PrismaWordmark />
         <div className="page-enter mx-auto flex w-full max-w-[380px] flex-1 flex-col justify-center py-12">{children}</div>
-        <p className="font-mono text-[11px] text-ink-400">Acesso restrito à equipe da agência.</p>
+        <p className="text-[11.5px] text-ink-400">Acesso restrito à equipe da agência.</p>
       </div>
-      <aside className="relative hidden flex-col justify-between overflow-hidden border-l border-ink-800 bg-ink-900 px-12 py-10 lg:flex">
-        <div className="flex flex-1 items-center justify-center">
-          <PrismDiagram />
+      <aside className="relative hidden overflow-hidden border-l border-ink-800 lg:block">
+        {/* Feixe aurora */}
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute left-[58%] top-[-10%] h-[85%] w-[16%] -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,rgb(86_131_218/0)_0%,rgb(86_131_218/0.55)_35%,rgb(255_137_100/0.75)_72%,rgb(255_255_255/0.9)_100%)] blur-[42px]" />
+          <div className="absolute left-[58%] top-[-10%] h-[80%] w-[2px] -translate-x-1/2 bg-[linear-gradient(180deg,transparent,rgb(195_211_245/0.9)_40%,#ffffff)]" />
+          <div className="absolute bottom-[-30%] left-[58%] size-[520px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgb(255_170_129/0.38)_0%,rgb(255_218_159/0.12)_45%,transparent_70%)]" />
         </div>
-        <div>
-          <p className="max-w-md font-display text-[26px] leading-snug text-ink-100">
-            A operação de conteúdo da agência, <span className="italic text-ink-300">do briefing à peça aprovada.</span>
-          </p>
-          <dl className="mt-8 grid gap-2.5 border-t border-ink-800 pt-5">
-            {COLOPHON.map(([k, v]) => (
-              <div key={k} className="grid grid-cols-[96px_1fr] gap-4 text-[12.5px]">
-                <dt className="font-mono text-ink-400">{k}</dt>
-                <dd className="text-ink-300">{v}</dd>
+        <div className="relative flex h-full flex-col justify-between px-12 py-10">
+          <div className="max-w-lg">
+            <p className="font-display text-[44px] font-medium leading-[0.98] tracking-[-0.05em] text-white">
+              Do briefing à peça aprovada, sem perder o controle.
+            </p>
+            <p className="mt-4 max-w-sm text-[15px] leading-relaxed text-ink-300">A central de conteúdo da agência: marca, criação com IA, aprovação e custos de cada cliente.</p>
+          </div>
+          {/* O próprio produto é a imagem: captura real da tela inicial. */}
+          <figure className="relative -mr-24 mt-10 overflow-hidden rounded-[var(--radius-card)] border border-ink-700 shadow-[0_6px_25px_rgb(0_0_0/0.5)]">
+            <Image src="/produto.png" alt="Tela inicial do PRISMA OS com indicadores de produção" width={1440} height={1000} className="h-auto w-full" priority />
+          </figure>
+          <dl className="mt-8 grid grid-cols-3 gap-6 border-t border-ink-800 pt-5">
+            {HIGHLIGHTS.map(([k, v]) => (
+              <div key={k} className="text-[12.5px]">
+                <dt className="font-medium text-ink-100">{k}</dt>
+                <dd className="mt-1 leading-relaxed text-ink-400">{v}</dd>
               </div>
             ))}
           </dl>

@@ -146,7 +146,7 @@ export function BrandForm({
                         value={colors[key]}
                         onChange={(e) => setColors((c) => ({ ...c, [key]: e.target.value }))}
                         pattern="#[0-9a-fA-F]{6}"
-                        className="font-mono"
+                        className="tabular"
                       />
                     </div>
                   </Field>
@@ -184,8 +184,8 @@ export function BrandForm({
                 <legend className="mb-2 text-sm font-medium text-ink-200">Famílias de layout preferidas</legend>
                 <div className="flex flex-wrap gap-2">
                   {TEMPLATE_FAMILIES.map((f) => (
-                    <label key={f} className="flex cursor-pointer items-center gap-2 rounded-md border border-ink-700 px-3 py-1.5 text-[13px] has-[:checked]:border-violet-400/70 has-[:checked]:bg-violet-400/[0.06]">
-                      <input type="checkbox" name="visual.preferredFamilies" value={f} defaultChecked={brand.visual.preferredFamilies.includes(f)} className="accent-violet-400" />
+                    <label key={f} className="flex cursor-pointer items-center gap-2 rounded-md border border-ink-700 px-3 py-1.5 text-[13px] has-[:checked]:border-iris-400/70 has-[:checked]:bg-iris-400/[0.06]">
+                      <input type="checkbox" name="visual.preferredFamilies" value={f} defaultChecked={brand.visual.preferredFamilies.includes(f)} className="accent-iris-400" />
                       {FAMILY_LABELS[f]}
                     </label>
                   ))}
@@ -210,7 +210,7 @@ export function BrandForm({
                 <Textarea id="v-restricted" name="visual.restrictedElements" defaultValue={brand.visual.restrictedElements} maxLength={2000} />
               </Field>
               <label className="flex items-start gap-3 rounded-md border border-ink-700 p-3 text-[13.5px] md:col-span-2">
-                <input type="checkbox" name="visual.configured" defaultChecked={brand.visual.configured} className="mt-0.5 accent-violet-400" />
+                <input type="checkbox" name="visual.configured" defaultChecked={brand.visual.configured} className="mt-0.5 accent-iris-400" />
                 <span>
                   <span className="font-medium text-ink-100">Identidade visual definida</span>
                   <span className="block text-ink-400">Marque quando cores e fontes estiverem confirmadas com o cliente. Antes disso, as peças são sinalizadas como provisórias.</span>

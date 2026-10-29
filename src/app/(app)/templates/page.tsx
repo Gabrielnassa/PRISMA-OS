@@ -19,7 +19,7 @@ export default async function TemplatesPage() {
         const items = TEMPLATES.filter((t) => t.family === family);
         return (
           <section key={family} className="mb-12">
-            <SectionTitle aside={<span className="font-mono text-[12px] text-ink-400">{items.length} layouts</span>}>{FAMILY_LABELS[family]}</SectionTitle>
+            <SectionTitle aside={<span className="tabular text-[12px] text-ink-400">{items.length} layouts</span>}>{FAMILY_LABELS[family]}</SectionTitle>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {items.map((t) => (
                 <Card key={t.id} className="overflow-hidden">
@@ -32,14 +32,14 @@ export default async function TemplatesPage() {
                   <div className="space-y-3 p-4 text-[13.5px]">
                     <div className="flex items-baseline justify-between gap-2">
                       <h3 className="text-[15px] font-semibold text-ink-50">{t.name}</h3>
-                      <span className="font-mono text-[11.5px] text-ink-400">v{t.version}</span>
+                      <span className="tabular text-[11.5px] text-ink-400">v{t.version}</span>
                     </div>
                     <p className="leading-relaxed text-ink-300">{t.description}</p>
                     <dl className="grid grid-cols-[72px_1fr] gap-x-3 gap-y-1 border-t border-ink-800 pt-3 text-[12.5px]">
                       <dt className="text-ink-400">Formatos</dt>
                       <dd className="text-ink-300">{t.formats.map((f) => FORMAT_LABELS[f]).join(" · ")}</dd>
                       <dt className="text-ink-400">Proporções</dt>
-                      <dd className="font-mono text-[12px] text-ink-300">{t.aspects.join("  ")}</dd>
+                      <dd className="tabular text-[12px] text-ink-300">{t.aspects.join("  ")}</dd>
                       <dt className="text-ink-400">Foto</dt>
                       <dd className={t.image === "required" ? "text-amber-300" : "text-ink-300"}>{t.image === "required" ? "Exige foto" : t.image === "optional" ? "Opcional" : "Sem foto"}</dd>
                     </dl>
@@ -48,7 +48,7 @@ export default async function TemplatesPage() {
                       <dl className="mt-2 space-y-2">
                         <div>
                           <dt className="font-medium text-ink-300">Identificador</dt>
-                          <dd className="font-mono">{t.id}</dd>
+                          <dd className="tabular">{t.id}</dd>
                         </div>
                         <div>
                           <dt className="font-medium text-ink-300">Finalidade</dt>

@@ -15,9 +15,9 @@ export const metadata: Metadata = { title: "Dashboard" };
 const PIPELINE: ContentStatus[] = ["generating", "in_review", "awaiting_approval", "approved", "rejected", "failed"];
 const PIPELINE_BAR: Partial<Record<ContentStatus, string>> = {
   generating: "bg-sky-400",
-  in_review: "bg-violet-400",
+  in_review: "bg-iris-400",
   awaiting_approval: "bg-amber-400",
-  approved: "bg-teal-400",
+  approved: "bg-emerald-400",
   rejected: "bg-red-400",
   failed: "bg-red-400",
 };
@@ -145,7 +145,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                           <div className="truncate text-[14px] font-medium text-ink-100">{r.title}</div>
                           <div className="mt-0.5 flex gap-2 text-[12.5px] text-ink-400">
                             <span className="truncate">{r.clientName}</span>
-                            <span className="shrink-0 font-mono text-[11.5px] text-ink-400">{formatDateTime(r.updatedAt)}</span>
+                            <span className="shrink-0 tabular text-[11.5px] text-ink-400">{formatDateTime(r.updatedAt)}</span>
                           </div>
                         </div>
                         <StatusBadge status={r.status} />
@@ -167,7 +167,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                       <Link href={`/conteudos?status=${s}${clientId ? `&cliente=${clientId}` : ""}`} className={cx("group block", status && status !== s && "opacity-50")}>
                         <div className="mb-1.5 flex items-baseline justify-between text-[13px]">
                           <span className="text-ink-300 group-hover:text-ink-100">{STATUS_LABELS[s]}</span>
-                          <span className="font-mono text-[12px] text-ink-200">{n}</span>
+                          <span className="tabular text-[12px] text-ink-200">{n}</span>
                         </div>
                         <div className="h-[3px] rounded-full bg-ink-800">
                           <div className={cx("h-[3px] rounded-full", n > 0 ? PIPELINE_BAR[s] : "")} style={{ width: `${(n / total) * 100}%` }} />
@@ -213,7 +213,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                     <Td className="text-right">{c.contents}</Td>
                     <Td className="text-right">{c.pending}</Td>
                     <Td className="text-right">{c.approved}</Td>
-                    <Td className="text-right font-mono text-[12.5px]">{formatUsd(c.costUsd)}</Td>
+                    <Td className="text-right tabular text-[12.5px]">{formatUsd(c.costUsd)}</Td>
                   </tr>
                 ))}
               </tbody>

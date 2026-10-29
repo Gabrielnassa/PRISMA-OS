@@ -21,7 +21,7 @@ export function OrgSettingsForm({ org, canEdit }: { org: { name: string; globalC
           <Textarea id="o-context" name="globalContext" defaultValue={org.globalContext} maxLength={20000} className="min-h-40" />
         </Field>
         <label className="flex items-start gap-3 text-sm">
-          <input type="checkbox" name="requireDistinctApprover" defaultChecked={org.requireDistinctApprover} className="mt-0.5 accent-violet-400" />
+          <input type="checkbox" name="requireDistinctApprover" defaultChecked={org.requireDistinctApprover} className="mt-0.5 accent-iris-400" />
           <span>
             <span className="font-medium text-ink-100">Exigir aprovador diferente de quem solicitou</span>
             <span className="block text-ink-400">Impede que a mesma pessoa envie e aprove a própria peça.</span>

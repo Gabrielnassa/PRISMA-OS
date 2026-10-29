@@ -14,7 +14,7 @@ export default async function ChangePasswordPage() {
   if (!auth.mustChangePassword) redirect("/");
   return (
     <AuthShell>
-      <h1 className="font-display text-[34px] font-medium leading-tight tracking-[-0.015em] text-ink-50">Defina sua senha</h1>
+      <h1 className="font-display text-[34px] font-medium leading-tight tracking-[-0.04em] text-ink-50">Defina sua senha</h1>
       <p className="mb-6 mt-3 text-[14.5px] leading-relaxed text-ink-400">
         Olá, {auth.userName}. Você entrou com uma senha temporária criada pelo administrador. Escolha uma senha pessoal para continuar.
       </p>

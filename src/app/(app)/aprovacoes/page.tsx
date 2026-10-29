@@ -43,7 +43,7 @@ export default async function ApprovalsPage() {
                   </p>
                   {a.requestNote ? <p className="text-sm text-ink-200">“{a.requestNote}”</p> : null}
                   <div className="mt-auto pt-2">
-                    <Link href={`/conteudos/${a.contentId}`} className="text-sm font-medium text-violet-300 hover:underline">
+                    <Link href={`/conteudos/${a.contentId}`} className="text-sm font-medium text-iris-300 hover:underline">
                       Revisar e decidir →
                     </Link>
                   </div>

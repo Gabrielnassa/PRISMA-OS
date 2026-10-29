@@ -7,18 +7,21 @@ export function cx(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(" ");
 }
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "light";
 const BUTTON: Record<Variant, string> = {
-  primary: "bg-ink-50 text-ink-950 shadow-[inset_0_-1px_0_rgb(0_0_0/0.18)] hover:bg-white disabled:bg-ink-700 disabled:text-ink-400 disabled:shadow-none",
-  secondary: "border border-ink-700 bg-ink-900 text-ink-100 hover:border-ink-600 hover:bg-ink-850 disabled:text-ink-500 disabled:hover:bg-ink-900",
+  // Uma ação principal por tela: íris cheio com texto branco (contraste 4,6:1).
+  primary: "bg-iris-500 text-white hover:bg-iris-600 hover:shadow-[0_0_0_4px_rgb(86_131_218/0.18)] disabled:bg-ink-800 disabled:text-ink-500 disabled:shadow-none",
+  secondary: "border border-ink-600 bg-transparent text-ink-50 hover:border-ink-400 hover:bg-ink-850 disabled:border-ink-700 disabled:text-ink-500 disabled:hover:bg-transparent",
   ghost: "text-ink-300 hover:bg-ink-850 hover:text-ink-50 disabled:text-ink-500 disabled:hover:bg-transparent",
-  danger: "border border-red-400/25 text-red-300 hover:border-red-400/45 hover:bg-red-400/[0.07] disabled:text-ink-500",
+  danger: "border border-red-400/35 text-red-300 hover:border-red-400/60 hover:bg-red-400/[0.08] disabled:border-ink-700 disabled:text-ink-500",
+  // Pílula branca: só onde a página é uma vitrine (tela de acesso).
+  light: "bg-white text-ink-950 hover:bg-ink-100 disabled:bg-ink-700 disabled:text-ink-400",
 };
 
 export function buttonClass(variant: Variant = "primary", size: "sm" | "md" = "md"): string {
   return cx(
-    "inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors duration-150 disabled:cursor-not-allowed",
-    size === "sm" ? "h-8 px-3 text-[13px]" : "h-9 px-3.5 text-[13.5px]",
+    "inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-full font-medium tracking-[-0.01em] transition-[background-color,border-color,color,box-shadow] duration-150 disabled:cursor-not-allowed",
+    size === "sm" ? "h-8 px-3.5 text-[13px]" : "h-9 px-[18px] text-[14px]",
     BUTTON[variant],
   );
 }
@@ -33,7 +36,7 @@ export function LinkButton({ variant = "primary", size = "md", className, ...pro
 
 export function Card({ className, children, ...props }: ComponentProps<"section">) {
   return (
-    <section className={cx("min-w-0 rounded-[var(--radius-card)] border border-ink-800 bg-ink-900 shadow-[inset_0_1px_0_rgb(255_255_255/0.025)]", className)} {...props}>
+    <section className={cx("min-w-0 rounded-[var(--radius-card)] border border-ink-700/80 bg-ink-900", className)} {...props}>
       {children}
     </section>
   );
@@ -43,7 +46,7 @@ export function CardHeader({ title, description, actions }: { title: ReactNode; 
   return (
     <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 border-b border-ink-800 px-5 pb-3.5 pt-4">
       <div className="min-w-0">
-        <h2 className="text-[15px] font-semibold tracking-[-0.005em] text-ink-50">{title}</h2>
+        <h2 className="text-[15px] font-semibold tracking-[-0.015em] text-ink-50">{title}</h2>
         {description ? <p className="mt-1 text-[13px] leading-relaxed text-ink-400">{description}</p> : null}
       </div>
       {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
@@ -60,7 +63,7 @@ export function PageHeader({ title, description, actions, eyebrow }: { title: Re
     <header className="page-enter mb-8 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
       <div className="min-w-0 max-w-3xl">
         {eyebrow ? <div className="mb-2 text-[13px] text-ink-400">{eyebrow}</div> : null}
-        <h1 className="font-display text-[30px] font-medium leading-[1.1] tracking-[-0.012em] text-ink-50 md:text-[36px]">{title}</h1>
+        <h1 className="font-display text-[30px] font-medium leading-[1.05] tracking-[-0.04em] text-ink-50 md:text-[36px]">{title}</h1>
         {description ? <p className="mt-2.5 text-[14.5px] leading-relaxed text-ink-400">{description}</p> : null}
       </div>
       {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
@@ -72,26 +75,27 @@ export function PageHeader({ title, description, actions, eyebrow }: { title: Re
 export function SectionTitle({ children, aside, className }: { children: ReactNode; aside?: ReactNode; className?: string }) {
   return (
     <div className={cx("mb-4 flex flex-wrap items-baseline justify-between gap-2", className)}>
-      <h2 className="font-display text-[22px] font-medium tracking-[-0.01em] text-ink-50">{children}</h2>
+      <h2 className="text-[18px] font-semibold tracking-[-0.02em] text-ink-50">{children}</h2>
       {aside ? <div className="text-[13px] text-ink-400">{aside}</div> : null}
     </div>
   );
 }
 
-type Tone = "neutral" | "info" | "warning" | "success" | "danger" | "accent" | "teal";
+type Tone = "neutral" | "info" | "warning" | "success" | "danger" | "accent" | "ember";
+// Etiqueta: a cor do assunto a 12% no fundo e cheia no texto.
 const TONES: Record<Tone, string> = {
-  neutral: "bg-ink-800 text-ink-300",
-  info: "bg-sky-400/10 text-sky-300",
-  warning: "bg-amber-400/10 text-amber-300",
-  success: "bg-emerald-400/10 text-emerald-300",
-  danger: "bg-red-400/10 text-red-300",
-  accent: "bg-violet-400/10 text-violet-300",
-  teal: "bg-teal-400/10 text-teal-300",
+  neutral: "bg-white/[0.07] text-ink-200",
+  info: "bg-sky-400/[0.12] text-sky-300",
+  warning: "bg-amber-400/[0.12] text-amber-300",
+  success: "bg-emerald-400/[0.12] text-emerald-300",
+  danger: "bg-red-400/[0.12] text-red-300",
+  accent: "bg-iris-400/[0.14] text-iris-300",
+  ember: "bg-ember-400/[0.12] text-ember-300",
 };
 
 export function Badge({ tone = "neutral", children, className, title }: { tone?: Tone; children: ReactNode; className?: string; title?: string }) {
   return (
-    <span title={title} className={cx("inline-flex items-center gap-1 whitespace-nowrap rounded-[4px] px-1.5 text-[11.5px] font-medium leading-5", TONES[tone], className)}>
+    <span title={title} className={cx("inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 text-[11.5px] font-medium leading-[22px]", TONES[tone], className)}>
       {children}
     </span>
   );
@@ -103,8 +107,8 @@ const DOTS: Record<Tone, string> = {
   warning: "bg-amber-400",
   success: "bg-emerald-400",
   danger: "bg-red-400",
-  accent: "bg-violet-400",
-  teal: "bg-teal-400",
+  accent: "bg-iris-400",
+  ember: "bg-ember-400",
 };
 
 /** Estado em texto com um ponto colorido (menos ruído que um selo em listas longas). */
@@ -121,7 +125,7 @@ const ALERT_BAR = { info: "bg-sky-400", warning: "bg-amber-400", danger: "bg-red
 
 export function Alert({ tone = "info", title, children }: { tone?: "info" | "warning" | "danger" | "success"; title?: ReactNode; children?: ReactNode }) {
   return (
-    <div role={tone === "danger" ? "alert" : "status"} className="relative overflow-hidden rounded-md border border-ink-800 bg-ink-900 py-3 pl-5 pr-4 text-[13.5px] leading-relaxed text-ink-300">
+    <div role={tone === "danger" ? "alert" : "status"} className="relative overflow-hidden rounded-[var(--radius-card)] border border-ink-700/80 bg-ink-900 py-3 pl-5 pr-4 text-[13.5px] leading-relaxed text-ink-300">
       <span aria-hidden className={cx("absolute inset-y-0 left-0 w-[3px]", ALERT_BAR[tone])} />
       {title ? <div className="font-semibold text-ink-50">{title}</div> : null}
       {children ? <div className={title ? "mt-0.5" : ""}>{children}</div> : null}
@@ -133,14 +137,14 @@ export function EmptyState({ title, description, action, icon }: { title: ReactN
   return (
     <div className="flex flex-col items-center justify-center rounded-[var(--radius-card)] border border-dashed border-ink-700 px-6 py-14 text-center">
       {icon ? <div className="mb-3 text-ink-400">{icon}</div> : null}
-      <div className="font-display text-[20px] font-medium text-ink-100">{title}</div>
+      <div className="text-[16px] font-semibold tracking-[-0.02em] text-ink-50">{title}</div>
       {description ? <p className="mt-1.5 max-w-md text-[13.5px] leading-relaxed text-ink-400">{description}</p> : null}
       {action ? <div className="mt-5">{action}</div> : null}
     </div>
   );
 }
 
-const STAT_TONES = { violet: "text-violet-300", teal: "text-teal-300", warning: "text-amber-300", danger: "text-red-300" } as const;
+const STAT_TONES = { iris: "text-iris-300", ember: "text-ember-300", success: "text-emerald-300", warning: "text-amber-300", danger: "text-red-300" } as const;
 
 /**
  * Indicador. Sozinho vira um cartão; dentro de `StatGroup` vira uma célula
@@ -150,8 +154,8 @@ export function Stat({ label, value, hint, tone, className }: { label: string; v
   return (
     <div className={cx("min-w-0 px-5 py-4", className)}>
       <div className="text-[12.5px] text-ink-400">{label}</div>
-      <div className={cx("mt-1.5 truncate font-display text-[30px] font-normal leading-none tracking-[-0.01em] [font-variant-numeric:lining-nums]", tone ? STAT_TONES[tone] : "text-ink-50")}>{value}</div>
-      {hint ? <div className="mt-2 font-mono text-[11.5px] leading-snug text-ink-400">{hint}</div> : null}
+      <div className={cx("mt-2 truncate font-display text-[32px] font-medium leading-none tracking-[-0.05em] tabular", tone ? STAT_TONES[tone] : "text-ink-50")}>{value}</div>
+      {hint ? <div className="tabular mt-2 text-[12px] leading-snug text-ink-400">{hint}</div> : null}
     </div>
   );
 }
@@ -165,7 +169,7 @@ export function StatGroup({ children, className }: { children: ReactNode; classN
   return (
     <div
       className={cx(
-        "grid grid-cols-2 gap-px overflow-hidden rounded-[var(--radius-card)] border border-ink-800 bg-ink-800 [&>*]:bg-ink-900 max-md:[&>*:last-child:nth-child(odd)]:col-span-2",
+        "grid grid-cols-2 gap-px overflow-hidden rounded-[var(--radius-card)] border border-ink-700/80 bg-ink-700/80 [&>*]:bg-ink-900 max-md:[&>*:last-child:nth-child(odd)]:col-span-2",
         className,
       )}
     >
@@ -175,7 +179,7 @@ export function StatGroup({ children, className }: { children: ReactNode; classN
 }
 
 export const inputClass =
-  "w-full rounded-md border border-ink-700 bg-ink-950/60 px-3 py-[7px] text-[14px] text-ink-50 placeholder:text-ink-500 transition-colors hover:border-ink-600 focus:border-violet-400/60 focus:outline-none focus:ring-2 focus:ring-violet-500/10 disabled:opacity-60";
+  "w-full rounded-[6px] border border-ink-700 bg-ink-950 px-3 py-[7px] text-[14px] text-ink-50 placeholder:text-ink-500 transition-colors hover:border-ink-600 focus:border-iris-400 focus:outline-none focus:ring-[3px] focus:ring-iris-400/20 disabled:opacity-60";
 
 export function Field({ label, htmlFor, hint, error, children, className }: { label: ReactNode; htmlFor?: string; hint?: ReactNode; error?: string; children: ReactNode; className?: string }) {
   return (
@@ -216,7 +220,7 @@ export function Table({ children }: { children: ReactNode }) {
 }
 
 export function Th({ children, className }: { children?: ReactNode; className?: string }) {
-  return <th className={cx("border-b border-ink-800 px-5 py-2.5 text-[12px] font-medium text-ink-400", className)}>{children}</th>;
+  return <th className={cx("border-b border-ink-800 px-5 py-2.5 text-[12px] font-medium tracking-normal text-ink-400", className)}>{children}</th>;
 }
 
 export function Td({ children, className }: { children?: ReactNode; className?: string }) {
@@ -233,7 +237,7 @@ export function TabLinks({ tabs, active }: { tabs: Array<{ id: string; label: Re
           aria-current={t.id === active ? "page" : undefined}
           className={cx(
             "-mb-px whitespace-nowrap border-b-2 pb-2.5 pt-1 text-[13.5px] font-medium transition-colors",
-            t.id === active ? "border-violet-400 text-ink-50" : "border-transparent text-ink-400 hover:text-ink-100",
+            t.id === active ? "border-iris-400 text-ink-50" : "border-transparent text-ink-400 hover:text-ink-100",
           )}
         >
           {t.label}

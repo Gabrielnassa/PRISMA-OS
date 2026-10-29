@@ -187,8 +187,8 @@ export function CreateForm({
                       <label
                         key={img.id}
                         className={cx(
-                          "relative cursor-pointer overflow-hidden rounded-lg border-2 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-violet-400 has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-ink-900",
-                          on ? "border-violet-400" : "border-transparent",
+                          "relative cursor-pointer overflow-hidden rounded-lg border-2 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-iris-400 has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-ink-900",
+                          on ? "border-iris-400" : "border-transparent",
                         )}
                       >
                         <input
@@ -197,11 +197,13 @@ export function CreateForm({
                           value={img.id}
                           checked={on}
                           onChange={() => setSelected((s) => (on ? s.filter((x) => x !== img.id) : s.length >= 10 ? s : [...s, img.id]))}
-                          className="sr-only"
+                          aria-label={img.altText || img.filename}
+                          // Invisível, mas cobrindo a foto inteira: o clique e o foco caem sempre nela.
+                          className="absolute inset-0 z-10 cursor-pointer appearance-none opacity-0"
                         />
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={`/api/media/${img.id}`} alt={img.altText || img.filename} className="aspect-square w-full bg-ink-850 object-cover" loading="lazy" />
-                        {on ? <span className="absolute right-1 top-1 rounded-[4px] bg-ink-50 px-1.5 font-mono text-[10px] font-medium text-ink-950">{selected.indexOf(img.id) + 1}</span> : null}
+                        {on ? <span className="absolute right-1 top-1 rounded-[4px] bg-ink-50 px-1.5 tabular text-[10px] font-medium text-ink-950">{selected.indexOf(img.id) + 1}</span> : null}
                       </label>
                     );
                   })}
@@ -246,7 +248,7 @@ export function CreateForm({
                     <Badge>{FORMAT_LABELS[idea.format]}</Badge>
                     <button
                       type="button"
-                      className="text-xs font-medium text-violet-300 hover:underline"
+                      className="text-xs font-medium text-iris-300 hover:underline"
                       onClick={() => {
                         setTitle(idea.title);
                         setBriefing(`${idea.hook}\n\n${idea.angle}\n\nJustificativa: ${idea.rationale}`);

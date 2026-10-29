@@ -87,7 +87,7 @@ async function Overview({ auth, client, completeness }: { auth: Auth; client: Cl
         <CardHeader title="Perfil da marca" description={`${completeness.percent}% dos campos essenciais preenchidos`} actions={<LinkButton href={`/clientes/${client.id}?aba=marca`} size="sm" variant="secondary">Editar perfil</LinkButton>} />
         <div className="p-5">
           <div className="h-[3px] rounded-full bg-ink-800">
-            <div className={completeness.percent === 100 ? "h-[3px] rounded-full bg-teal-400" : "h-[3px] rounded-full bg-violet-400"} style={{ width: `${completeness.percent}%` }} />
+            <div className={completeness.percent === 100 ? "h-[3px] rounded-full bg-emerald-400" : "h-[3px] rounded-full bg-iris-400"} style={{ width: `${completeness.percent}%` }} />
           </div>
           {completeness.missing.length ? (
             <p className="mt-3 text-sm text-ink-300">
@@ -119,7 +119,7 @@ async function Overview({ auth, client, completeness }: { auth: Auth; client: Cl
               <dd className="mt-0.5 text-ink-100">{client.brand.voice.forbiddenTerms.join(", ") || "—"}</dd>
             </div>
           </dl>
-          <div className="mt-6 border-t border-ink-800 pt-3 font-mono text-[11.5px] text-ink-400">Revisão {client.brandRevision} · atualizado em {formatDateTime(client.brandUpdatedAt)}</div>
+          <div className="mt-6 border-t border-ink-800 pt-3 tabular text-[11.5px] text-ink-400">Revisão {client.brandRevision} · atualizado em {formatDateTime(client.brandUpdatedAt)}</div>
         </div>
       </Card>
       <div className="flex flex-col gap-6">
