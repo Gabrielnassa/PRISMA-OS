@@ -19,7 +19,7 @@ export default async function ApprovalsPage({ searchParams }: { searchParams: Pr
     <>
       <PageHeader
         title="Aprovações"
-        description={can(auth.role, "content.approve") ? "Peças aguardando sua decisão. Cada aprovação vale apenas para a versão exata enviada." : "Peças aguardando aprovação (seu papel permite acompanhar, não decidir)."}
+        description={can(auth.role, "content.approve") ? undefined : "Você acompanha; a decisão é de quem aprova."}
       />
       {client ? (
         <p className="-mt-4 mb-6 text-[13.5px] text-ink-300">
@@ -30,7 +30,7 @@ export default async function ApprovalsPage({ searchParams }: { searchParams: Pr
         </p>
       ) : null}
       {items.length === 0 ? (
-        <EmptyState title="Nada aguardando aprovação" description="Quando a equipe enviar uma versão para aprovação, ela aparecerá aqui." />
+        <EmptyState title="Nada aguardando aprovação" />
       ) : (
         <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {items.map((a) => (

@@ -328,8 +328,8 @@ Formato da resposta:
     },
     demo(input) {
       return {
-        result: `Resultado de demonstração da skill "${s.name}" (sem IA).\n\nPedido recebido:\n${input.request}`,
-        assumptions: ["Gerado pelo provedor de demonstração: nenhum texto foi criado por IA."],
+        result: `Modo de demonstração da skill "${s.name}".\n\nPedido recebido:\n${input.request}`,
+        assumptions: ["Modo de demonstração: nenhum texto foi criado por IA."],
       };
     },
   };

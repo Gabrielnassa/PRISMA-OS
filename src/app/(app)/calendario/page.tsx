@@ -24,7 +24,7 @@ function tone(e: CalendarEntry): string {
 function statusText(e: CalendarEntry): string {
   if (e.contentStatus) return STATUS_LABELS[e.contentStatus];
   if (e.itemStatus === "done") return "Feito";
-  return e.planApproved ? "Planejada" : "Rascunho da linha editorial";
+  return e.planApproved ? "Planejada" : "Em rascunho";
 }
 
 function Entry({ e, showClient }: { e: CalendarEntry; showClient: boolean }) {
@@ -65,7 +65,6 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
     <>
       <PageHeader
         title="Calendário"
-        description="As pautas das linhas editoriais de todos os clientes, dia a dia. Clique para abrir a peça ou a linha editorial."
         actions={
           <span className="flex items-center gap-1">
             <LinkButton href={href(shiftMonth(month, -1))} variant="ghost" size="sm" aria-label="Mês anterior">
@@ -102,7 +101,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
       {entries.length === 0 ? (
         <EmptyState
           title={`Nada planejado em ${monthLabel(month).toLowerCase()}`}
-          description="Monte a linha editorial do mês na página de cada cliente (aba Linha editorial) e as pautas aparecem aqui."
+          description="As pautas aparecem aqui quando a linha editorial do cliente é montada."
           action={clients[0] ? <LinkButton href={`/clientes/${clientId ?? clients[0].id}?aba=editorial&mes=${month}`}>Abrir linha editorial</LinkButton> : undefined}
         />
       ) : (

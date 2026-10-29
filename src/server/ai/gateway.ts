@@ -60,13 +60,13 @@ export function providerStatus(): ProviderStatus {
       model: p.model,
       isDemo: p.isDemo,
       detail: p.isDemo
-        ? "Modo demonstração: textos montados a partir do briefing, sem IA. Não use em produção."
+        ? "Modo de demonstração: textos montados a partir do briefing, sem IA."
         : p.id === "openai"
           ? `Modelo ${p.model}, esforço ${e.OPENAI_EFFORT ? `fixo em ${e.OPENAI_EFFORT} (OPENAI_EFFORT)` : "definido por skill"}. Respostas não ficam guardadas na conta da OpenAI.`
           : `Modelo ${p.model}, esforço ${e.ANTHROPIC_EFFORT ? `fixo em ${e.ANTHROPIC_EFFORT} (ANTHROPIC_EFFORT)` : "definido por skill"}, fallback do servidor ${e.ANTHROPIC_FALLBACKS === "default" ? "ativado" : "desativado"}.`,
     };
   }
-  let detail = "Nenhum provedor de IA configurado. Defina ANTHROPIC_API_KEY (Claude) ou OPENAI_API_KEY (ChatGPT) no ambiente do servidor.";
+  let detail = "Nenhuma chave de IA conectada. Defina ANTHROPIC_API_KEY (Claude) ou OPENAI_API_KEY (ChatGPT) na configuração do servidor.";
   if (id === "anthropic") detail = "AI_PROVIDER=anthropic, mas ANTHROPIC_API_KEY não está definida.";
   if (id === "openai") detail = "AI_PROVIDER=openai, mas OPENAI_API_KEY não está definida.";
   if (id === "demo" && e.NODE_ENV === "production") detail = "O provedor de demonstração é bloqueado em produção.";

@@ -115,7 +115,7 @@ export async function handleGenerateContent(job: Job, auth: AuthContext): Promis
     const version = await insertVersion(tx, auth, locked, doc, {
       source: copy.isDemo ? "demo" : "ai",
       aiRunId: copy.runId,
-      changeNote: copy.isDemo ? "Gerado pelo provedor de demonstração" : `Gerado por IA (${copy.model})`,
+      changeNote: copy.isDemo ? "Rascunho de demonstração" : `Gerado por IA (${copy.model})`,
     });
     await tx.query("UPDATE content_items SET current_version_id = $2, status = 'in_review', last_error = NULL WHERE id = $1", [item.id, version.id]);
     const report = await evaluateVersion(tx, auth, item.client_id, version.id, doc, item.briefing);

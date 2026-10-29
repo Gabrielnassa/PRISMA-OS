@@ -19,6 +19,9 @@ import { EDITORIAL_FORMAT_LABELS, monthLabel } from "@/lib/content/editorial";
 import { can } from "@/server/authz/permissions";
 import { NotFoundError } from "@/server/errors";
 import { brandCompleteness } from "@/lib/brand";
+import { plural } from "@/lib/text";
+
+const CLIENT_STATUS_LABELS = { active: "Ativo", paused: "Pausado", archived: "Arquivado" } as const;
 import { Alert, Badge, Card, CardHeader, EmptyState, LinkButton, PageHeader, Stat, StatGroup, TabLinks, formatDateTime, formatRelative, formatUsd } from "@/components/ui";
 import { ContentTable } from "@/components/content-table";
 import { toContentRows } from "@/components/content-rows";
@@ -72,7 +75,7 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
       {novo === "1" && tab === "marca" ? (
         <div className="mb-6">
           <Alert tone="success" title="Cliente cadastrado">
-            Preencha o perfil da marca: ele é usado em todas as criações deste cliente.
+            Agora preencha o perfil da marca. Ele orienta todas as peças deste cliente.
           </Alert>
         </div>
       ) : null}
@@ -97,7 +100,7 @@ async function Overview({ auth, client, completeness }: { auth: Auth; client: Cl
     <div className="grid items-start gap-6 lg:grid-cols-3">
       {pendingSteps > 0 && client.status !== "archived" ? (
         <Card className="lg:col-span-3">
-          <CardHeader title="Primeiros passos" description={`${steps.length - pendingSteps} de ${steps.length} prontos. Com tudo pronto, a linha editorial do mês vira peças com um clique.`} />
+          <CardHeader title="Primeiros passos" description={`${steps.length - pendingSteps} de ${steps.length} concluídos`} />
           <ol className="grid gap-px bg-ink-800 sm:grid-cols-2 xl:grid-cols-3 [&>*]:bg-ink-900">
             {steps.map((st) => (
               <li key={st.id}>
@@ -122,7 +125,7 @@ async function Overview({ auth, client, completeness }: { auth: Auth; client: Cl
         </Card>
       ) : null}
       <Card className="lg:col-span-2">
-        <CardHeader title="Perfil da marca" description={`${completeness.percent}% dos campos essenciais preenchidos`} actions={<LinkButton href={`/clientes/${client.id}?aba=marca`} size="sm" variant="secondary">Editar perfil</LinkButton>} />
+        <CardHeader title="Perfil da marca" description={`${completeness.percent}% preenchido`} actions={<LinkButton href={`/clientes/${client.id}?aba=marca`} size="sm" variant="secondary">Editar perfil</LinkButton>} />
         <div className="p-5">
           <div className="h-[3px] rounded-full bg-ink-800">
             <div className={completeness.percent === 100 ? "h-[3px] rounded-full bg-emerald-400" : "h-[3px] rounded-full bg-iris-400"} style={{ width: `${completeness.percent}%` }} />
@@ -132,7 +135,7 @@ async function Overview({ auth, client, completeness }: { auth: Auth; client: Cl
               Falta preencher: <span className="text-ink-100">{completeness.missing.join(", ")}</span>.
             </p>
           ) : (
-            <p className="mt-3 text-sm text-emerald-300">Perfil essencial completo.</p>
+            <p className="mt-3 text-sm text-emerald-300">Perfil completo.</p>
           )}
           <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
             <div>
@@ -166,12 +169,12 @@ async function Overview({ auth, client, completeness }: { auth: Auth; client: Cl
           {can(auth.role, "client.update") ? (
             <ClientSettingsForm client={client} canArchive={can(auth.role, "client.archive")} />
           ) : (
-            <div className="p-5 text-sm text-ink-300">Situação: {client.status}</div>
+            <div className="p-5 text-sm text-ink-300">Situação: {CLIENT_STATUS_LABELS[client.status]}</div>
           )}
         </Card>
         {can(auth.role, "costs.manage") ? (
           <Card>
-            <CardHeader title="Consumo de IA" description={myCosts ? `${myCosts.runs} execução(ões) no mês · ${formatUsd(myCosts.costUsd, 4)}` : "Sem execuções no mês"} />
+            <CardHeader title="Consumo de IA" description={myCosts?.runs ? `${plural(myCosts.runs, "execução", "execuções")} no mês · ${formatUsd(myCosts.costUsd, 2)}` : "Nenhum uso neste mês"} />
             <BudgetForm clientId={client.id} budget={{ limitUsd: myCosts?.limitUsd ?? null, alertPct: myCosts?.alertPct ?? null, hardStop: myCosts?.hardStop ?? null }} />
           </Card>
         ) : null}
@@ -208,12 +211,12 @@ async function MemoryTab({ auth, clientId }: { auth: Auth; clientId: string }) {
       <Card>
         <CardHeader
           title="Memória do cliente"
-          description="Fatos e preferências confirmados entram no contexto da IA. Hipóteses entram rotuladas como hipóteses. Sugestões (inclusive de reprovações) só valem depois de revisadas e convertidas por você."
+          description="Fatos e preferências usados nas próximas criações. Sugestões vindas de reprovações só valem depois de revisadas."
         />
         {canManage ? <AddMemoryForm clientId={clientId} /> : null}
       </Card>
       {memories.length === 0 ? (
-        <EmptyState title="Nenhuma informação memorizada" description="Registre preferências e fatos confirmados para orientar as próximas criações." />
+        <EmptyState title="Memória vazia" description="Registre fatos e preferências confirmados do cliente." />
       ) : (
         <Card>
           <ul className="divide-y divide-ink-800">
@@ -224,7 +227,7 @@ async function MemoryTab({ auth, clientId }: { auth: Auth; clientId: string }) {
                   <p className={m.status === "archived" ? "text-sm text-ink-400 line-through" : "text-sm text-ink-100"}>{m.content}</p>
                   <p className="mt-0.5 text-xs text-ink-400">
                     {m.source === "approval_feedback" ? "Origem: reprovação" : "Registro manual"} · {m.createdByName ?? "—"} · {formatDateTime(m.createdAt)}
-                    {m.kind === "suggestion" && m.status === "active" ? " · não entra no contexto da IA até ser registrada como fato ou preferência" : ""}
+                    {m.kind === "suggestion" && m.status === "active" ? " · aguardando revisão" : ""}
                   </p>
                 </div>
                 {canManage ? (
@@ -239,7 +242,7 @@ async function MemoryTab({ auth, clientId }: { auth: Auth; clientId: string }) {
                       fields={{ clientId, memoryId: m.id, op: "delete" }}
                       label="Excluir"
                       tone="danger"
-                      confirmMessage="Excluir esta informação da memória do cliente? A exclusão é definitiva; para apenas tirá-la do contexto da IA, use Arquivar."
+                      confirmMessage="Excluir esta informação? Para só deixar de usá-la, prefira Arquivar."
                     />
                   </div>
                 ) : null}
@@ -260,7 +263,7 @@ async function FilesTab({ auth, clientId }: { auth: Auth; clientId: string }) {
       <Card>
         <CardHeader
           title="Pasta do Google Drive"
-          description="Coloque as fotos e os vídeos do cliente numa pasta do Drive e traga para a biblioteca com um clique."
+          description="Fotos e vídeos do cliente direto da pasta compartilhada."
           actions={drive?.lastImportAt ? <span className="text-[12.5px] text-ink-400" title={formatDateTime(drive.lastImportAt)}>Última importação {formatRelative(drive.lastImportAt)}</span> : null}
         />
         <DrivePanel
@@ -275,7 +278,7 @@ async function FilesTab({ auth, clientId }: { auth: Auth; clientId: string }) {
       </Card>
       {can(auth.role, "media.upload") ? (
         <Card>
-          <CardHeader title="Enviar arquivos" description="Prefira fotografias reais do cliente ou imagens licenciadas." />
+          <CardHeader title="Enviar arquivos" />
           <MediaUploader clientId={clientId} />
         </Card>
       ) : null}
@@ -286,7 +289,7 @@ async function FilesTab({ auth, clientId }: { auth: Auth; clientId: string }) {
 
 async function ContentsTab({ auth, clientId }: { auth: Auth; clientId: string }) {
   const { items } = await listContents(auth, { clientId, limit: 50 });
-  if (items.length === 0) return <EmptyState title="Nenhum conteúdo" description="Os conteúdos deste cliente aparecerão aqui." action={can(auth.role, "content.create") ? <LinkButton href={`/criar?cliente=${clientId}`}>Criar conteúdo</LinkButton> : undefined} />;
+  if (items.length === 0) return <EmptyState title="Nenhuma peça deste cliente" action={can(auth.role, "content.create") ? <LinkButton href={`/criar?cliente=${clientId}`}>Criar conteúdo</LinkButton> : undefined} />;
   return (
     <Card>
       <ContentTable items={toContentRows(items)} showClient={false} onDelete={can(auth.role, "content.delete") ? deleteContentsAction : undefined} />
@@ -313,28 +316,28 @@ async function EditorialTab({ auth, clientId, month: requested, archived }: { au
   return (
     <div className="flex flex-col gap-6">
       <StatGroup className="md:grid-cols-3">
-        <Stat label="Pacote do mês" value={total ? `${total} peça${total === 1 ? "" : "s"}` : "—"} hint={total ? counts.filter(([k]) => pkg[k]).map(([k, f]) => `${pkg[k]} ${EDITORIAL_FORMAT_LABELS[f as "post"].toLowerCase()}${pkg[k] === 1 ? "" : "s"}`).join(" · ") : "Defina abaixo quantas peças o cliente contratou."} />
-        <Stat label="Produzido neste mês" value={total ? `${produced.posts + produced.carousels + produced.stories + produced.videos} de ${total}` : "—"} hint="Peças criadas no mês e vídeos marcados como feitos." />
+        <Stat label="Pacote do mês" value={total ? `${total} peça${total === 1 ? "" : "s"}` : "—"} hint={total ? counts.filter(([k]) => pkg[k]).map(([k, f]) => `${pkg[k]} ${EDITORIAL_FORMAT_LABELS[f as "post"].toLowerCase()}${pkg[k] === 1 ? "" : "s"}`).join(" · ") : "Defina o pacote abaixo."} />
+        <Stat label="Produzido neste mês" value={total ? `${produced.posts + produced.carousels + produced.stories + produced.videos} de ${total}` : "—"} hint="Inclui vídeos marcados como feitos" />
         <Stat
           label="Custo de IA estimado"
           tone="iris"
           value={estimate.totalUsd === null ? "—" : formatUsd(estimate.totalUsd, 2)}
-          hint={estimate.totalUsd === null ? estimate.note : `${estimate.aiPieces} peças × ${formatUsd(estimate.perPieceUsd, 3)}${estimate.planUsd ? ` + pauta ${formatUsd(estimate.planUsd, 3)}` : ""} · ${estimate.basis === "measured" ? "média real" : "estimativa pela tarifa"}`}
+          hint={estimate.totalUsd === null ? estimate.note : `${estimate.aiPieces} peças × ${formatUsd(estimate.perPieceUsd, 3)}${estimate.planUsd ? ` + pauta ${formatUsd(estimate.planUsd, 3)}` : ""} · ${estimate.basis === "measured" ? "média do histórico" : "pela tarifa"}`}
         />
       </StatGroup>
       {delivered.length ? (
         <Alert tone="success" title={`${delivered.length === 1 ? "1 peça aprovada" : `${delivered.length} peças aprovadas`} em ${monthLabel(month).toLowerCase()}`}>
-          Baixe tudo de uma vez para postar: uma pasta por peça, com as imagens, a legenda com hashtags e os textos alternativos.{" "}
+          Uma pasta por peça, com as imagens, a legenda e os textos alternativos.{" "}
           <a href={`/api/clients/${clientId}/delivery?mes=${month}`} className="font-medium text-iris-300 hover:underline">
             Baixar entrega do mês (.zip)
           </a>
         </Alert>
       ) : null}
-      {estimate.totalUsd !== null ? <p className="-mt-3 text-[12.5px] text-ink-400">{estimate.note} Gasto real do cliente neste mês: {formatUsd(overview.monthSpendUsd, 2)}.</p> : null}
+      {estimate.totalUsd !== null ? <p className="-mt-3 text-[12.5px] text-ink-400">{estimate.note} Gasto de IA do cliente neste mês: {formatUsd(overview.monthSpendUsd, 2)}.</p> : null}
 
       {can(auth.role, "client.package") ? (
         <Card>
-          <CardHeader title="Pacote mensal" description="Quantas peças por mês o cliente contratou. A linha editorial é montada a partir daqui." />
+          <CardHeader title="Pacote mensal" description="Peças contratadas por mês" />
           <PackageForm clientId={clientId} pkg={pkg} />
         </Card>
       ) : null}
@@ -346,8 +349,8 @@ async function EditorialTab({ auth, clientId, month: requested, archived }: { au
             plan
               ? plan.status === "approved"
                 ? `Aprovada${plan.approvedByName ? ` por ${plan.approvedByName}` : ""} em ${formatDateTime(plan.approvedAt)}.`
-                : `Rascunho${plan.fromAi ? " proposto pela IA" : ""}: revise, ajuste e aprove.`
-              : "Uma pauta para cada peça do pacote. A IA propõe; a equipe revisa e aprova; aí as peças são criadas."
+                : "Rascunho. Revise as pautas e aprove."
+              : "Uma pauta para cada peça do pacote. Depois da aprovação, as peças entram em produção."
           }
           actions={
             <span className="flex items-center gap-1">
@@ -380,7 +383,7 @@ async function EditorialTab({ auth, clientId, month: requested, archived }: { au
             )}
           </div>
         ) : null}
-        {!plan && !canEdit ? <p className="p-5 text-[13.5px] text-ink-400">Nenhuma linha editorial para este mês.</p> : null}
+        {!plan && !canEdit ? <p className="p-5 text-[13.5px] text-ink-400">Sem linha editorial neste mês.</p> : null}
       </Card>
     </div>
   );

@@ -42,14 +42,14 @@ test("skills da agência: importar, executar, histórico, versão e virar peça"
   // Build de produção (E2E_PROD=1): o provedor de demonstração é bloqueado, então
   // sem chave da IA o botão fica desativado e a tela explica o motivo.
   if (process.env.E2E_PROD === "1") {
-    await expect(page.getByText("Para executar skills, configure a chave da Anthropic.")).toBeVisible();
+    await expect(page.getByText("Conecte uma chave de IA em Integrações para executar skills.")).toBeVisible();
     await expect(page.getByRole("button", { name: "Executar skill" })).toBeDisabled();
   } else {
     // Executar: o resultado aparece com copiar e criar peça.
     await page.getByLabel("Cliente").selectOption({ label: "Padaria Fermento" });
     await page.getByLabel("Pedido").fill("Promoção do pão de queijo às sextas-feiras.");
     await page.getByRole("button", { name: "Executar skill" }).click();
-    await expect(page.getByText("Resultado de demonstração (sem IA).")).toBeVisible();
+    await expect(page.getByText("Resultado de demonstração.")).toBeVisible();
     await expect(page.getByText(/Pedido recebido:\s*Promoção do pão de queijo às sextas-feiras\./)).toBeVisible();
     await expect(page.getByRole("button", { name: "Copiar" })).toBeVisible();
 

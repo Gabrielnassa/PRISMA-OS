@@ -40,17 +40,17 @@ export function GenerationStatus({ contentId }: { contentId: string }) {
       <span aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-sky-400" />
       <span className="mt-1 size-5 shrink-0 animate-spin rounded-full border-2 border-sky-300 border-t-transparent" aria-hidden />
       <div className="text-sm">
-        <div className="font-semibold text-sky-100">Gerando conteúdo</div>
+        <div className="font-semibold text-sky-100">Gerando a peça</div>
         <p className="mt-1 text-sky-100/80">
           {job?.status === "queued" && job.attempts === 0
-            ? "Na fila. O worker processa os pedidos em ordem."
+            ? "Na fila, aguardando a vez."
             : job?.status === "queued"
-              ? `Nova tentativa agendada (${job.attempts}/${job.maxAttempts}) após falha temporária: ${job.lastError ?? ""}`
+              ? `Falha temporária; nova tentativa em instantes (${job.attempts} de ${job.maxAttempts}). ${job.lastError ?? ""}`
               : job?.status === "running"
-                ? `Em execução (tentativa ${job.attempts}/${job.maxAttempts}): direção de arte, texto, renderização e controle de qualidade.`
+                ? job.attempts > 1 ? `Escrevendo os textos e montando a arte (tentativa ${job.attempts} de ${job.maxAttempts}).` : "Escrevendo os textos e montando a arte."
                 : "Verificando o andamento..."}
         </p>
-        <p className="mt-2 text-xs text-sky-100/60">Se nada acontecer, verifique se o worker está rodando (npm run worker).</p>
+        <p className="mt-2 text-xs text-sky-100/60">Costuma levar menos de um minuto.</p>
       </div>
     </div>
   );

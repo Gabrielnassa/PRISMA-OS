@@ -88,7 +88,7 @@ export function composeDocument(opts: {
 /** Notas de produção visíveis no editor: conceito, premissas e pontos a confirmar. */
 export function productionNotes(copy: CopyOutput | null, art: ArtDirection, isDemo: boolean): string {
   const parts: string[] = [];
-  if (isDemo) parts.push("ATENÇÃO: gerado pelo provedor de DEMONSTRAÇÃO (sem IA). Textos extraídos do briefing.");
+  if (isDemo) parts.push("Modo de demonstração: textos extraídos do briefing, sem IA.");
   if (copy?.concept) parts.push(`Conceito: ${copy.concept}`);
   if (copy?.assumptions.length) parts.push(`Premissas:\n${copy.assumptions.map((a) => `- ${a}`).join("\n")}`);
   if (copy?.claimsToConfirm.length) parts.push(`Confirmar com o cliente:\n${copy.claimsToConfirm.map((a) => `- ${a}`).join("\n")}`);

@@ -76,7 +76,7 @@ export function SkillForm({
     <div className="space-y-6">
       {!skillId ? (
         <Card>
-          <CardHeader title="Começar mais rápido" description="Importe um SKILL.md (o formato das skills do Claude) ou parta de um modelo. Você revisa tudo antes de salvar." />
+          <CardHeader title="Começar mais rápido" description="Importe um SKILL.md ou parta de um modelo. Nada é salvo antes da sua revisão." />
           <div className="grid gap-5 p-5 lg:grid-cols-2">
             <div className="space-y-3">
               <Field label="Importar arquivo SKILL.md" htmlFor="skill-file" hint="Só o nome, a descrição e as instruções são usados. Scripts e arquivos extras da skill não rodam aqui.">
@@ -125,7 +125,7 @@ export function SkillForm({
       <Card>
         <CardHeader
           title={skillId ? "Editar skill" : "Nova skill"}
-          description="O perfil da marca, a memória e o contexto do cliente entram sozinhos em cada execução. Escreva aqui só o que a skill faz e como entregar."
+          description="A marca e a memória do cliente entram automaticamente. Escreva só o que a skill faz e como entregar."
         />
         <ActionForm action={action} state={state} className="space-y-5 p-5">
           {skillId ? <input type="hidden" name="skillId" value={skillId} /> : null}

@@ -67,7 +67,7 @@ CTA: ${escapeData(input.cta)}
   },
   demo() {
     return {
-      summary: "Revisão de demonstração: nenhuma análise de IA foi executada. Use as regras automáticas e a revisão humana.",
+      summary: "Modo de demonstração: a revisão de texto por IA não foi feita. Confira a verificação automática.",
       issues: [],
     };
   },

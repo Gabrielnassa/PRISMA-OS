@@ -72,7 +72,7 @@ export async function runSkillAction(_prev: ActionState<RunSkillData>, form: For
     refresh();
     return {
       data: { runId: out.runId, clientId, result: out.output.result, assumptions: out.output.assumptions, isDemo: out.isDemo, costUsd: out.costUsd },
-      message: out.isDemo ? "Resultado de demonstração (sem IA)." : out.reused ? "Este pedido já tinha sido executado: mostrando o mesmo resultado, sem nova cobrança." : undefined,
+      message: out.isDemo ? "Resultado de demonstração." : out.reused ? "Pedido já executado antes. Mostrando o mesmo resultado, sem nova cobrança." : undefined,
     };
   });
 }

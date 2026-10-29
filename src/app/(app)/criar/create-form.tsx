@@ -126,7 +126,7 @@ export function CreateForm({
               </Select>
             </Field>
             {format === "carousel" ? (
-              <Field label="Número de lâminas" htmlFor="slideCount" hint="Abertura + desenvolvimento + chamada final." error={fe("slideCount")}>
+              <Field label="Número de lâminas" htmlFor="slideCount" hint="Inclui a capa e a chamada final." error={fe("slideCount")}>
                 <Input id="slideCount" name="slideCount" type="number" min={2} max={10} defaultValue={5} />
               </Field>
             ) : (
@@ -136,7 +136,7 @@ export function CreateForm({
         </Card>
 
         <Card>
-          <CardHeader title="2. Briefing" description="O conteúdo é tratado como dado de referência. Nada fora dele, do perfil da marca e das ofertas confirmadas é afirmado como fato." />
+          <CardHeader title="2. Briefing" />
           <div className="grid gap-4 p-5">
             <Field label="Título interno da pauta" htmlFor="title" error={fe("title")}>
               <Input id="title" name="title" value={title} onChange={(e) => setTitle(e.target.value)} required minLength={2} maxLength={200} placeholder="Ex.: 3 cuidados com a saúde no inverno" />
@@ -162,11 +162,11 @@ export function CreateForm({
         </Card>
 
         <Card>
-          <CardHeader title="3. Direção visual" description="Escolha automática considera objetivo, famílias preferidas da marca e se há fotos selecionadas." />
+          <CardHeader title="3. Direção visual" />
           <div className="grid gap-4 p-5">
             <Field label="Template" htmlFor="templatePreference">
               <Select id="templatePreference" name="templatePreference" key={format} defaultValue="auto">
-                <option value="auto">Automático (diretor de arte)</option>
+                <option value="auto">Automático</option>
                 {availableTemplates.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.familyLabel} — {t.name}
@@ -176,9 +176,9 @@ export function CreateForm({
               </Select>
             </Field>
             <fieldset>
-              <legend className="mb-2 text-sm font-medium text-ink-200">Fotos do cliente para usar (opcional, até 10)</legend>
+              <legend className="mb-2 text-sm font-medium text-ink-200">Fotos do cliente (até 10)</legend>
               {images.length === 0 ? (
-                <p className="text-sm text-ink-400">Nenhuma imagem na biblioteca deste cliente. Sem fotos, o diretor de arte prioriza layouts tipográficos.</p>
+                <p className="text-sm text-ink-400">Este cliente ainda não tem fotos. Sem foto, a peça usa um layout só com texto.</p>
               ) : (
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-6">
                   {images.map((img) => {
@@ -216,18 +216,18 @@ export function CreateForm({
         <FormMessage state={state} />
         <div className="flex flex-wrap gap-3">
           <SubmitButton name="mode" value="ai" disabled={!providerReady} pendingText="Enviando para a fila...">
-            {providerDemo ? "Gerar (modo demonstração)" : "Gerar com IA"}
+            {providerDemo ? "Gerar rascunho" : "Gerar com IA"}
           </SubmitButton>
           <SubmitButton name="mode" value="manual" variant="secondary" pendingText="Criando...">
-            Começar pelo template (sem IA)
+            Montar manualmente
           </SubmitButton>
         </div>
-        {!providerReady ? <Alert tone="warning">Nenhum provedor de IA configurado. Você ainda pode começar pelo template e escrever os textos no editor.</Alert> : null}
+        {!providerReady ? <Alert tone="warning">IA não conectada. Monte a peça manualmente e escreva os textos no editor.</Alert> : null}
       </ActionForm>
 
       <aside className="flex flex-col gap-6">
         <Card>
-          <CardHeader title="Precisa de ideias?" description="O gerador de pautas usa o perfil da marca e evita repetir títulos recentes." />
+          <CardHeader title="Ideias de pauta" description="Com base no perfil da marca, sem repetir títulos recentes" />
           <ActionForm action={ideasAction} state={ideasState} className="flex flex-col gap-3 p-5">
             <input type="hidden" name="clientId" value={clientId} />
             <input type="hidden" name="objective" value={objective} />
@@ -263,15 +263,6 @@ export function CreateForm({
               ))}
             </ul>
           ) : null}
-        </Card>
-        <Card>
-          <CardHeader title="Como funciona" />
-          <ol className="list-decimal space-y-2 py-4 pl-9 pr-5 text-sm text-ink-300">
-            <li>O pedido entra na fila (com proteção contra duplicidade).</li>
-            <li>O diretor de arte escolhe o template; o copywriter escreve respeitando os limites de cada campo.</li>
-            <li>A peça é renderizada e passa pelo controle de qualidade.</li>
-            <li>Você revisa, edita e envia para aprovação.</li>
-          </ol>
         </Card>
       </aside>
     </div>

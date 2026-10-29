@@ -47,7 +47,7 @@ test("cores pelo logotipo, exclusão de peças e do cliente", async ({ page }) =
     await expect(page.locator("#clientId")).toHaveValue(clientId);
     await page.getByLabel("Título interno da pauta").fill(title);
     await page.getByLabel("Briefing", { exact: true }).fill("Divulgar o cardápio de inverno com bebidas quentes e pães artesanais da casa.");
-    await page.getByRole("button", { name: "Começar pelo template (sem IA)" }).click();
+    await page.getByRole("button", { name: "Montar manualmente" }).click();
     await expect(page).toHaveURL(/\/conteudos\/[0-9a-f-]+$/);
   }
 

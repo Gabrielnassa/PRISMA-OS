@@ -13,7 +13,7 @@ export function MediaGrid({
   showClient?: boolean;
   deleteAction?: (prev: ActionState, form: FormData) => Promise<ActionState>;
 }) {
-  if (items.length === 0) return <EmptyState title="Nenhum arquivo" description="Envie fotos reais, logotipos e documentos do cliente." />;
+  if (items.length === 0) return <EmptyState title="Nenhum arquivo" description="Envie fotos, logotipos e documentos do cliente." />;
   return (
     <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
       {items.map((m) => (

@@ -62,11 +62,11 @@ ${input.recentTitles.length ? input.recentTitles.map((t) => `- ${escapeData(t)}`
       const seed = seeds[i % seeds.length] ?? "Pauta";
       return {
         title: clipWords(`${seed}`, 80),
-        angle: "Pauta de demonstração derivada do tema informado (sem IA).",
+        angle: "Pauta de exemplo a partir do tema informado.",
         format: input.format as ContentFormat,
         objective: input.objective as Objective,
         hook: clipWords(seed, 90),
-        rationale: "Gerado pelo provedor de demonstração; valide com a equipe.",
+        rationale: "Modo de demonstração; valide com a equipe.",
       };
     });
     return { ideas };

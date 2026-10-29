@@ -57,6 +57,6 @@ export async function suggestIdeasAction(_prev: ActionState<IdeasOutput>, form: 
         recentTitles: recent.items.map((i) => i.title),
       },
     });
-    return { data: out.output, message: out.isDemo ? "Pautas de demonstração (sem IA)." : undefined };
+    return { data: out.output, message: out.isDemo ? "Pautas de demonstração." : undefined };
   });
 }

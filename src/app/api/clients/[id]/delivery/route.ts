@@ -27,7 +27,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     if (pieces.length === 0) throw new ValidationError(`Nenhuma peça aprovada em ${monthLabel(month).toLowerCase()} para este cliente.`);
 
     const zip = new JSZip();
-    const index: string[] = [`Entrega de ${monthLabel(month)} · ${client.name}`, `${pieces.length} peça(s) aprovada(s)`, ""];
+    const index: string[] = [`Entrega de ${monthLabel(month)} · ${client.name}`, pieces.length === 1 ? "1 peça aprovada" : `${pieces.length} peças aprovadas`, ""];
     for (const [i, p] of pieces.entries()) {
       const version = await getVersionDocument(auth, p.id, p.approvedVersionId);
       const slides = await renderStoredDocument(auth, p.id, version.document);
@@ -37,7 +37,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       const doc = version.document;
       folder.file("legenda.txt", [doc.caption, doc.hashtags.join(" ")].filter(Boolean).join("\n\n") || "(sem legenda)");
       folder.file("texto-alternativo.txt", doc.slides.map((s, k) => `${k + 1}. ${s.alt || "(sem texto alternativo)"}`).join("\n"));
-      index.push(`${String(i + 1).padStart(2, "0")}. ${p.plannedDate ? `${p.plannedDate.slice(8, 10)}/${p.plannedDate.slice(5, 7)} · ` : ""}${p.title} (v${version.number}, ${slides.length} imagem(ns))`);
+      index.push(`${String(i + 1).padStart(2, "0")}. ${p.plannedDate ? `${p.plannedDate.slice(8, 10)}/${p.plannedDate.slice(5, 7)} · ` : ""}${p.title} (v${version.number}, ${slides.length === 1 ? "1 imagem" : `${slides.length} imagens`})`);
       await recordExport(auth, p.id, id, { versionId: p.approvedVersionId, versionNumber: version.number, approved: true, format: "delivery" });
     }
     zip.file("LEIA-ME.txt", index.join("\n"));

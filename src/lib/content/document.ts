@@ -149,7 +149,7 @@ export const ContentDocumentSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["slides"],
-        message: `O formato ${FORMAT_LABELS[doc.format]} aceita de ${limits.min} a ${limits.max} lâmina(s).`,
+        message: limits.max === 1 ? `O formato ${FORMAT_LABELS[doc.format]} tem 1 lâmina.` : `O formato ${FORMAT_LABELS[doc.format]} aceita de ${limits.min} a ${limits.max} lâminas.`,
       });
     }
     if (!FORMAT_ASPECTS[doc.format].includes(doc.aspect)) {

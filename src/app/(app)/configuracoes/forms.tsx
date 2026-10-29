@@ -16,7 +16,7 @@ export function OrgSettingsForm({ org, canEdit }: { org: { name: string; globalC
         <Field
           label="Contexto global da agência"
           htmlFor="o-context"
-          hint="Políticas e processos que valem para todos os clientes (ex.: linguagem inclusiva, regras de saúde). Enviado à IA como dado de referência."
+          hint="Regras que valem para todos os clientes (ex.: linguagem inclusiva, cuidados com temas de saúde)."
         >
           <Textarea id="o-context" name="globalContext" defaultValue={org.globalContext} maxLength={20000} className="min-h-40" />
         </Field>

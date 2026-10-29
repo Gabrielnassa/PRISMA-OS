@@ -8,43 +8,37 @@ import { cx } from "../ui";
 import { PrismaWordmark } from "../brand/logo";
 import { logoutAction } from "@/app/(app)/actions";
 
-type Item = { href: string; label: string; icon: keyof typeof Icon; phase?: string };
+type Item = { href: string; label: string; icon: keyof typeof Icon };
 
 const SECTIONS: Array<{ title: string; items: Item[] }> = [
   {
     title: "Operação",
     items: [
-      { href: "/", label: "Dashboard", icon: "dashboard" },
+      { href: "/", label: "Início", icon: "dashboard" },
       { href: "/clientes", label: "Clientes", icon: "clients" },
-      { href: "/criar", label: "Central de criação", icon: "create" },
+      { href: "/criar", label: "Criar", icon: "create" },
       { href: "/calendario", label: "Calendário", icon: "calendar" },
       { href: "/conteudos", label: "Conteúdos", icon: "contents" },
       { href: "/aprovacoes", label: "Aprovações", icon: "approvals" },
-      { href: "/midia", label: "Biblioteca de mídia", icon: "media" },
-      { href: "/templates", label: "Biblioteca de layouts", icon: "templates" },
     ],
   },
   {
-    title: "Inteligência",
-    items: [{ href: "/skills", label: "Agentes e skills", icon: "skills" }],
+    title: "Acervo",
+    items: [
+      { href: "/midia", label: "Mídia", icon: "media" },
+      { href: "/templates", label: "Layouts", icon: "templates" },
+      { href: "/skills", label: "Skills", icon: "skills" },
+    ],
   },
   {
     title: "Gestão",
     items: [
       { href: "/integracoes", label: "Integrações", icon: "integrations" },
-      { href: "/custos", label: "Custos e consumo", icon: "costs" },
-      { href: "/usuarios", label: "Usuários e permissões", icon: "users" },
+      { href: "/custos", label: "Custos", icon: "costs" },
+      { href: "/usuarios", label: "Equipe", icon: "users" },
       { href: "/configuracoes", label: "Configurações", icon: "settings" },
     ],
   },
-];
-
-const PLANNED: Item[] = [
-  { href: "#", label: "Estratégias", icon: "strategy", phase: "Fase 3" },
-  { href: "#", label: "Automações", icon: "automations", phase: "Fase 3" },
-  { href: "#", label: "Relatórios", icon: "reports", phase: "Fase 4" },
-  { href: "#", label: "Sites e landing pages", icon: "sites", phase: "Fase 5" },
-  { href: "#", label: "Campanhas e anúncios", icon: "ads", phase: "Fase 6" },
 ];
 
 export interface ShellInfo {
@@ -93,31 +87,6 @@ function Nav({ pathname, onNavigate }: { pathname: string; onNavigate?: () => vo
           </ul>
         </div>
       ))}
-      <details className="group">
-        <summary className="flex cursor-pointer list-none items-center gap-1.5 px-3 text-[11.5px] font-medium text-ink-400 hover:text-ink-200 [&::-webkit-details-marker]:hidden">
-          <Icon.chevron width={12} height={12} className="transition-transform group-open:rotate-90" />
-          Próximas fases
-          <span className="ml-auto tabular text-[10.5px] text-ink-400">{PLANNED.length}</span>
-        </summary>
-        <ul className="mt-1.5 flex flex-col gap-px">
-          {PLANNED.map((item) => {
-            const IconCmp = Icon[item.icon];
-            return (
-              <li key={item.label}>
-                <span
-                  className="flex h-8 cursor-not-allowed items-center gap-2.5 rounded-full px-3 text-[13px] text-ink-500"
-                  title={`Módulo previsto para a ${item.phase}; ainda não implementado.`}
-                  aria-disabled="true"
-                >
-                  <IconCmp width={16} height={16} />
-                  <span className="flex-1 truncate">{item.label}</span>
-                  <span className="tabular text-[10.5px] text-ink-600">{item.phase?.replace("Fase ", "F")}</span>
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      </details>
     </nav>
   );
 }
@@ -179,7 +148,7 @@ export function Sidebar({ info }: { info: ShellInfo }) {
     <>
       <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-ink-800 bg-ink-950 lg:flex">
         <div className="flex h-14 shrink-0 items-center border-b border-ink-800 px-5">
-          <Link href="/" aria-label="PRISMA OS — início">
+          <Link href="/" aria-label="PRISMA OS, início">
             <PrismaWordmark />
           </Link>
         </div>
@@ -200,7 +169,7 @@ export function Sidebar({ info }: { info: ShellInfo }) {
         >
           <Icon.menu />
         </button>
-        <Link href="/" aria-label="PRISMA OS — início">
+        <Link href="/" aria-label="PRISMA OS, início">
           <PrismaWordmark />
         </Link>
         <Link href="/integracoes" className="ml-auto inline-flex items-center gap-2 text-[12px] text-ink-400" title={info.ai.detail}>

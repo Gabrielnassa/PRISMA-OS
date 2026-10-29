@@ -123,15 +123,15 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
       ) : null}
       {current?.source === "demo" ? (
         <div className="mb-6">
-          <Alert tone="warning" title="Versão gerada em modo demonstração">
-            Os textos foram extraídos do briefing sem IA. Revise tudo antes de enviar para aprovação.
+          <Alert tone="warning" title="Rascunho de demonstração">
+            Textos montados a partir do briefing, sem IA. Revise antes de enviar para aprovação.
           </Alert>
         </div>
       ) : null}
       {detail.status === "approved" && current?.id === detail.approvedVersionId ? (
         <div className="mb-6">
           <Alert tone="success" title="Versão aprovada">
-            A exportação oficial usa exatamente esta versão. Publicação automática ainda não está habilitada (fase 4); nada é publicado sem autorização.
+            Downloads e publicações usam exatamente esta versão.
           </Alert>
         </div>
       ) : null}
@@ -151,7 +151,7 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
         ) : (
           <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_420px]">
             <Card>
-              <CardHeader title={`Versão ${current.number}`} description={`Template: ${getTemplate(current.document.templateId).template.name}`} />
+              <CardHeader title={`Versão ${current.number}`} description={`Layout ${getTemplate(current.document.templateId).template.name}`} />
               <div className="grid grid-cols-2 gap-3 p-5 md:grid-cols-3">
                 {current.document.slides.map((s, i) => (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -188,7 +188,7 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
         </div>
         <div className="flex min-w-0 flex-col gap-6">
           <Card>
-            <CardHeader title="Versões" description="Versões são imutáveis. Restaurar cria uma nova versão igual à escolhida." />
+            <CardHeader title="Versões" />
             <ul className="divide-y divide-ink-800">
               {detail.versions.map((v, i) => (
                 <li key={v.id} className="flex flex-wrap items-center gap-2 px-5 py-2.5 text-sm">
@@ -251,7 +251,7 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
           </Card>
 
           <Card>
-            <CardHeader title="Histórico e auditoria" description="Ações registradas para este conteúdo." />
+            <CardHeader title="Histórico" />
             <ol className="max-h-96 divide-y divide-ink-800 overflow-y-auto">
               {history.map((h) => (
                 <li key={h.id} className="px-5 py-2.5 text-sm">
@@ -294,10 +294,10 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
             <InlineAction
               action={archiveAction}
               fields={{ contentId: id }}
-              label="Arquivar conteúdo"
+              label="Arquivar peça"
               tone="danger"
               className="text-right"
-              confirmMessage="Arquivar este conteúdo? Ele sai das listas de trabalho e aprovações pendentes são canceladas."
+              confirmMessage="Arquivar esta peça? Ela sai das listas e os pedidos de aprovação pendentes são cancelados."
             />
           ) : null}
           {can(auth.role, "content.delete") && detail.status !== "generating" ? (
@@ -308,7 +308,7 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
               pendingText="Excluindo..."
               tone="danger"
               className="text-right"
-              confirmMessage="Excluir este conteúdo de vez? Todas as versões, aprovações e comentários serão apagados. Não dá para desfazer."
+              confirmMessage="Excluir esta peça de vez? Versões, aprovações e comentários também serão apagados."
             />
           ) : null}
         </div>

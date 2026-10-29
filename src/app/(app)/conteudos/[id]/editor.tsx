@@ -125,7 +125,7 @@ export function ContentEditor({
         setUrls(next);
         setQuality(json.quality);
       } catch {
-        if (seq === requestSeq.current && !controller.signal.aborted) setPreviewError("Sem conexão com o servidor de renderização.");
+        if (seq === requestSeq.current && !controller.signal.aborted) setPreviewError("Sem conexão para atualizar a prévia.");
       } finally {
         if (seq === requestSeq.current) setRendering(false);
       }
@@ -354,7 +354,7 @@ export function ContentEditor({
               </Field>
               {template.image !== "none" ? (
                 <div className="flex flex-col gap-3 rounded-lg border border-ink-700 p-3">
-                  <Field label={`Imagem${template.image === "required" ? " (exigida pelo template)" : ""}`} htmlFor="image">
+                  <Field label={`Imagem${template.image === "required" ? " (obrigatória neste layout)" : ""}`} htmlFor="image">
                     <Select id="image" value={slide.imageAssetId ?? ""} onChange={(e) => updateSlide({ imageAssetId: e.target.value || null })}>
                       <option value="">Sem imagem</option>
                       {images.map((img) => (
@@ -456,7 +456,7 @@ export function ContentEditor({
         <QualityPanel report={quality} live={dirty} />
 
         <Card>
-          <CardHeader title="Template e estilo" description="Texto, cores, fontes e recorte mudam sem regenerar a peça." />
+          <CardHeader title="Layout e estilo" />
           <fieldset disabled={!canEdit} className="grid gap-4 p-5">
             <Field label="Template" htmlFor="template">
               <Select id="template" value={doc.templateId} onChange={(e) => setDoc((d) => ({ ...d, templateId: e.target.value }))}>

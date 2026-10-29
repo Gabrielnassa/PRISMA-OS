@@ -21,7 +21,7 @@ test("linha editorial do mês: do pacote às peças", async ({ page }) => {
   await page.getByRole("button", { name: "Enviar" }).click();
   await expect(page.getByText("loja.png: enviado")).toBeVisible();
   // Sem conta de serviço do Google: a pasta pode ser ligada, a importação explica o que falta.
-  await expect(page.getByText("A leitura do Google Drive ainda não está configurada")).toBeVisible();
+  await expect(page.getByText("O Google Drive ainda não está conectado")).toBeVisible();
 
   await page.goto(`${clientUrl}?aba=editorial`);
   await expect(page.getByText("Defina o pacote mensal do cliente")).toBeVisible();
@@ -33,7 +33,7 @@ test("linha editorial do mês: do pacote às peças", async ({ page }) => {
 
   if (prod) {
     await expect(page.getByRole("button", { name: "Propor pautas com IA" })).toBeDisabled();
-    await page.getByRole("button", { name: "Montar sem IA" }).click();
+    await page.getByRole("button", { name: "Montar manualmente" }).click();
     await expect(page.getByRole("status").filter({ hasText: "3 espaços criados pelo pacote" })).toBeVisible();
     // Pautas em branco: completar as duas que viram peça.
     for (let i = 0; i < 2; i++) {
@@ -48,7 +48,7 @@ test("linha editorial do mês: do pacote às peças", async ({ page }) => {
   } else {
     await page.getByLabel("Tema ou pedidos do mês (opcional)").fill("Bolão da Mega da Virada. Conheça a equipe da loja.");
     await page.getByRole("button", { name: "Propor pautas com IA" }).click();
-    await expect(page.getByRole("status").filter({ hasText: "3 pautas propostas (demonstração, sem IA)" })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "3 pautas propostas em modo de demonstração" })).toBeVisible();
   }
   await shot(page, "11-linha-editorial");
 

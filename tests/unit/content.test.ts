@@ -107,7 +107,7 @@ describe("copywriter", () => {
     const raw = { ...demo, slides: [{ ...cover!, title: "CAPA" }, { ...a!, title: "A" }, { ...cta!, title: "COMPRE" }] };
     const out = copywriterSkill.postProcess!(raw, input);
     expect(out.slides.map((s) => `${s.kind}:${s.title}`)).toEqual(["cover:CAPA", "content:A", "content:", "cta:COMPRE"]);
-    expect(out.assumptions.at(-1)).toContain("3 lâmina(s) para um plano de 4");
+    expect(out.assumptions.at(-1)).toContain("A IA devolveu 3 de 4 lâminas");
   });
 });
 

@@ -177,12 +177,12 @@ ${briefingBlock(input.briefing)}`;
       .map((t) => normalizeHashtag(t.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\p{L}\p{N}]/gu, "")))
       .filter((h): h is string => Boolean(h));
     return {
-      concept: `Demonstração montada a partir do briefing (sem IA): ${clipWords(input.briefing.text, 160)}`,
+      concept: `Rascunho montado a partir do briefing: ${clipWords(input.briefing.text, 160)}`,
       slides,
       caption: `${clipWords(input.briefing.text, 1200)}${input.briefing.cta ? `\n\n${input.briefing.cta}` : ""}`,
       hashtags,
       cta: input.briefing.cta,
-      assumptions: ["Conteúdo gerado pelo provedor de demonstração: textos extraídos do briefing, sem criação por IA."],
+      assumptions: ["Modo de demonstração: textos extraídos do briefing, sem IA."],
       claimsToConfirm: [],
     };
   },
@@ -207,7 +207,7 @@ ${briefingBlock(input.briefing)}`;
     });
     const assumptions = sameLength
       ? output.assumptions
-      : [...output.assumptions, `A IA devolveu ${output.slides.length} lâmina(s) para um plano de ${plan.length}; as lâminas sem texto ficaram em branco para revisão.`];
+      : [...output.assumptions, `A IA devolveu ${output.slides.length} de ${plan.length} lâminas; as que ficaram sem texto estão em branco para revisão.`];
     return { ...output, slides, assumptions, hashtags, caption: output.caption.slice(0, 2200) };
   },
 };

@@ -21,7 +21,6 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
     <>
       <PageHeader
         title="Clientes"
-        description="Cada cliente tem dados, marca, arquivos e histórico isolados. Usuários só veem os clientes aos quais têm acesso."
         actions={
           <Link href={arquivados === "1" ? "/clientes" : "/clientes?arquivados=1"} className="text-sm text-ink-300 hover:text-ink-50">
             {arquivados === "1" ? "Ocultar arquivados" : "Mostrar arquivados"}
@@ -31,20 +30,20 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
       {excluido === "1" ? (
         <div className="mb-6">
           <Alert tone="success" title="Cliente excluído">
-            O cliente, seus conteúdos, arquivos e memória foram apagados. O consumo de IA continua nos totais de Custos.
+            O cliente e tudo o que era dele foram apagados.
           </Alert>
         </div>
       ) : null}
       {can(auth.role, "client.create") ? (
         <Card className="mb-6">
-          <CardHeader title="Novo cliente" description="Depois do cadastro você será levado ao perfil da marca." />
+          <CardHeader title="Novo cliente" />
           <CreateClientForm />
         </Card>
       ) : null}
       {clients.length === 0 ? (
         <EmptyState
           title="Nenhum cliente disponível"
-          description={can(auth.role, "client.create") ? "Cadastre o primeiro cliente acima." : "Peça a um administrador para liberar o acesso aos clientes com os quais você trabalha."}
+          description={can(auth.role, "client.create") ? "Cadastre o primeiro cliente acima." : "Peça ao administrador acesso aos clientes com que você trabalha."}
         />
       ) : (
         <Card>

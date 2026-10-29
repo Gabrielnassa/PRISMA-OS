@@ -2,26 +2,26 @@ import type { Metadata } from "next";
 import { requireAuth } from "@/server/auth/next";
 import { listMembers } from "@/server/services/users";
 import { listClients } from "@/server/services/clients";
-import { can, permissionsFor, ROLE_DESCRIPTIONS, ROLE_LABELS, ROLES } from "@/server/authz/permissions";
+import { can, ROLE_DESCRIPTIONS, ROLE_LABELS, ROLES } from "@/server/authz/permissions";
 import { Badge, Card, CardHeader, EmptyState, PageHeader, formatDateTime } from "@/components/ui";
 import { InviteForm, MemberForm, ResetPasswordForm } from "./forms";
 
-export const metadata: Metadata = { title: "Usuários e permissões" };
+export const metadata: Metadata = { title: "Equipe" };
 
 export default async function UsersPage() {
   const auth = await requireAuth();
-  if (!can(auth.role, "users.manage")) return <EmptyState title="Acesso restrito" description="Somente proprietários e administradores gerenciam usuários." />;
+  if (!can(auth.role, "users.manage")) return <EmptyState title="Acesso restrito" description="Só proprietários e administradores gerenciam a equipe." />;
   const [members, clients] = await Promise.all([listMembers(auth), listClients(auth, { includeArchived: true })]);
   const roles = ROLES.filter((r) => r !== "owner" || auth.role === "owner").map((r) => ({ id: r, label: ROLE_LABELS[r], description: ROLE_DESCRIPTIONS[r] }));
   return (
     <>
-      <PageHeader title="Usuários e permissões" description="Permissões são verificadas no servidor e no banco (RLS), não apenas escondidas na interface." />
+      <PageHeader title="Equipe" description="Acessos, papéis e clientes de cada pessoa" />
       <Card className="mb-6">
         <CardHeader title="Novo acesso" />
         <InviteForm roles={roles} />
       </Card>
       <Card className="mb-6">
-        <CardHeader title="Membros" description={`${members.length} pessoa(s)`} />
+        <CardHeader title="Membros" description={members.length === 1 ? "1 pessoa" : `${members.length} pessoas`} />
         <ul className="divide-y divide-ink-800">
           {members.map((m) => (
             <li key={m.userId} className="grid gap-3 px-5 py-4 md:grid-cols-[260px_1fr]">
@@ -53,7 +53,6 @@ export default async function UsersPage() {
             <li key={r} className="px-5 py-3 text-sm">
               <div className="font-medium text-ink-100">{ROLE_LABELS[r]}</div>
               <div className="text-ink-400">{ROLE_DESCRIPTIONS[r]}</div>
-              <div className="mt-1 tabular text-[11px] text-ink-400">{permissionsFor(r).join(" · ")}</div>
             </li>
           ))}
         </ul>

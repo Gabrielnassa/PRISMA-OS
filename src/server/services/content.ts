@@ -559,7 +559,7 @@ export async function submitForApproval(auth: AuthContext, contentId: string, in
     );
     if (!report) throw new ValidationError("Execute o controle de qualidade antes de enviar para aprovação.");
     if (report.critical_count > 0) {
-      throw new ValidationError(`Corrija os ${report.critical_count} problema(s) crítico(s) apontados pelo controle de qualidade antes de enviar.`);
+      throw new ValidationError(report.critical_count === 1 ? "Corrija o problema crítico apontado na verificação antes de enviar." : `Corrija os ${report.critical_count} problemas críticos apontados na verificação antes de enviar.`);
     }
     const version = await one<{ document_hash: string; version_number: number }>(tx, "SELECT document_hash, version_number FROM content_versions WHERE id = $1", [input.versionId]);
     const approval = await one<{ id: string }>(

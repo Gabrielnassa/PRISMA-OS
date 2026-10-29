@@ -5,8 +5,10 @@ import { getCostSummary } from "@/server/services/costs";
 import { can } from "@/server/authz/permissions";
 import { Badge, Card, CardHeader, Dot, EmptyState, PageHeader, Stat, StatGroup, Table, Td, Th, formatDateTime, formatNumber, formatUsd } from "@/components/ui";
 import { PriceForm } from "./price-form";
+import { plural } from "@/lib/text";
+import { monthLabel } from "@/lib/content/editorial";
 
-export const metadata: Metadata = { title: "Custos e consumo" };
+export const metadata: Metadata = { title: "Custos" };
 
 const RUN_STATUS: Record<string, { label: string; tone: "success" | "info" | "danger" | "warning" }> = {
   succeeded: { label: "Concluída", tone: "success" },
@@ -17,29 +19,29 @@ const RUN_STATUS: Record<string, { label: string; tone: "success" | "info" | "da
 
 export default async function CostsPage() {
   const auth = await requireAuth();
-  if (!can(auth.role, "costs.view")) return <EmptyState title="Acesso restrito" description="Custos são visíveis para administradores." />;
+  if (!can(auth.role, "costs.view")) return <EmptyState title="Acesso restrito" description="Custos ficam visíveis para administradores." />;
   const s = await getCostSummary(auth);
   return (
     <>
       <PageHeader
-        title="Custos e consumo"
-        description={`Mês ${s.month}. Custos calculados com os tokens informados pelo provedor e a tarifa cadastrada vigente. Execuções atendidas por um modelo sem tarifa aparecem como "sem tarifa"; para o teto, contam pela tarifa do modelo configurado (estimativa).`}
+        title="Custos"
+        description={`${monthLabel(s.month)} · consumo de IA pela tarifa cadastrada de cada modelo`}
       />
       <StatGroup className="lg:grid-cols-5">
-        <Stat label="Custo calculado" value={formatUsd(s.totals.costUsd, 4)} />
-        <Stat label="Execuções" value={s.totals.runs} hint={`${s.totals.failed} sem sucesso`} />
+        <Stat label="Custo no mês" value={formatUsd(s.totals.costUsd, 2)} />
+        <Stat label="Execuções" value={s.totals.runs} hint={s.totals.failed ? `${s.totals.failed} sem sucesso` : undefined} />
         <Stat label="Tokens de entrada" value={formatNumber(s.totals.inputTokens)} />
         <Stat label="Tokens de saída" value={formatNumber(s.totals.outputTokens)} />
         <Stat
           label="Sem tarifa"
           value={s.totals.unpricedRuns}
           tone={s.totals.unpricedRuns ? "warning" : undefined}
-          hint={[s.totals.unpricedEstimateUsd ? `≈ ${formatUsd(s.totals.unpricedEstimateUsd, 4)} estimado` : "", s.totals.demoRuns ? `${s.totals.demoRuns} execução(ões) demo sem custo` : ""].filter(Boolean).join(" · ") || undefined}
+          hint={[s.totals.unpricedEstimateUsd ? `≈ ${formatUsd(s.totals.unpricedEstimateUsd, 4)} estimado` : "", s.totals.demoRuns ? `${plural(s.totals.demoRuns, "demonstração", "demonstrações")} sem custo` : ""].filter(Boolean).join(" · ") || undefined}
         />
       </StatGroup>
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
         <Card>
-          <CardHeader title="Por cliente" description="Teto mensal configurável na página de cada cliente." />
+          <CardHeader title="Por cliente" description="O teto mensal é definido na página do cliente" />
           <Table>
             <thead>
               <tr>
@@ -153,7 +155,7 @@ export default async function CostsPage() {
         </Table>
       </Card>
       <Card className="mt-6">
-        <CardHeader title="Tarifas cadastradas" description="A tarifa vigente é a mais recente de cada provedor/modelo. Margem por cliente depende do cadastro de receitas (fase 3)." />
+        <CardHeader title="Tarifas" description="Vale a mais recente de cada modelo" />
         <Table>
           <thead>
             <tr>

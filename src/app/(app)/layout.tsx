@@ -13,9 +13,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     roleLabel: ROLE_LABELS[auth.role],
     ai: provider.configured
       ? provider.isDemo
-        ? { state: "demo", label: "IA em modo demonstração", detail: provider.detail }
+        ? { state: "demo", label: "IA em demonstração", detail: provider.detail }
         : { state: "ready", label: `IA conectada · ${provider.model}`, detail: provider.detail }
-      : { state: "off", label: "IA não configurada", detail: provider.detail },
+      : { state: "off", label: "IA não conectada", detail: provider.detail },
   };
   return (
     <ToastProvider>

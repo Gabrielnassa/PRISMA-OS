@@ -13,8 +13,9 @@ import { MonthBoard } from "@/components/month-board";
 import { monthByClient } from "@/server/services/month";
 import { currentMonth } from "@/server/services/editorial";
 import { monthLabel } from "@/lib/content/editorial";
+import { plural } from "@/lib/text";
 
-export const metadata: Metadata = { title: "Dashboard" };
+export const metadata: Metadata = { title: "Início" };
 
 const PIPELINE: ContentStatus[] = ["generating", "in_review", "awaiting_approval", "approved", "rejected", "failed"];
 const PIPELINE_BAR: Partial<Record<ContentStatus, string>> = {
@@ -51,8 +52,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     <>
       <PageHeader
         eyebrow={today()}
-        title={`Olá, ${auth.userName.split(" ")[0]}`}
-        description="Indicadores calculados a partir dos registros reais da sua organização."
+        title="Visão geral"
         actions={can(auth.role, "content.create") ? <LinkButton href="/criar">Criar conteúdo</LinkButton> : null}
       />
 
@@ -97,14 +97,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
       {!provider.configured ? (
         <div className="mb-8">
-          <Alert tone="warning" title="IA não configurada">
-            {provider.detail} Ainda é possível criar peças manualmente a partir dos templates. <Link href="/integracoes" className="underline">Ver integrações</Link>
+          <Alert tone="warning" title="IA não conectada">
+            Conecte uma chave em <Link href="/integracoes" className="underline">Integrações</Link> para gerar textos. Até lá, as peças podem ser montadas manualmente.
           </Alert>
         </div>
       ) : provider.isDemo ? (
         <div className="mb-8">
-          <Alert tone="warning" title="Modo demonstração ativo">
-            As gerações usam o provedor de demonstração (sem IA). Os conteúdos gerados assim ficam identificados como “Demonstração”.
+          <Alert tone="warning" title="Modo de demonstração">
+            Os textos são montados a partir do briefing, sem IA, e ficam marcados como demonstração.
           </Alert>
         </div>
       ) : null}
@@ -112,24 +112,24 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {clients.length === 0 ? (
         <EmptyState
           title="Nenhum cliente ainda"
-          description="Cadastre o primeiro cliente e configure a identidade da marca para começar a produzir."
+          description="Cadastre o primeiro cliente para começar."
           action={can(auth.role, "client.create") ? <LinkButton href="/clientes">Cadastrar cliente</LinkButton> : undefined}
         />
       ) : (
         <>
           <StatGroup className="md:grid-cols-3 xl:grid-cols-6">
-            <Stat label="Clientes ativos" value={data.clients.active} hint={`${data.clients.total} no total`} />
+            <Stat label="Clientes ativos" value={data.clients.active} hint={data.clients.total !== data.clients.active ? `${data.clients.total} no total` : undefined} />
             <Stat label="Produzidos" value={data.producedInPeriod} hint={DASHBOARD_PERIOD_LABELS[period]} />
             <Stat label="Aprovados" value={data.approvedInPeriod} hint={DASHBOARD_PERIOD_LABELS[period]} />
             <Stat label="Aguardando aprovação" value={data.pendingApprovals} tone={data.pendingApprovals > 0 ? "warning" : undefined} />
-            <Stat label="Falhas de geração" value={data.failedJobs} tone={data.failedJobs > 0 ? "danger" : undefined} hint={`${DASHBOARD_PERIOD_LABELS[period]} · ${data.runningJobs} em andamento`} />
+            <Stat label="Falhas de geração" value={data.failedJobs} tone={data.failedJobs > 0 ? "danger" : undefined} hint={data.runningJobs ? `${DASHBOARD_PERIOD_LABELS[period]} · ${data.runningJobs} em andamento` : DASHBOARD_PERIOD_LABELS[period]} />
             <Stat
               label="Consumo de IA"
               value={formatUsd(data.ai.costUsd)}
               hint={
                 data.ai.runs === 0
-                  ? `${DASHBOARD_PERIOD_LABELS[period]} · nenhuma execução`
-                  : `${DASHBOARD_PERIOD_LABELS[period]} · ${data.ai.runs} execução(ões)${data.ai.unpriced ? ` · ${data.ai.unpriced} sem tarifa` : ""}${data.ai.demoRuns ? ` · ${data.ai.demoRuns} demo` : ""}`
+                  ? DASHBOARD_PERIOD_LABELS[period]
+                  : `${DASHBOARD_PERIOD_LABELS[period]} · ${plural(data.ai.runs, "execução", "execuções")}${data.ai.unpriced ? ` · ${data.ai.unpriced} sem tarifa` : ""}`
               }
             />
           </StatGroup>
@@ -140,10 +140,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
           <div className="mt-6 grid gap-6 xl:grid-cols-3">
             <Card className="xl:col-span-2">
-              <CardHeader title="Atividade recente" description="Últimos conteúdos atualizados" actions={<LinkButton href="/conteudos" variant="ghost" size="sm">Ver todos</LinkButton>} />
+              <CardHeader title="Atividade recente" actions={<LinkButton href="/conteudos" variant="ghost" size="sm">Ver todos</LinkButton>} />
               {data.recent.length === 0 ? (
                 <div className="p-5">
-                  <EmptyState title="Sem conteúdos ainda" description="Os conteúdos criados aparecerão aqui." action={can(auth.role, "content.create") ? <LinkButton href="/criar" size="sm">Criar o primeiro</LinkButton> : undefined} />
+                  <EmptyState title="Nenhuma peça ainda" action={can(auth.role, "content.create") ? <LinkButton href="/criar" size="sm">Criar o primeiro</LinkButton> : undefined} />
                 </div>
               ) : (
                 <ul className="divide-y divide-ink-800/70">
@@ -166,7 +166,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             </Card>
 
             <Card>
-              <CardHeader title="Fluxo de produção" description="Conteúdos por estado" />
+              <CardHeader title="Produção" />
               <ul className="space-y-4 p-5">
                 {PIPELINE.map((s) => {
                   const n = data.contentByStatus[s] ?? 0;
@@ -187,7 +187,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 })}
               </ul>
               <div className="border-t border-ink-800 px-5 py-3.5 text-[12.5px] text-ink-400">
-                Tempo médio do pedido à aprovação ({periodLabel}):{" "}
+                Tempo médio até a aprovação ({periodLabel}):{" "}
                 <span className="font-medium text-ink-100">
                   {data.avgHoursToApproval === null
                     ? "sem dados"
@@ -200,7 +200,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </div>
 
           <Card className="mt-6">
-            <CardHeader title="Por cliente" description={`Conteúdos criados, aprovações e consumo de IA (${periodLabel}); pendências atuais`} />
+            <CardHeader title="Por cliente" description={DASHBOARD_PERIOD_LABELS[period]} />
             <Table>
               <thead>
                 <tr>
@@ -228,9 +228,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               </tbody>
             </Table>
           </Card>
-          <p className="mt-5 max-w-3xl text-[12.5px] leading-relaxed text-ink-400">
-            Publicações, campanhas e métricas de redes sociais aparecerão aqui quando as integrações oficiais forem conectadas (fases 4 e 6). Nenhum número é estimado.
-          </p>
         </>
       )}
     </>

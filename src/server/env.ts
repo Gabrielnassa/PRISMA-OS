@@ -36,6 +36,16 @@ const EnvSchema = z.object({
   GOOGLE_SERVICE_ACCOUNT_JSON: z.string().optional(),
   // Limite por arquivo importado do Drive (vídeos costumam passar do limite de envio pela tela).
   DRIVE_IMPORT_MAX_MB: z.coerce.number().min(1).max(500).catch(100).default(100),
+  // Chave mestra que criptografa as credenciais guardadas no banco (32+ caracteres aleatórios).
+  APP_SECRET_KEY: z.string().trim().optional(),
+  // Apps das redes sociais. Opcional: também podem ser cadastrados em Integrações
+  // (ficam criptografados no banco). Quando definidos aqui, têm prioridade.
+  META_APP_ID: z.string().trim().optional(),
+  META_APP_SECRET: z.string().trim().optional(),
+  TIKTOK_CLIENT_KEY: z.string().trim().optional(),
+  TIKTOK_CLIENT_SECRET: z.string().trim().optional(),
+  GOOGLE_OAUTH_CLIENT_ID: z.string().trim().optional(),
+  GOOGLE_OAUTH_CLIENT_SECRET: z.string().trim().optional(),
   TRUST_PROXY: z
     .enum(["true", "false"])
     .default("false")

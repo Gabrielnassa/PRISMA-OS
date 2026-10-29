@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAuth } from "@/server/auth/next";
-import { PLANNED_SKILLS, SKILLS } from "@/server/skills/registry";
+import { SKILLS } from "@/server/skills/registry";
+import { plural } from "@/lib/text";
 import { getCostSummary } from "@/server/services/costs";
 import { listCustomSkills } from "@/server/services/custom-skills";
 import { can } from "@/server/authz/permissions";
 import { Badge, Card, CardHeader, EmptyState, LinkButton, PageHeader, SectionTitle, formatUsd } from "@/components/ui";
 
-export const metadata: Metadata = { title: "Agentes e skills" };
+export const metadata: Metadata = { title: "Skills" };
 
 export default async function SkillsPage({ searchParams }: { searchParams: Promise<{ arquivadas?: string }> }) {
   const auth = await requireAuth();
@@ -19,8 +20,8 @@ export default async function SkillsPage({ searchParams }: { searchParams: Promi
   return (
     <>
       <PageHeader
-        title="Agentes e skills"
-        description="Skills são especialistas que a IA segue para entregar um tipo de trabalho. Crie as da sua agência ou importe um SKILL.md; o contexto de cada cliente entra sozinho. Nenhuma skill publica ou gasta sem autorização."
+        title="Skills"
+        description="Instruções que a IA segue em tarefas recorrentes da agência. O contexto de cada cliente entra automaticamente."
         actions={canManage ? <LinkButton href="/skills/nova">Nova skill</LinkButton> : null}
       />
 
@@ -37,7 +38,7 @@ export default async function SkillsPage({ searchParams }: { searchParams: Promi
         {custom.length === 0 ? (
           <EmptyState
             title="Nenhuma skill da agência ainda"
-            description="Crie uma skill para tarefas que vocês repetem (roteiros, legendas, respostas, planejamentos) ou importe um arquivo SKILL.md."
+            description="Crie uma para tarefas que vocês repetem (roteiros, legendas, respostas) ou importe um arquivo SKILL.md."
             action={canManage ? <LinkButton href="/skills/nova">Criar a primeira skill</LinkButton> : undefined}
           />
         ) : (
@@ -73,7 +74,7 @@ export default async function SkillsPage({ searchParams }: { searchParams: Promi
             <Card key={s.id}>
               <CardHeader
                 title={s.name}
-                description={`${s.id} · v${s.version} · seção ${s.specSection}`}
+                description={`Versão ${s.version}`}
                 actions={<Badge tone={s.kind === "ai" ? "accent" : "ember"}>{s.kind === "ai" ? "IA" : "Regras"}</Badge>}
               />
               <div className="space-y-3 p-5 text-sm">
@@ -86,15 +87,9 @@ export default async function SkillsPage({ searchParams }: { searchParams: Promi
                     ))}
                   </ul>
                 </div>
-                <p className="text-xs text-ink-400">
-                  <span className="font-semibold text-ink-300">Ferramentas autorizadas:</span> {s.allowedTools.length ? s.allowedTools.join(", ") : "nenhuma (somente gera dados estruturados)"}
-                </p>
-                <p className="text-xs text-ink-400">
-                  <span className="font-semibold text-ink-300">Tratamento de erros:</span> {s.errorHandling}
-                </p>
                 {u ? (
                   <p className="text-xs text-ink-400">
-                    Este mês: {u.runs} execução(ões) · {formatUsd(u.costUsd, 4)}
+                    Este mês: {plural(u.runs, "execução", "execuções")} · {formatUsd(u.costUsd, 2)}
                     {u.avgDurationMs ? ` · média ${(u.avgDurationMs / 1000).toFixed(1)} s` : ""}
                   </p>
                 ) : null}
@@ -103,18 +98,6 @@ export default async function SkillsPage({ searchParams }: { searchParams: Promi
           );
         })}
       </div>
-      <Card className="mt-6">
-        <CardHeader title="Skills previstas" description="Definidas na especificação e ainda não implementadas." />
-        <ul className="divide-y divide-ink-800">
-          {PLANNED_SKILLS.map((s) => (
-            <li key={s.name} className="flex items-center gap-3 px-5 py-2.5 text-sm">
-              <span className="flex-1 text-ink-200">{s.name}</span>
-              <span className="text-xs text-ink-400">seção {s.specSection}</span>
-              <Badge>{s.phase}</Badge>
-            </li>
-          ))}
-        </ul>
-      </Card>
     </>
   );
 }

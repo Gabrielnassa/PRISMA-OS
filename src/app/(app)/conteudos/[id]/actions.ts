@@ -131,6 +131,6 @@ export async function aiReviewAction(_prev: ActionState<ReviewOutput>, form: For
       },
     });
     refresh();
-    return { data: out.output, message: out.isDemo ? "Revisão de demonstração: nenhuma IA foi chamada." : out.reused ? "Revisão desta versão já existia (sem nova cobrança)." : undefined };
+    return { data: out.output, message: out.isDemo ? "Revisão de demonstração." : out.reused ? "Esta versão já tinha sido revisada (sem nova cobrança)." : undefined };
   });
 }

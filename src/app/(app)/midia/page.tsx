@@ -10,7 +10,7 @@ import { MediaGrid } from "@/components/media-grid";
 import { MediaUploader } from "@/components/media-uploader";
 import { deleteMediaAction } from "./actions";
 
-export const metadata: Metadata = { title: "Biblioteca de mídia" };
+export const metadata: Metadata = { title: "Mídia" };
 const PAGE = 48;
 
 export default async function MediaPage({ searchParams }: { searchParams: Promise<{ cliente?: string; tipo?: string; q?: string; pagina?: string }> }) {
@@ -26,14 +26,14 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
     `/midia?${new URLSearchParams({ ...(clientId ? { cliente: clientId } : {}), ...(kind ? { tipo: kind } : {}), ...(sp.q ? { q: sp.q } : {}), pagina: String(p) })}`;
   return (
     <>
-      <PageHeader title="Biblioteca de mídia" description="Arquivos de todos os clientes que você acessa. Cada arquivo pertence a um único cliente." />
+      <PageHeader title="Mídia" />
       {clientId && can(auth.role, "media.upload") ? (
         <Card className="mb-6">
           <CardHeader title={`Enviar para ${clients.find((c) => c.id === clientId)?.name}`} />
           <MediaUploader clientId={clientId} />
         </Card>
       ) : can(auth.role, "media.upload") ? (
-        <p className="mb-4 text-sm text-ink-400">Selecione um cliente no filtro para enviar arquivos.</p>
+        <p className="mb-4 text-sm text-ink-400">Para enviar arquivos, escolha um cliente no filtro.</p>
       ) : null}
       <form className="mb-6 grid gap-2 md:grid-cols-[1fr_220px_180px_auto]" action="/midia">
         <Input name="q" defaultValue={sp.q ?? ""} placeholder="Buscar por nome, descrição ou etiqueta" aria-label="Buscar" />

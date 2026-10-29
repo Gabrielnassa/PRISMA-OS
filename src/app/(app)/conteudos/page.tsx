@@ -32,7 +32,7 @@ export default async function ContentsPage({ searchParams }: { searchParams: Pro
   };
   return (
     <>
-      <PageHeader title="Conteúdos" description="Todas as peças, com status, versões e histórico." actions={can(auth.role, "content.create") ? <LinkButton href="/criar">Criar conteúdo</LinkButton> : null} />
+      <PageHeader title="Conteúdos" actions={can(auth.role, "content.create") ? <LinkButton href="/criar">Criar conteúdo</LinkButton> : null} />
       <form className="mb-6 grid gap-2 md:grid-cols-[1fr_220px_220px_auto]" action="/conteudos">
         <label className="sr-only" htmlFor="q">
           Buscar
@@ -66,7 +66,7 @@ export default async function ContentsPage({ searchParams }: { searchParams: Pro
         </div>
       ) : null}
       {items.length === 0 ? (
-        <EmptyState title="Nenhum conteúdo encontrado" description="Ajuste os filtros ou crie um novo conteúdo." />
+        <EmptyState title="Nenhum conteúdo encontrado" description="Tente outros filtros." />
       ) : (
         <Card>
           <ContentTable

@@ -32,7 +32,7 @@ export function InviteForm({ roles }: { roles: RoleOption[] }) {
         {state.status === "ok" && state.data?.temporaryPassword ? (
           <div className="mt-2 rounded-md border border-amber-400/25 bg-amber-400/[0.06] p-3 text-[13.5px] text-ink-200">
             Senha temporária de <strong>{state.data.email}</strong>: <code className="select-all rounded-[4px] bg-ink-950 px-2 py-0.5 font-mono text-ink-50 ring-1 ring-ink-700">{state.data.temporaryPassword}</code>
-            <p className="mt-1 text-xs text-ink-400">Envie por um canal seguro. A pessoa deverá trocá-la no primeiro acesso. O envio por e-mail depende da integração de e-mail (fase 3).</p>
+            <p className="mt-1 text-xs text-ink-400">Envie por um canal seguro. No primeiro acesso, a pessoa define uma senha nova.</p>
           </div>
         ) : null}
       </div>

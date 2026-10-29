@@ -96,7 +96,7 @@ ${input.recentTitles.length ? input.recentTitles.map((t) => `- ${escapeData(t)}`
         return {
           title: clipWords(`${seed}`, 70),
           objective: cycle[i % cycle.length]!,
-          brief: `Pauta de demonstração (sem IA) para ${FORMAT_TEXT[slot.format]}: ${seed}. Revise e complete com informações confirmadas do cliente.`,
+          brief: `Rascunho para ${FORMAT_TEXT[slot.format]}: ${seed}. Complete com as informações do cliente.`,
           cta: slot.format === "video" ? "Siga o perfil" : "Fale com a gente",
         };
       }),

@@ -65,7 +65,7 @@ export async function assertWithinBudget(tx: Queryable, clientId: string): Promi
   const limit = Number(budget.monthly_limit_usd);
   if (budget.hard_stop && spent >= limit) {
     throw new BudgetExceededError(
-      `Teto mensal de IA deste cliente atingido (US$ ${spent.toFixed(2)} de US$ ${limit.toFixed(2)}). Ajuste o limite em Custos e consumo.`,
+      `Teto mensal de IA deste cliente atingido (US$ ${spent.toFixed(2)} de US$ ${limit.toFixed(2)}). Ajuste o limite na página do cliente.`,
     );
   }
   return { spent, limit, alert: spent >= (limit * budget.alert_threshold_pct) / 100 };

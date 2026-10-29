@@ -33,7 +33,7 @@ export function RunPanel({
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader title="Usar esta skill" description="Escolha o cliente e escreva o pedido. O perfil da marca, a memória e o contexto do cliente vão junto automaticamente." />
+        <CardHeader title="Usar esta skill" description="A marca e a memória do cliente entram automaticamente" />
         <ActionForm action={action} state={state} className="space-y-5 p-5">
           <input type="hidden" name="skillId" value={skillId} />
           <input type="hidden" name="requestKey" value={requestKey} />
@@ -63,14 +63,14 @@ export function RunPanel({
           </Field>
           {!providerReady ? (
             <Alert tone="warning" title="IA não configurada">
-              Para executar skills, configure a chave da Anthropic. Veja como em Integrações.
+              Conecte uma chave de IA em Integrações para executar skills.
             </Alert>
           ) : null}
           <div className="flex flex-wrap items-center gap-3">
             <SubmitButton pendingText="Executando... pode levar até 1 minuto" disabled={!providerReady}>
               Executar skill
             </SubmitButton>
-            <span className="text-xs text-ink-400">Cada execução consome créditos da chave da Anthropic e aparece em Custos e consumo.</span>
+            <span className="text-xs text-ink-400">O consumo aparece em Custos.</span>
           </div>
           <FormMessage state={state} />
         </ActionForm>
@@ -86,7 +86,7 @@ export function RunResult({ result, canCreateContent }: { result: RunSkillData; 
     <Card>
       <CardHeader
         title="Resultado"
-        description={result.isDemo ? "Demonstração: nenhum texto foi criado por IA." : result.costUsd !== null ? `Custo desta execução: ${formatUsd(result.costUsd, 4)}` : undefined}
+        description={result.isDemo ? "Demonstração, sem IA" : result.costUsd !== null ? `Custo: ${formatUsd(result.costUsd, 4)}` : undefined}
         actions={result.isDemo ? <Badge tone="warning">demonstração</Badge> : null}
       />
       <div className="space-y-4 p-5">

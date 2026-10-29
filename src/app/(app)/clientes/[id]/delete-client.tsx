@@ -33,7 +33,7 @@ export function DeleteClientCard({ clientId, summary }: { clientId: string; summ
             <li>perfil da marca e limite de custos</li>
           </ul>
           <p className="mt-2 text-ink-400">
-            O consumo de IA continua nos totais de Custos, sem o texto gerado. Para só tirar o cliente das listas, arquive em Dados do cliente.
+            Para só tirar o cliente das listas, prefira arquivar em Dados do cliente.
           </p>
         </div>
         {summary.inProgress ? (

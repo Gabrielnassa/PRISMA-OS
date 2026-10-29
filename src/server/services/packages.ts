@@ -133,7 +133,7 @@ export async function estimatePackageCost(tx: Queryable, organizationId: string,
       basis: "measured",
       sampleSize: measured.pieces,
       model: provider?.model ?? null,
-      note: `Média real de ${measured.pieces} peça(s) dos últimos 90 dias${planUsd === null ? "" : ", mais a linha editorial do mês"}.`,
+      note: `Média de ${measured.pieces === 1 ? "1 peça" : `${measured.pieces} peças`} dos últimos 90 dias${planUsd === null ? "" : ", mais a linha editorial do mês"}.`,
     };
   }
   if (price) {
@@ -146,7 +146,7 @@ export async function estimatePackageCost(tx: Queryable, organizationId: string,
       basis: "typical",
       sampleSize: 0,
       model: provider!.model,
-      note: `Sem execuções reais ainda: tarifa de ${provider!.model} com consumo típico (cerca de 6 mil tokens de entrada e 4 mil de saída por peça). Vira média real depois das primeiras peças.`,
+      note: `Estimativa pela tarifa de ${provider!.model} com consumo típico de uma peça. Passa a usar a média do histórico depois das primeiras peças.`,
     };
   }
   return {
@@ -158,10 +158,10 @@ export async function estimatePackageCost(tx: Queryable, organizationId: string,
     sampleSize: 0,
     model: provider?.model ?? null,
     note: provider?.isDemo
-      ? "Modo demonstração: não há custo. Configure a chave da IA para estimar."
+      ? "Modo de demonstração, sem custo. Conecte a chave da IA para estimar."
       : provider
-        ? `Sem tarifa cadastrada para ${provider.model}. Cadastre em Custos e consumo.`
-        : "Configure a chave da IA (Claude ou ChatGPT) para estimar o custo.",
+        ? `Sem tarifa cadastrada para ${provider.model}. Cadastre em Custos.`
+        : "Conecte a chave da IA (Claude ou ChatGPT) para estimar o custo.",
   };
 }
 

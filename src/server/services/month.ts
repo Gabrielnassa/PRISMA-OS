@@ -144,7 +144,7 @@ export async function clientChecklist(auth: AuthContext, clientId: string, month
     { id: "photos", label: "Fotos do cliente", done: r.photos >= 3, hint: r.photos >= 3 ? `${r.photos} na biblioteca` : `${r.photos} de pelo menos 3 (envie ou importe do Drive)`, href: `${base}?aba=arquivos` },
     { id: "package", label: "Pacote mensal", done: r.pkg > 0, hint: r.pkg > 0 ? `${r.pkg} peças por mês` : "Quantas peças o cliente contratou", href: `${base}?aba=editorial` },
     { id: "editorial", label: "Linha editorial do mês", done: r.plan === "approved", hint: r.plan === "approved" ? "Aprovada" : r.plan === "draft" ? "Em rascunho: revise e aprove" : "Ainda não montada", href: `${base}?aba=editorial` },
-    { id: "ai", label: "IA conectada", done: Boolean(getProvider() && !getProvider()!.isDemo), hint: getProvider() ? (getProvider()!.isDemo ? "Modo demonstração" : "Pronta") : "Configure a chave em Integrações", href: "/integracoes" },
+    { id: "ai", label: "IA conectada", done: Boolean(getProvider() && !getProvider()!.isDemo), hint: getProvider() ? (getProvider()!.isDemo ? "Modo de demonstração" : "Pronta") : "Conecte a chave em Integrações", href: "/integracoes" },
   ];
 }
 

@@ -202,7 +202,7 @@ export async function proposeEditorialPlan(
   let aiRunId: string | null = null;
   let isDemo = false;
   if (input.useAi) {
-    if (!getProvider()) throw new ValidationError("A IA não está configurada. Use “Montar sem IA” ou configure a chave em Integrações.");
+    if (!getProvider()) throw new ValidationError("A IA não está conectada. Use “Montar manualmente” ou conecte a chave em Integrações.");
     const out = await runAiSkill(editorialSkill, {
       auth,
       clientId,

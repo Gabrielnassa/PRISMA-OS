@@ -72,9 +72,9 @@ test("ciclo completo: briefing → texto → arte → revisão → aprovação �
   const prod = process.env.E2E_PROD === "1";
   if (prod) {
     await expect(page.getByRole("button", { name: "Gerar com IA" })).toBeDisabled();
-    await page.getByRole("button", { name: "Começar pelo template (sem IA)" }).click();
+    await page.getByRole("button", { name: "Montar manualmente" }).click();
   } else {
-    await page.getByRole("button", { name: "Gerar (modo demonstração)" }).click();
+    await page.getByRole("button", { name: "Gerar rascunho" }).click();
   }
   await expect(page).toHaveURL(/\/conteudos\/[0-9a-f-]+$/);
   const contentUrl = page.url();
@@ -82,7 +82,7 @@ test("ciclo completo: briefing → texto → arte → revisão → aprovação �
   // 5. Geração assíncrona pelo worker → Em revisão (ou rascunho manual)
   if (!prod) {
     await expect(page.getByText("Em revisão").first()).toBeVisible({ timeout: 90_000 });
-    await expect(page.getByText("Versão gerada em modo demonstração")).toBeVisible();
+    await expect(page.getByText("Rascunho de demonstração")).toBeVisible();
   }
   await expect(page.getByAltText("Pré-visualização da lâmina 1")).toBeVisible({ timeout: 30_000 });
   await shot(page, "05-editor");

@@ -5,15 +5,15 @@ import { FAMILY_LABELS, TEMPLATE_FAMILIES } from "@/lib/brand";
 import { FIELD_LABELS, FORMAT_LABELS, SLIDE_KIND_LABELS, type FieldKey, type SlideKind } from "@/lib/content/document";
 import { Card, PageHeader, SectionTitle } from "@/components/ui";
 
-export const metadata: Metadata = { title: "Biblioteca de layouts" };
+export const metadata: Metadata = { title: "Layouts" };
 
 export default async function TemplatesPage() {
   await requireAuth();
   return (
     <>
       <PageHeader
-        title="Biblioteca de layouts"
-        description="Templates originais e editáveis. As pré-visualizações usam texto e imagem de EXEMPLO; nas peças reais, cores, fontes e logotipo vêm da marca de cada cliente."
+        title="Layouts"
+        description="As prévias usam textos de exemplo. Nas peças, cores, fontes e logotipo vêm da marca de cada cliente."
       />
       {TEMPLATE_FAMILIES.map((family) => {
         const items = TEMPLATES.filter((t) => t.family === family);
@@ -44,7 +44,7 @@ export default async function TemplatesPage() {
                       <dd className={t.image === "required" ? "text-amber-300" : "text-ink-300"}>{t.image === "required" ? "Exige foto" : t.image === "optional" ? "Opcional" : "Sem foto"}</dd>
                     </dl>
                     <details className="text-xs text-ink-400">
-                      <summary className="cursor-pointer text-ink-400 hover:text-ink-200">Metadados do template</summary>
+                      <summary className="cursor-pointer text-ink-400 hover:text-ink-200">Detalhes</summary>
                       <dl className="mt-2 space-y-2">
                         <div>
                           <dt className="font-medium text-ink-300">Identificador</dt>

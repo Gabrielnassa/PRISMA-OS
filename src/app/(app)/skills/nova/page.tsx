@@ -10,12 +10,12 @@ export const metadata: Metadata = { title: "Nova skill" };
 export default async function NewSkillPage() {
   const auth = await requireAuth();
   if (!can(auth.role, "skills.manage")) {
-    return <EmptyState title="Sem permissão" description="Só proprietários e administradores criam skills. Você pode usar as skills existentes em Agentes e skills." />;
+    return <EmptyState title="Sem permissão" description="Só proprietários e administradores criam skills. As existentes podem ser usadas em Skills." />;
   }
   const clients = (await listClients(auth)).filter((c) => c.status !== "archived");
   return (
     <>
-      <PageHeader eyebrow="Agentes e skills" title="Nova skill" description="Uma skill ensina a IA a fazer um tipo de trabalho do jeito da sua agência." />
+      <PageHeader eyebrow="Skills" title="Nova skill" />
       <SkillForm clients={clients.map((c) => ({ id: c.id, name: c.name }))} />
     </>
   );

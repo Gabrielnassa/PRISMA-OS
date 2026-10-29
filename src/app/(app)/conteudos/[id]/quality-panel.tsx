@@ -12,7 +12,7 @@ export function QualityPanel({ report, live = false }: { report: QualityReport |
   if (!report) {
     return (
       <Card>
-        <CardHeader title="Controle de qualidade" description="Ainda não executado para esta versão." />
+        <CardHeader title="Verificação" description="Ainda não feita nesta versão." />
       </Card>
     );
   }
@@ -20,9 +20,9 @@ export function QualityPanel({ report, live = false }: { report: QualityReport |
   return (
     <Card>
       <CardHeader
-        title="Controle de qualidade"
-        description={live ? "Prévia das alterações não salvas" : `Versão salva · ${report.checkerVersion}`}
-        actions={report.passed ? <Badge tone="success">Sem críticos</Badge> : <Badge tone="danger">{report.criticalCount} crítico(s)</Badge>}
+        title="Verificação"
+        description={live ? "Alterações ainda não salvas" : "Versão salva"}
+        actions={report.passed ? <Badge tone="success">Sem críticos</Badge> : <Badge tone="danger">{report.criticalCount === 1 ? "1 crítico" : `${report.criticalCount} críticos`}</Badge>}
       />
       <ul className="max-h-[420px] divide-y divide-ink-800 overflow-y-auto">
         {ordered.map((item, i) => (

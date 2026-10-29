@@ -63,7 +63,7 @@ export function BrandForm({
       <input type="hidden" name="clientId" value={clientId} />
       <input type="hidden" name="revision" value={revision} />
       <fieldset disabled={!canEdit} className="flex flex-col gap-6">
-        <Section title="Negócio" description="Empresa, oferta e objetivos comerciais.">
+        <Section title="Negócio">
           <Field label="Nome da empresa" htmlFor="b-company">
             <Input id="b-company" name="business.companyName" defaultValue={brand.business.companyName} maxLength={200} />
           </Field>
@@ -99,7 +99,7 @@ export function BrandForm({
           </Field>
         </Section>
 
-        <Section title="Tom de voz" description="Usado por todas as skills de texto deste cliente.">
+        <Section title="Tom de voz">
           <Field label="Tom de voz" htmlFor="v-tone">
             <Textarea id="v-tone" name="voice.tone" defaultValue={brand.voice.tone} maxLength={2000} placeholder="Ex.: acolhedor, direto, sem jargão técnico" />
           </Field>
@@ -115,7 +115,7 @@ export function BrandForm({
         </Section>
 
         <Card>
-          <CardHeader title="Identidade visual" description="Cores, fontes e logotipo aplicados às peças. A paleta do PRISMA OS não é imposta aos clientes." />
+          <CardHeader title="Identidade visual" description="Cores, fontes e logotipo aplicados às peças" />
           <div className="grid gap-6 p-5 lg:grid-cols-[1fr_320px]">
             <div className="grid gap-4 md:grid-cols-2">
               {canEdit ? (
@@ -245,7 +245,7 @@ export function BrandForm({
                 ))}
               </div>
               <p className={cx("mt-3 text-xs", textContrast >= 4.5 ? "text-emerald-300" : "text-amber-300")}>
-                Contraste texto/fundo: {textContrast.toFixed(1)}:1 {textContrast >= 4.5 ? "(adequado)" : "(abaixo de 4,5:1; o motor ajusta automaticamente)"}
+                Contraste texto/fundo: {textContrast.toFixed(1)}:1 {textContrast >= 4.5 ? "(adequado)" : "(baixo; a peça ajusta o contraste)"}
               </p>
               <p className="mt-2 text-xs text-ink-400">Prévia aproximada, com as mesmas fontes das peças finais.</p>
             </div>
@@ -277,7 +277,7 @@ export function BrandForm({
         </Section>
 
         <Section title="Referências e responsáveis">
-          <Field label="Concorrentes" htmlFor="r-comp" hint="URLs usadas apenas para análise autorizada.">
+          <Field label="Concorrentes" htmlFor="r-comp">
             <Textarea id="r-comp" name="references.competitors" defaultValue={brand.references.competitors} maxLength={3000} />
           </Field>
           <Field label="URLs de referência" htmlFor="r-urls">

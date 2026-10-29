@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import type { BrandColors, PaletteSuggestion } from "@/server/brand/palette";
 import type { InstagramColors } from "@/server/services/brand-colors";
 import { Button, cx } from "@/components/ui";
+import { plural } from "@/lib/text";
 import { suggestColorsFromInstagramAction, suggestColorsFromMediaAction } from "../actions";
 
 const ROLES: Array<[keyof BrandColors, string]> = [
@@ -57,12 +58,12 @@ export function ColorSuggest({
         const r = await suggestColorsFromInstagramAction(clientId, handle, saveLogo && canUpload);
         if (r.status === "ok" && r.data) {
           const d: InstagramColors = r.data;
-          setResult({ ...d, origin: `@${d.username}${d.name ? ` (${d.name})` : ""} · foto de perfil e ${d.postsRead} post(s)` });
+          setResult({ ...d, origin: `@${d.username}${d.name ? ` (${d.name})` : ""} · foto de perfil e ${plural(d.postsRead, "post", "posts")}` });
           if (d.savedLogoId) onLogoSaved(d.savedLogoId);
         } else if (r.status === "error") setError(r.message);
       } else {
         const r = await suggestColorsFromMediaAction(clientId, selected);
-        if (r.status === "ok" && r.data) setResult({ ...r.data, origin: `${r.data.imagesUsed} imagem(ns) da biblioteca` });
+        if (r.status === "ok" && r.data) setResult({ ...r.data, origin: `${plural(r.data.imagesUsed, "imagem", "imagens")} da biblioteca` });
         else if (r.status === "error") setError(r.message);
       }
       setBusy(null);
@@ -106,8 +107,8 @@ export function ColorSuggest({
           ) : null}
           <p className="mt-2.5 text-[12.5px] leading-relaxed text-ink-400">
             {instagramReady
-              ? "Usa a API oficial da Meta: funciona com contas comerciais ou de criador. Lê a foto de perfil e os posts recentes."
-              : "Para buscar pelo @, conecte a API oficial da Meta (veja Integrações). Enquanto isso, use um print do perfil ou o logotipo ao lado."}
+              ? "Funciona com contas comerciais ou de criador."
+              : "Para buscar pelo @, conecte a Meta em Integrações. Enquanto isso, use um print do perfil ou o logotipo."}
           </p>
         </div>
 

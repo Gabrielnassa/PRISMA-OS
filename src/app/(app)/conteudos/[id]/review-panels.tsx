@@ -41,7 +41,7 @@ export function ApprovalPanel({
 
   return (
     <Card>
-      <CardHeader title="Aprovação" description="A aprovação fica vinculada à versão exata (hash do conteúdo). Qualquer alteração exige nova aprovação." />
+      <CardHeader title="Aprovação" description="Vale para a versão enviada. Qualquer alteração pede nova aprovação." />
       <div className="flex flex-col gap-4 p-5">
         {pending ? (
           <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
@@ -67,7 +67,7 @@ export function ApprovalPanel({
                 </div>
               </ActionForm>
             ) : (
-              <p className="mt-3 text-xs text-ink-400">Seu papel não permite decidir aprovações.</p>
+              <p className="mt-3 text-xs text-ink-400">A decisão cabe a quem aprova.</p>
             )}
           </div>
         ) : submittable ? (
@@ -77,7 +77,7 @@ export function ApprovalPanel({
             <Field label={`Enviar a versão ${currentVersionNumber} para aprovação`} htmlFor="request-note">
               <Textarea id="request-note" name="note" maxLength={1000} placeholder="Observações para quem vai aprovar (opcional)" className="min-h-16" />
             </Field>
-            {!qualityPassed ? <p className="text-xs text-red-300">Há problemas críticos no controle de qualidade. Corrija e salve uma nova versão antes de enviar.</p> : null}
+            {!qualityPassed ? <p className="text-xs text-red-300">Corrija os problemas críticos da verificação e salve uma nova versão antes de enviar.</p> : null}
             <FormMessage state={submitState} />
             <div>
               <SubmitButton disabled={!qualityPassed} pendingText="Enviando...">
@@ -86,7 +86,7 @@ export function ApprovalPanel({
             </div>
           </ActionForm>
         ) : status === "approved" ? (
-          <p className="text-sm text-emerald-300">Versão aprovada. Exportação liberada.</p>
+          <p className="text-sm text-emerald-300">Versão aprovada.</p>
         ) : null}
 
         {approvals.length ? (
@@ -167,7 +167,7 @@ export function RetryPanel({ contentId, error, canRetry }: { contentId: string; 
           <FormMessage state={state} />
         </ActionForm>
       ) : (
-        <p className="mt-3 text-xs text-red-100/70">Peça a alguém com permissão de criação para reprocessar.</p>
+        <p className="mt-3 text-xs text-red-100/70">Peça a alguém da criação para tentar de novo.</p>
       )}
     </div>
   );
@@ -177,7 +177,7 @@ export function AiReviewPanel({ contentId, enabled }: { contentId: string; enabl
   const [state, action, pending] = useActionState<import("@/server/actions").ActionState<ReviewOutput>, FormData>(aiReviewAction, { status: "idle" });
   return (
     <Card>
-      <CardHeader title="Revisão por IA" description="Consultiva: ortografia, aderência ao briefing e afirmações sem base. Não substitui a aprovação humana." />
+      <CardHeader title="Revisão de texto" description="Ortografia, aderência ao briefing e afirmações sem base" />
       <ActionForm action={action} state={state} className="flex flex-col gap-3 p-5">
         <input type="hidden" name="contentId" value={contentId} />
         <div>

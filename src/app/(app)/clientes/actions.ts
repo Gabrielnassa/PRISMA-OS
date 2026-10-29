@@ -208,7 +208,7 @@ export async function proposeEditorialAction(_prev: ActionState, form: FormData)
     refresh();
     return {
       message: useAi
-        ? `${r.items} pautas propostas${r.isDemo ? " (demonstração, sem IA)" : ""}. Revise, ajuste e aprove.`
+        ? `${r.items} pautas propostas${r.isDemo ? " em modo de demonstração" : ""}. Revise e aprove.`
         : `${r.items} espaços criados pelo pacote. Preencha as pautas e aprove.`,
     };
   });
@@ -267,7 +267,7 @@ export async function driveImportAction(_prev: ActionState, form: FormData): Pro
     const r = await importFromDrive(auth, str(form, "clientId"));
     refresh();
     const parts = [r.imported === 1 ? "1 arquivo importado." : `${r.imported} arquivos importados.`];
-    if (r.failed.length) parts.push(`${r.failed.length} recusado(s): ${r.failed.slice(0, 3).join("; ")}${r.failed.length > 3 ? "..." : ""}`);
+    if (r.failed.length) parts.push(`${r.failed.length === 1 ? "1 recusado" : `${r.failed.length} recusados`}: ${r.failed.slice(0, 3).join("; ")}${r.failed.length > 3 ? "..." : ""}`);
     if (r.remaining) parts.push(`Faltam ${r.remaining}: clique de novo para continuar.`);
     return { message: parts.join(" ") };
   });

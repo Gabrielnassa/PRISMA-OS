@@ -52,7 +52,7 @@ export function DrivePanel({
         </p>
       ) : (
         <p className="text-[12.5px] leading-relaxed text-ink-400">
-          A leitura do Google Drive ainda não está configurada no servidor (veja Integrações). O link fica salvo e a importação funciona assim que a conta de serviço do Google for definida.
+          O Google Drive ainda não está conectado. O link fica salvo e a importação libera assim que a conexão for feita em Integrações.
         </p>
       )}
 

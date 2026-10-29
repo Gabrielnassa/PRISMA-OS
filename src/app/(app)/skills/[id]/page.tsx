@@ -42,7 +42,7 @@ export default async function SkillPage({
       <PageHeader
         eyebrow={
           <Link href="/skills" className="hover:text-ink-200">
-            Agentes e skills
+            Skills
           </Link>
         }
         title={skill.name}
@@ -86,11 +86,11 @@ export default async function SkillPage({
 
 async function UseTab({ auth, skill, defaultClientId }: { auth: AuthContext; skill: CustomSkillDetail; defaultClientId: string | null }) {
   if (!can(auth.role, "skills.run")) {
-    return <EmptyState title="Sem permissão para executar" description="Seu papel permite consultar a skill e o histórico." />;
+    return <EmptyState title="Sem permissão para executar" description="Seu acesso permite consultar a skill e o histórico." />;
   }
   if (skill.status === "archived") return <EmptyState title="Skill arquivada" description="Restaure a skill para voltar a usá-la." />;
   const clients = (await listClients(auth)).filter((c) => c.status !== "archived").map((c) => ({ id: c.id, name: c.name }));
-  if (clients.length === 0) return <EmptyState title="Cadastre um cliente primeiro" description="Toda execução usa o perfil da marca e a memória de um cliente." />;
+  if (clients.length === 0) return <EmptyState title="Cadastre um cliente primeiro" description="Cada execução usa a marca e a memória de um cliente." />;
   const fixedClient = skill.clientId ? { id: skill.clientId, name: skill.clientName ?? "cliente" } : null;
   const provider = providerStatus();
   return (
@@ -115,11 +115,11 @@ const STATUS: Record<string, { label: string; tone: "success" | "info" | "danger
 
 async function HistoryTab({ auth, skill }: { auth: AuthContext; skill: CustomSkillDetail }) {
   const runs = await listCustomSkillRuns(auth, skill.id, 30);
-  if (runs.length === 0) return <EmptyState title="Nenhuma execução ainda" description="Os resultados de cada execução ficam guardados aqui." />;
+  if (runs.length === 0) return <EmptyState title="Nenhuma execução ainda" />;
   const canCreate = can(auth.role, "content.create");
   return (
     <Card>
-      <CardHeader title="Execuções" description="As 30 mais recentes, dos clientes que você acessa. Falhas mostram o motivo em Custos e consumo." />
+      <CardHeader title="Execuções" description="As 30 mais recentes" />
       <ul className="divide-y divide-ink-800">
         {runs.map((r) => (
           <li key={r.id}>
@@ -187,7 +187,7 @@ async function EditTab({ auth, skill }: { auth: AuthContext; skill: CustomSkillD
       />
       {skill.status === "active" ? (
         <Card>
-          <CardHeader title="Arquivar" description="A skill some da lista e deixa de poder ser executada. O histórico e as versões continuam guardados, e dá para restaurar depois." />
+          <CardHeader title="Arquivar" description="A skill sai da lista e não pode ser executada. Histórico e versões ficam guardados." />
           <div className="p-5">
             <InlineAction action={skillStatusAction} fields={{ skillId: skill.id, op: "archive" }} label="Arquivar skill" tone="danger" confirmMessage={`Arquivar a skill "${skill.name}"?`} />
           </div>
@@ -200,7 +200,7 @@ async function EditTab({ auth, skill }: { auth: AuthContext; skill: CustomSkillD
 function VersionsTab({ skill }: { skill: CustomSkillDetail }) {
   return (
     <Card>
-      <CardHeader title="Versões" description="Cada alteração no conteúdo da skill gera uma versão. As execuções registram a versão usada." />
+      <CardHeader title="Versões" />
       <ul className="divide-y divide-ink-800">
         {skill.versions.map((v) => (
           <li key={v.version}>

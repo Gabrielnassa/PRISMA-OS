@@ -17,7 +17,7 @@ export function MonthBoard({ rows, month, monthName }: { rows: ClientMonth[]; mo
   if (rows.length === 0) return null;
   return (
     <Card>
-      <CardHeader title={`${monthName} por cliente`} description="Pacote contratado, linha editorial e o que está esperando alguém." />
+      <CardHeader title={monthName} description="Pacote, linha editorial e pendências de cada cliente" />
       <ul className="divide-y divide-ink-800">
         {rows.map((r) => {
           const pct = r.contracted ? Math.min(100, Math.round((r.produced / r.contracted) * 100)) : 0;
@@ -46,7 +46,7 @@ export function MonthBoard({ rows, month, monthName }: { rows: ClientMonth[]; mo
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-1.5 md:justify-end">
-                {todo.length === 0 ? <span className="text-[12.5px] text-ink-400">Nada parado</span> : null}
+                {todo.length === 0 ? <span className="text-[12.5px] text-ink-400">Em dia</span> : null}
                 {todo.map((t) => (
                   <Link key={t.label} href={t.href} className="hover:opacity-80">
                     <Badge tone={t.tone}>{t.label}</Badge>
@@ -56,7 +56,7 @@ export function MonthBoard({ rows, month, monthName }: { rows: ClientMonth[]; mo
                   <a
                     href={`/api/clients/${r.clientId}/delivery?mes=${month}`}
                     className="inline-flex items-center gap-1 rounded-full border border-ink-600 px-2.5 text-[11.5px] font-medium leading-[22px] text-ink-100 hover:border-ink-400"
-                    title="Baixar todas as peças aprovadas no mês (PNG + legendas)"
+                    title="Baixar as peças aprovadas no mês"
                   >
                     <Icon.download width={12} height={12} /> Entrega ({r.approvedThisMonth})
                   </a>

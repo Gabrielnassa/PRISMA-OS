@@ -46,7 +46,7 @@ export function MediaUploader({ clientId, defaultKind = "image" }: { clientId: s
   return (
     <form onSubmit={onSubmit} className="grid gap-4 p-5 md:grid-cols-[2fr_1fr_1fr_auto] md:items-end">
       <input type="hidden" name="clientId" value={clientId} />
-      <Field label="Arquivos" htmlFor="files" hint="PNG, JPEG, GIF, SVG, PDF, MP4 ou MOV. O tipo real é verificado no servidor.">
+      <Field label="Arquivos" htmlFor="files" hint="PNG, JPEG, GIF, SVG, PDF, MP4 ou MOV">
         {/* Área de soltar: arraste fotos e vídeos ou clique para escolher. */}
         <label
           onDragOver={(e) => {
@@ -116,7 +116,7 @@ export function MediaUploader({ clientId, defaultKind = "image" }: { clientId: s
         <ul className="space-y-1 text-sm md:col-span-4" role="status">
           {results.map((r) => (
             <li key={r.filename} className={r.error ? "text-red-300" : "text-emerald-300"}>
-              {r.filename}: {r.error ?? (r.duplicate ? "já existia na biblioteca (reaproveitado)" : "enviado")}
+              {r.filename}: {r.error ?? (r.duplicate ? "já estava na biblioteca" : "enviado")}
             </li>
           ))}
         </ul>

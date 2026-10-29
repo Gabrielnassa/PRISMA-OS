@@ -53,7 +53,7 @@ export function ProposeForm({ clientId, month, hasPlan, aiReady }: { clientId: s
     >
       <input type="hidden" name="clientId" value={clientId} />
       <input type="hidden" name="month" value={month} />
-      <Field label="Tema ou pedidos do mês (opcional)" htmlFor="ed-theme" hint="Datas, campanhas, produtos em destaque, o que evitar. A IA usa também o perfil e a memória da marca.">
+      <Field label="Tema ou pedidos do mês (opcional)" htmlFor="ed-theme" hint="Datas, campanhas, produtos em destaque, o que evitar.">
         <Textarea id="ed-theme" name="theme" rows={3} maxLength={3000} placeholder="Ex.: Bolão da Mega da Virada a partir do dia 10. Mostrar a equipe da loja." />
       </Field>
       {state.status === "error" ? <FormMessage state={state} /> : null}
@@ -62,7 +62,7 @@ export function ProposeForm({ clientId, month, hasPlan, aiReady }: { clientId: s
           {hasPlan ? "Refazer com IA" : "Propor pautas com IA"}
         </SubmitButton>
         <SubmitButton name="mode" value="manual" variant="secondary" pendingText="Criando...">
-          Montar sem IA
+          Montar manualmente
         </SubmitButton>
       </div>
       {!aiReady ? <p className="text-[12.5px] text-ink-400">IA não configurada: monte sem IA e escreva as pautas, ou configure a chave em Integrações.</p> : null}
@@ -202,8 +202,8 @@ export function ApproveForm({ planId, approved, pending, blank }: { planId: stri
       className="flex flex-wrap items-center gap-3"
       confirmMessage={
         approved
-          ? `Criar as ${pending} peça(s) que ainda faltam?`
-          : `Aprovar a linha editorial e criar ${pending} peça(s) agora? Elas entram na fila de criação com fotos da biblioteca do cliente; vídeos ficam como itens a marcar.`
+          ? `Criar ${pending === 1 ? "a peça que falta" : `as ${pending} peças que faltam`}?`
+          : `Aprovar a linha editorial e criar ${pending === 1 ? "1 peça" : `${pending} peças`}? Os vídeos ficam na lista para marcar quando estiverem prontos.`
       }
       confirmLabel={approved ? "Criar peças" : "Aprovar e criar"}
     >

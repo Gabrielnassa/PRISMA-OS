@@ -9,7 +9,7 @@ import type { AiProvider, StructuredRequest, StructuredResult } from "../types";
  */
 export class DemoProvider implements AiProvider {
   readonly id = "demo" as const;
-  readonly label = "Demonstração (sem IA)";
+  readonly label = "Demonstração";
   readonly model = "demo-deterministico";
   readonly isDemo = true;
 
@@ -31,6 +31,6 @@ export class DemoProvider implements AiProvider {
   }
 
   async ping() {
-    return { ok: true, detail: "Provedor de demonstração ativo: nenhuma IA real é chamada." };
+    return { ok: true, detail: "Modo de demonstração: os textos são montados sem IA." };
   }
 }
