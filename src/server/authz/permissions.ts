@@ -27,6 +27,7 @@ const MATRIX = {
   "client.create": ["owner", "admin"],
   "client.archive": ["owner", "admin"],
   "client.delete": ["owner", "admin"],
+  "client.package": ["owner", "admin"],
   "client.update": ["owner", "admin", "editor"],
   "memory.manage": ["owner", "admin", "editor"],
   "media.upload": ["owner", "admin", "editor"],

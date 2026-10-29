@@ -40,6 +40,8 @@ Veja `.env.example`. As essenciais:
 | `AI_TIMEOUT_MS` | não | Tempo limite por chamada à IA (padrão 180000) |
 | `JOB_LOCK_TIMEOUT_MS` | não | Reserva de uma tarefa sem renovação antes de ser considerada abandonada (padrão 600000; o worker renova a cada ¼ desse valor) |
 | `GENERATION_RATE_PER_MINUTE` | não | Gerações e chamadas interativas de IA por pessoa por minuto (padrão 10) |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | para o Google Drive | Chave JSON (inteira ou em base64) de uma conta de serviço do Google com a API do Drive ativada |
+| `DRIVE_IMPORT_MAX_MB` | não | Limite por arquivo importado do Drive (padrão 100 MB; o envio pela tela segue `MAX_UPLOAD_MB`) |
 | `META_ACCESS_TOKEN` | para o @ do Instagram | Token da Meta com `instagram_basic` e `pages_read_engagement` (veja abaixo). Sem ele, a sugestão de cores funciona só por imagens |
 | `META_IG_USER_ID` | para o @ do Instagram | ID numérico da conta comercial do Instagram **da agência** (quem faz a consulta) |
 | `META_GRAPH_VERSION` | não | Versão da Graph API (padrão `v23.0`) |
@@ -152,6 +154,28 @@ Ao criar ou alterar um template, recalibre a capacidade de texto e copie o resul
 npx tsx scripts/calibrate-capacity.ts [filtro-de-id]
 npx vitest run --project unit tests/unit/capacity.test.ts
 ```
+
+## Pacote mensal, custo estimado e linha editorial
+
+Na página do cliente, aba **Linha editorial**:
+
+- **Pacote mensal** (proprietário e administrador): quantos posts, carrosséis, stories e vídeos o cliente contratou.
+- **Custo de IA estimado** do pacote: com execuções reais, usa a média real por peça (do cliente, com pelo menos 3 peças nos últimos 90 dias; senão, a média da agência); antes disso, a tarifa do modelo configurado × um consumo típico (6 mil tokens de entrada e 4 mil de saída por peça), mais a linha editorial do mês. Vídeos não entram (ainda são feitos fora do sistema). O valor é sempre identificado como estimativa; o gasto real fica em Custos e consumo.
+- **Linha editorial do mês**: a IA propõe uma pauta para cada peça do pacote (formatos intercalados e datas em dias úteis), usando o perfil e a memória da marca e evitando repetir títulos recentes; ou "Montar sem IA" cria os espaços para a equipe escrever. A equipe edita e aprova; na aprovação, cada pauta (menos vídeo) vira uma peça na fila, com fotos da biblioteca do cliente em rodízio. Se o limite por minuto ou o teto de custo interromper, o botão "Criar peças pendentes" continua de onde parou, sem duplicar (a pauta é a chave da peça). Vídeos ficam como itens a marcar como feitos. Excluir uma peça devolve a pauta para "planejada".
+
+## Google Drive: fotos e vídeos de cada cliente
+
+Na aba **Arquivos** do cliente, cole o link da pasta do Drive e use **Importar agora**: fotos (PNG, JPEG, GIF, SVG), vídeos (MP4, MOV) e PDFs entram na biblioteca do cliente, até 25 por clique, sem repetir (pelo id do arquivo no Drive e pelo conteúdo). Documentos do Google (Docs, Planilhas) ficam de fora. Para configurar:
+
+1. Em console.cloud.google.com, crie um projeto, ative a **Google Drive API** e crie uma **conta de serviço**.
+2. Na conta de serviço, gere uma chave **JSON** e defina o conteúdo em `GOOGLE_SERVICE_ACCOUNT_JSON` (no Mac e no Codespaces, prefira em base64: `base64 -w0 chave.json`).
+3. Em cada pasta de cliente no Drive, **Compartilhar** com o e-mail da conta de serviço (aparece em Integrações), como **Leitor**.
+
+O acesso é só leitura (`drive.readonly`), pelo fluxo oficial de conta de serviço (JWT assinado). A integração foi testada contra uma API simulada; os domínios do Google não estavam acessíveis neste ambiente.
+
+## Publicação no Instagram e no Facebook
+
+Ainda não implementada (precisa de app da Meta revisado e da conta de cada cliente conectada). O desenho está em `docs/design/PUBLICACAO.md`.
 
 ## ChatGPT (OpenAI) no lugar do Claude
 

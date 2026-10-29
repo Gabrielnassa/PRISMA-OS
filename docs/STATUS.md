@@ -1,6 +1,6 @@
 # Relatório da etapa — Fase 1 + primeira entrega obrigatória
 
-Relatório no formato da seção 29 da especificação. Data: 22/10/2026. Branch: `claude/session-vagl59`.
+Relatório no formato da seção 29 da especificação. Data: 22/10/2026 (atualizado em 29/10/2026). Branch: `claude/session-vagl59`.
 
 ## 1. Objetivo e funcionalidades implementadas
 
@@ -23,11 +23,16 @@ Objetivo da etapa (seções 25, 26 e 30): fundação do PRISMA OS e o ciclo comp
 | Qualidade | Verificações automáticas (texto cortado, contraste WCAG, glifos ausentes, marca, termos proibidos, CTA, números sem fonte, ofertas não confirmadas, resolução, texto alternativo…) e revisão consultiva por IA |
 | Aprovação | Vinculada ao hash da versão exata; alteração exige nova aprovação; reprovação gera sugestão revisável na memória do cliente |
 | Exportação e histórico | PNG/ZIP com legenda e textos alternativos (rascunhos identificados); versões imutáveis com comparação e restauração; auditoria somente inserção |
+| Pacote e linha editorial | Pacote mensal por cliente (posts, carrosséis, stories, vídeos), produzido × contratado no mês e custo de IA estimado (média real por peça quando houver; antes, tarifa × consumo típico, sempre identificado como estimativa); linha editorial do mês proposta pela IA (skill `planner.editorial`) ou montada sem IA, editada e aprovada pela equipe; na aprovação as pautas viram peças na fila com fotos do cliente em rodízio, sem duplicar ao repetir; vídeos ficam como itens a marcar |
+| Google Drive | Pasta do Drive por cliente; "Importar agora" traz fotos, vídeos e PDFs para a biblioteca (até 25 por clique, sem repetir), pela API oficial com conta de serviço (só leitura) |
+| IA à escolha | Claude (Anthropic) ou ChatGPT (OpenAI) pelo mesmo gateway, skills, fila, qualidade e custos |
 | Gestão | Dashboard com dados reais e filtros por cliente, período, canal e status; custos por execução e por cliente, tarifas com fonte, tetos mensais; integrações com diagnóstico e teste real; usuários e permissões; configurações |
 
 Módulos das fases 3–6 (estratégias, calendário, automações, relatórios, sites, campanhas) aparecem no menu como "próximas fases", desabilitados — nada é simulado.
 
-**Interface (redesenho de 28/10/2026).** Visual sóbrio e editorial sobre a mesma paleta (grafite, violeta e verde-água), sem degradês, brilhos ou rótulos em caixa alta: Newsreader nos títulos e números de destaque, Schibsted Grotesk na interface e IBM Plex Mono em metadados (datas, versões, custos, códigos), todas servidas pelo próprio sistema. Botão principal claro; violeta reservado a navegação ativa, foco, seleção e links; verde-água para estados positivos. Nova marca (prisma de duas faces), tela de acesso com painel da marca, barra lateral com agência, estado da IA e usuário, indicadores em faixa única com divisórias finas, estados com ponto colorido, tabelas e alertas mais discretos. Textos informativos com contraste mínimo AA (4,5:1); só itens desativados ficam abaixo disso. Corrigidos no caminho: rolagem horizontal no celular na página da peça (já existia) e na de custos, status de execuções em inglês ("succeeded") nas telas de custos e da peça, e a dica de primeiro acesso da tela de login, que mostrava um comando técnico.
+**Interface (visual novo de 29/10/2026, referência em `docs/design/DESIGN-referencia.md`).** Grafite quase preto, cartões #111111 com borda fina, azul íris na ação principal e na navegação ativa, coral só como acento; Inter na interface e Sora em títulos de 28px ou mais; botões, etiquetas e navegação em pílula; o feixe de luz em degradê aparece só na tela de acesso, com um print real do sistema. O botão principal usa o íris #4a74c6 porque o #5683da da referência dá 3,7:1 com texto branco (abaixo do AA); o #5683da fica em indicadores. Acabamento: janela de confirmação própria (dialog modal acessível) no lugar de `window.confirm`, avisos rápidos de resultado, conteúdos em cartões no celular, datas relativas, envio de arquivos por arrastar e soltar. Textos informativos com contraste mínimo AA (4,5:1); só itens desativados ficam abaixo disso. No caminho: a caixinha invisível da foto na Central de criação ficava no canto recortado do cartão arredondado e o clique não chegava nela (corrigido; ela cobre a foto inteira).
+
+Antes disso (28/10/2026), o redesenho sóbrio: Corrigidos no caminho: rolagem horizontal no celular na página da peça (já existia) e na de custos, status de execuções em inglês ("succeeded") nas telas de custos e da peça, e a dica de primeiro acesso da tela de login, que mostrava um comando técnico.
 
 ## 2. Arquivos e módulos
 
@@ -54,21 +59,23 @@ Módulos das fases 3–6 (estratégias, calendário, automações, relatórios, 
 - **0001_foundation**: `organizations`, `users`, `memberships`, `sessions`, `login_attempts`, `clients`, `client_access`, `brand_profiles`, `client_memories`, `media_assets`, `content_items`, `content_versions`, `quality_reports`, `approvals`, `content_comments`, `provider_prices`, `ai_runs`, `client_budgets`, `jobs`, `job_attempts`, `audit_logs`; RLS em todas as tabelas; papel `prisma_app` sem posse das tabelas; versões e auditoria imutáveis (exclusão só com `app.allow_purge`).
 - **0002_review_hardening**: `memberships.deactivated_at` e `last_access_at` (ativação por organização; `app_org_role` passa a considerá-la), `users.password_set_at` (validade da senha temporária), `media_assets.orientation` (EXIF), `ai_runs.estimated_cost_usd` e `usage_breakdown` (custo por modelo e estimativa para o teto), limite de `jobs.max_attempts` ampliado para reprocessamentos, `job_attempts.duration_ms` em `bigint`, tarifas dos modelos de fallback para organizações existentes.
 - Sem migration nova para cores e exclusão: a exclusão usa as cascatas existentes e liga `app.allow_purge` só na transação que apaga; antes disso, desvincula as execuções de IA (`ai_runs`) da peça ou do cliente, para os custos continuarem nos totais.
+- **0004_openai_prices**: tarifas da OpenAI (`gpt-6.1-sol`, `gpt-6.1-terra`, `gpt-6-astra`) para organizações existentes.
+- **0005_packages_editorial_drive**: `client_packages` (escrita só pela administração), `editorial_plans` (um por cliente e mês, rascunho ou aprovado) e `editorial_items` (pauta com data, formato, objetivo, briefing, CTA, situação e peça criada), `client_drive_folders` (pasta e resultado da última importação) e `media_assets.drive_file_id`; RLS por acesso ao cliente.
 - **0003_custom_skills**: `custom_skills` (nome único por organização, sem diferenciar maiúsculas; escopo opcional por cliente com chave composta) e `custom_skill_versions` (somente inserção: o papel da aplicação não tem UPDATE/DELETE); RLS: leitura por membros (skill de cliente só para quem acessa o cliente), escrita por administradores.
 
 ## 4. Testes executados e resultados reais
 
-Executados em 28/10/2026 neste ambiente (Node 22, PostgreSQL 16 local, Chromium do Playwright):
+Executados em 29/10/2026 neste ambiente (Node 22, PostgreSQL 16 local, Chromium do Playwright):
 
 | Comando | Resultado |
 | --- | --- |
 | `npm run typecheck` | sem erros |
 | `npm run lint` | sem erros nem avisos |
-| `npm test` (Vitest: unitários + integração com PostgreSQL real) | **17 arquivos, 165 testes aprovados**, 0 falhas |
-| `npm run test:e2e` (Playwright, `next dev` + worker) | **4/4 aprovados** (ciclo completo; cores pelo logotipo e exclusão de peças e cliente; skills da agência; celular, inclusive a página da peça sem rolagem horizontal) |
-| `npm run build` + `npm run test:e2e:prod` (build de produção) | build concluído; **4/4 aprovados** (sem chave, o botão de executar skill fica desativado com o aviso) |
+| `npm test` (Vitest: unitários + integração com PostgreSQL real) | **23 arquivos, 185 testes aprovados**, 0 falhas |
+| `npm run test:e2e` (Playwright, `next dev` + worker) | **5/5 aprovados** (ciclo completo; linha editorial do pacote às peças; cores pelo logotipo e exclusão de peças e cliente; skills da agência; celular, inclusive a página da peça sem rolagem horizontal) |
+| `npm run build` + `npm run test:e2e:prod` (build de produção) | build concluído; **5/5 aprovados** (sem chave: botão de executar skill desativado com o aviso e linha editorial montada sem IA) |
 
-Destaques da cobertura: isolamento entre organizações e clientes (RLS efetivo, inserção cruzada recusada pelo banco); ciclo completo com versões e aprovação vinculada; invalidação da aprovação quando a peça muda; bloqueio por termo proibido; fila (backoff, recuperação, reserva perdida, reprocessamento com histórico); idempotência da IA (reaproveitamento, chamada simultânea não paga duas vezes); custo por modelo no fallback e estimativa sem tarifa no teto; contexto correto enviado à IA sem dados de outro cliente; login (limite em paralelo, senha temporária vencida, convite de e-mail existente, desativação por organização); redirecionamento seguro; provedor Anthropic contra API simulada (esquema com `enum`, esforço, recusa, erros recuperáveis); todos os 18 templates em todas as proporções sem texto cortado e com textos no limite efetivo; dashboard com filtros e isolamento; skills da agência (versões a cada alteração, edição simultânea recusada, nome repetido, permissões por papel, skill exclusiva invisível para quem não acessa o cliente e recusada em outro cliente, outra organização sem acesso, versões imutáveis no banco, contexto do cliente e regras invioláveis enviados à IA, custo com o nome da skill, clique duplo sem cobrança dupla, histórico filtrado pelo acesso, leitura e exportação de SKILL.md); origens aceitas no túnel do Codespaces só dentro de um Codespace; paleta (logotipo de duas cores, marca em preto e branco, fundo escuro com contraste, peso do logotipo sobre fotos, SVG, formatos não lidos), consulta à Meta contra API simulada (token só no cabeçalho, @ e link do perfil normalizados, só imagens do CDN da Meta com tipo e tamanho conferidos, erros traduzidos, configuração inválida sem derrubar o sistema), sugestão por imagens de outro cliente ou já excluídas recusada; exclusão (versões, aprovações, comentários e relatórios apagados, custos mantidos sem o texto gerado, peças em geração preservadas, lote ignorando outra organização, cliente só com o nome certo e sem gerações pendentes, todas as tabelas do cliente e os arquivos do armazenamento apagados, outro cliente intacto, permissões por papel). O E2E também confirma que um erro devolvido pelo servidor não apaga o formulário, que descartar alterações mantém o editor utilizável e que sair pelo menu com alterações pendentes pede confirmação.
+Destaques da cobertura: isolamento entre organizações e clientes (RLS efetivo, inserção cruzada recusada pelo banco); ciclo completo com versões e aprovação vinculada; invalidação da aprovação quando a peça muda; bloqueio por termo proibido; fila (backoff, recuperação, reserva perdida, reprocessamento com histórico); idempotência da IA (reaproveitamento, chamada simultânea não paga duas vezes); custo por modelo no fallback e estimativa sem tarifa no teto; contexto correto enviado à IA sem dados de outro cliente; login (limite em paralelo, senha temporária vencida, convite de e-mail existente, desativação por organização); redirecionamento seguro; provedor Anthropic contra API simulada (esquema com `enum`, esforço, recusa, erros recuperáveis); todos os 18 templates em todas as proporções sem texto cortado e com textos no limite efetivo; dashboard com filtros e isolamento; skills da agência (versões a cada alteração, edição simultânea recusada, nome repetido, permissões por papel, skill exclusiva invisível para quem não acessa o cliente e recusada em outro cliente, outra organização sem acesso, versões imutáveis no banco, contexto do cliente e regras invioláveis enviados à IA, custo com o nome da skill, clique duplo sem cobrança dupla, histórico filtrado pelo acesso, leitura e exportação de SKILL.md); origens aceitas no túnel do Codespaces só dentro de um Codespace; paleta (logotipo de duas cores, marca em preto e branco, fundo escuro com contraste, peso do logotipo sobre fotos, SVG, formatos não lidos), consulta à Meta contra API simulada (token só no cabeçalho, @ e link do perfil normalizados, só imagens do CDN da Meta com tipo e tamanho conferidos, erros traduzidos, configuração inválida sem derrubar o sistema), sugestão por imagens de outro cliente ou já excluídas recusada; exclusão (versões, aprovações, comentários e relatórios apagados, custos mantidos sem o texto gerado, peças em geração preservadas, lote ignorando outra organização, cliente só com o nome certo e sem gerações pendentes, todas as tabelas do cliente e os arquivos do armazenamento apagados, outro cliente intacto, permissões por papel); OpenAI contra API simulada (Responses API, JSON Schema estrito com campos opcionais, esforço, `store: false`, erros de chave, sem crédito, limite e modelo, recusa e corte, custo com cache separado e versão datada cobrada pela tarifa do modelo pedido, escolha do provedor); pacote e estimativa (só administração define, estimativa pela tarifa × consumo típico); linha editorial (espaços intercalados em dias úteis, proposta substitui o rascunho, pautas em branco bloqueiam a aprovação, aprovação cria as peças com a foto do cliente sem duplicar, vídeo marcado à mão, peça excluída devolve a pauta, isolamento e papéis); Google Drive contra API simulada que confere a assinatura do JWT (link da pasta, importação única por arquivo, documento do Google ignorado, arquivo falso recusado, pasta não compartilhada explica o e-mail, papéis). O E2E também confirma que um erro devolvido pelo servidor não apaga o formulário, que descartar alterações mantém o editor utilizável e que sair pelo menu com alterações pendentes pede confirmação.
 
 ### Testes de aceitação (seção 27)
 
@@ -108,7 +115,9 @@ Depois da primeira versão, uma revisão em várias frentes levantou **61 achado
 | OpenAI (ChatGPT) | Implementada (Responses API, saída em JSON Schema estrito, esforço por skill, `store: false`, custos com cache separado e cobrança da versão datada pela tarifa do modelo pedido); testada contra API simulada no nível do SDK oficial (v7.45.1). **Conexão real pendente de chave**; o site da OpenAI não estava acessível daqui, então modelo padrão (`gpt-6.1-sol`) e lista de modelos vêm do SDK oficial, e as tarifas de agregadores (conferir em Custos e consumo) |
 | Provedor de demonstração | Ativo nos testes; bloqueado em produção e identificado como "Demonstração" |
 | Meta (Instagram Business Discovery) | Implementada para sugerir cores pelo @ (foto de perfil e posts de contas comerciais ou de criador); testada contra API simulada; **conexão real pendente de token** (`META_ACCESS_TOKEN` e `META_IG_USER_ID`). Os domínios da Meta não estavam acessíveis neste ambiente, então a consulta segue a documentação pública da Graph API; a primeira consulta real confirma. Sem token, a tela de Integrações mostra o que falta e a sugestão funciona por imagens |
-| Redes sociais (publicação), e-mail, n8n, Meta/Google Ads, Analytics, Drive, S3 | Não conectados (fases seguintes); nada é apresentado como conectado |
+| Google Drive | Implementado (conta de serviço, JWT assinado, `drive.readonly`, listagem e download); testado contra API simulada que confere a assinatura. **Conexão real pendente da chave da conta de serviço**; os domínios do Google não estavam acessíveis neste ambiente |
+| Publicação no Instagram/Facebook | Não implementada: precisa de app da Meta com permissões revisadas e da conta de cada cliente conectada. Desenho em `docs/design/PUBLICACAO.md` |
+| E-mail, n8n, Meta/Google Ads, Analytics, S3 | Não conectados (fases seguintes); nada é apresentado como conectado |
 
 ## 6. Configurações pendentes
 
@@ -121,7 +130,9 @@ Depois da primeira versão, uma revisão em várias frentes levantou **61 achado
 3. Usuários de banco separados (migrations × aplicação) no ambiente de produção — ver OPERATIONS.md.
 4. Volume persistente para `STORAGE_LOCAL_DIR` e rotina de backup do banco + arquivos.
 5. Conferir as tarifas cadastradas com a tabela vigente da Anthropic antes do uso comercial.
-6. Opcional: `META_ACCESS_TOKEN` e `META_IG_USER_ID` para sugerir cores pelo @ do Instagram (passo a passo em OPERATIONS.md). Para o token não expirar, use um usuário do sistema do Gerenciador de Negócios.
+6. Opcional: `OPENAI_API_KEY` (e `AI_PROVIDER=openai` se houver as duas chaves) para usar o ChatGPT; conferir as tarifas da OpenAI em Custos e consumo.
+7. Opcional: `GOOGLE_SERVICE_ACCOUNT_JSON` para importar das pastas do Drive dos clientes.
+8. Opcional: `META_ACCESS_TOKEN` e `META_IG_USER_ID` para sugerir cores pelo @ do Instagram (passo a passo em OPERATIONS.md). Para o token não expirar, use um usuário do sistema do Gerenciador de Negócios.
 
 ## 7. Custos conhecidos ou estimados
 
@@ -139,6 +150,9 @@ Depois da primeira versão, uma revisão em várias frentes levantou **61 achado
 - WebP é recusado no envio até haver conversão no servidor.
 - Fontes de clientes (TTF/OTF próprios) ainda não podem ser enviadas; só as fontes OFL empacotadas.
 - Consulta pelo @ do Instagram ainda não exercitada contra a Meta real: o app pode precisar de revisão ou de acesso avançado às permissões, e tokens de usuário expiram (cerca de 60 dias no de longa duração). Se o CDN da Meta entregar WebP, essa imagem é ignorada (o leitor de cores aceita PNG, JPEG, GIF e SVG).
+- Tarifas da OpenAI vieram de agregadores (o site oficial não estava acessível): podem estar diferentes da tabela vigente; confira antes de usar a estimativa por pacote para orçar.
+- A importação do Drive roda dentro da requisição (até 25 arquivos por clique); pastas muito grandes pedem vários cliques. Vídeos acima de `DRIVE_IMPORT_MAX_MB` são recusados com aviso.
+- A estimativa de custo por pacote, antes de execuções reais, usa um consumo típico fixo; vira média real depois das primeiras peças.
 - A exclusão definitiva não tem lixeira: arquivar continua sendo o caminho reversível, e o backup é a única forma de recuperar algo excluído.
 - Dependência de desenvolvimento com alerta (`braces`, via `eslint-config-next`); `npm audit --omit=dev` não aponta vulnerabilidades.
 - Ferramentas de terceiros podem alterar APIs (Next.js 16, SDK da Anthropic, Satori): atualize uma por vez e rode toda a suíte.
@@ -147,7 +161,8 @@ Depois da primeira versão, uma revisão em várias frentes levantou **61 achado
 
 1. Configurar a chave da Anthropic, testar a conexão e validar 3–5 gerações reais (qualidade, custo, tempo) com um cliente piloto.
 2. Geração em lote (vários itens por pedido, tolerando falhas parciais) e alternativas de texto por lâmina.
-3. Fase 3: calendário editorial, workflows A/B/E com ativação, pausa e execução manual, notificações e controles de consumo ampliados.
-4. Armazenamento S3/Supabase Storage e envio de e-mail (convites e senhas).
-5. Novos formatos (anúncio, banner, capa, peça promocional) e upload de fontes próprias dos clientes.
-6. Seletor de organização para contas em mais de uma agência.
+3. Publicação no Instagram/Facebook depois da aprovação (desenho em `docs/design/PUBLICACAO.md`): criar o app da Meta e pedir a revisão das permissões já.
+4. Fase 3: calendário editorial com visão mensal e agendamento, workflows A/B/E com ativação, pausa e execução manual, notificações e controles de consumo ampliados.
+5. Armazenamento S3/Supabase Storage e envio de e-mail (convites e senhas).
+6. Vídeos curtos (Reels) a partir das fotos e vídeos do cliente; novos formatos (anúncio, banner, capa, peça promocional) e upload de fontes próprias dos clientes.
+7. Seletor de organização para contas em mais de uma agência.

@@ -35,6 +35,10 @@ O uso é cobrado na conta da Anthropic dona da chave. Crie a chave num workspace
 
 Crie o secret `OPENAI_API_KEY` pelo mesmo caminho, com uma chave de platform.openai.com > API keys (a assinatura do ChatGPT não inclui chave de API; o uso é cobrado à parte, em Billing). Se tiver as duas chaves, crie também `AI_PROVIDER` com o valor `openai` para escolher o ChatGPT.
 
+## Pastas do Google Drive dos clientes (opcional)
+
+Para importar as fotos e os vídeos das pastas do Drive, crie o secret `GOOGLE_SERVICE_ACCOUNT_JSON` com a chave JSON de uma conta de serviço do Google, de preferência em base64 (passo a passo em `docs/OPERATIONS.md`, seção "Google Drive"). Depois compartilhe a pasta de cada cliente com o e-mail da conta de serviço, como Leitor.
+
 ## Cores pelo @ do Instagram (opcional)
 
 Sem isso, o sistema sugere as cores pelo logotipo ou por um print do perfil do cliente. Para buscar pelo @, crie mais dois secrets pelo mesmo caminho da chave da IA: `META_ACCESS_TOKEN` (token da API oficial da Meta) e `META_IG_USER_ID` (ID da conta do Instagram da agência). Como obter os dois: `docs/OPERATIONS.md`, seção "Instagram: cores da marca pelo @". Depois pare e abra o Codespace de novo.

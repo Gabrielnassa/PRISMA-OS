@@ -17,6 +17,11 @@ import { setClientBudget } from "@/server/services/costs";
 import type { BrandProfile, TemplateFamily } from "@/lib/brand";
 import { suggestColorsFromInstagram, suggestColorsFromMedia, type InstagramColors } from "@/server/services/brand-colors";
 import { deleteClient } from "@/server/services/deletion";
+import { setPackage } from "@/server/services/packages";
+import { approveEditorialPlan, proposeEditorialPlan, setEditorialItemStatus, updateEditorialItem } from "@/server/services/editorial";
+import { importFromDrive, setDriveFolder } from "@/server/services/drive";
+import type { EditorialFormat } from "@/server/skills/editorial";
+import type { Objective } from "@/lib/content/document";
 import type { PaletteSuggestion } from "@/server/brand/palette";
 
 export async function createClientAction(_prev: ActionState, form: FormData): Promise<ActionState> {
@@ -175,5 +180,95 @@ export async function suggestColorsFromInstagramAction(clientId: string, handle:
     const data = await suggestColorsFromInstagram(auth, String(clientId), String(handle ?? ""), { saveProfilePicture: saveProfilePicture === true });
     if (data.savedLogoId) refresh();
     return { data };
+  });
+}
+
+// --- Pacote mensal, linha editorial e Google Drive ---
+
+export async function packageAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const auth = await requireAuth();
+  return runAction(async () => {
+    await setPackage(auth, str(form, "clientId"), {
+      posts: str(form, "posts") || "0",
+      carousels: str(form, "carousels") || "0",
+      stories: str(form, "stories") || "0",
+      videos: str(form, "videos") || "0",
+      notes: str(form, "notes"),
+    });
+    refresh();
+    return { message: "Pacote salvo." };
+  });
+}
+
+export async function proposeEditorialAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const auth = await requireAuth();
+  return runAction(async () => {
+    const useAi = str(form, "mode") === "ai";
+    const r = await proposeEditorialPlan(auth, str(form, "clientId"), { month: str(form, "month"), theme: str(form, "theme"), useAi });
+    refresh();
+    return {
+      message: useAi
+        ? `${r.items} pautas propostas${r.isDemo ? " (demonstração, sem IA)" : ""}. Revise, ajuste e aprove.`
+        : `${r.items} espaços criados pelo pacote. Preencha as pautas e aprove.`,
+    };
+  });
+}
+
+export async function updateEditorialItemAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const auth = await requireAuth();
+  return runAction(async () => {
+    await updateEditorialItem(auth, str(form, "itemId"), {
+      title: str(form, "title"),
+      brief: str(form, "brief"),
+      cta: str(form, "cta"),
+      objective: str(form, "objective") as Objective,
+      format: str(form, "format") as EditorialFormat,
+      plannedDate: str(form, "plannedDate") || null,
+    });
+    refresh();
+    return { message: "Pauta salva." };
+  });
+}
+
+export async function editorialItemStatusAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const auth = await requireAuth();
+  return runAction(async () => {
+    const status = str(form, "status");
+    await setEditorialItemStatus(auth, str(form, "itemId"), status === "done" ? "done" : status === "skipped" ? "skipped" : "planned");
+    refresh();
+    return { message: status === "done" ? "Marcado como feito." : status === "skipped" ? "Fora deste mês." : "Pauta de volta à lista." };
+  });
+}
+
+export async function approveEditorialAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const auth = await requireAuth();
+  return runAction(async () => {
+    const r = await approveEditorialPlan(auth, str(form, "planId"));
+    refresh();
+    const parts = [r.created === 1 ? "1 peça enviada para criação." : `${r.created} peças enviadas para criação.`];
+    if (r.videos) parts.push(r.videos === 1 ? "1 vídeo fica para marcar quando feito." : `${r.videos} vídeos ficam para marcar quando feitos.`);
+    if (r.stoppedBecause) parts.push(`Parou antes de terminar: ${r.stoppedBecause} Clique de novo para criar as ${r.pending} restantes.`);
+    return { message: parts.join(" ") };
+  });
+}
+
+export async function driveFolderAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const auth = await requireAuth();
+  return runAction(async () => {
+    const r = await setDriveFolder(auth, str(form, "clientId"), str(form, "folder"));
+    refresh();
+    return { message: str(form, "folder") ? (r.folderName ? `Pasta ligada: ${r.folderName}.` : "Pasta salva.") : "Pasta desligada." };
+  });
+}
+
+export async function driveImportAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const auth = await requireAuth();
+  return runAction(async () => {
+    const r = await importFromDrive(auth, str(form, "clientId"));
+    refresh();
+    const parts = [r.imported === 1 ? "1 arquivo importado." : `${r.imported} arquivos importados.`];
+    if (r.failed.length) parts.push(`${r.failed.length} recusado(s): ${r.failed.slice(0, 3).join("; ")}${r.failed.length > 3 ? "..." : ""}`);
+    if (r.remaining) parts.push(`Faltam ${r.remaining}: clique de novo para continuar.`);
+    return { message: parts.join(" ") };
   });
 }

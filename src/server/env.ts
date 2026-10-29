@@ -32,6 +32,10 @@ const EnvSchema = z.object({
   META_ACCESS_TOKEN: z.string().trim().optional(),
   META_IG_USER_ID: z.string().trim().optional(),
   META_GRAPH_VERSION: z.string().trim().regex(/^v\d+\.\d+$/).catch("v23.0").default("v23.0"),
+  // Google Drive (conta de serviço): importa fotos e vídeos da pasta de cada cliente.
+  GOOGLE_SERVICE_ACCOUNT_JSON: z.string().optional(),
+  // Limite por arquivo importado do Drive (vídeos costumam passar do limite de envio pela tela).
+  DRIVE_IMPORT_MAX_MB: z.coerce.number().min(1).max(500).catch(100).default(100),
   TRUST_PROXY: z
     .enum(["true", "false"])
     .default("false")

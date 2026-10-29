@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, use, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, use, useActionState, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import type { ActionState } from "@/server/actions";
 import { cx } from "./ui";
 
 type Toast = { id: number; tone: "success" | "error"; text: string };
@@ -46,4 +47,18 @@ function ToastItem({ toast, onDone }: { toast: Toast; onDone: () => void }) {
       </button>
     </div>
   );
+}
+
+/**
+ * useActionState que avisa o resultado (toast) assim que a ação termina. O
+ * aviso sai do próprio retorno da ação: aparece mesmo quando o formulário some
+ * da tela com a atualização (ex.: botão trocado depois de concluir).
+ */
+export function useToastAction<T>(serverAction: (prev: ActionState<T>, form: FormData) => Promise<ActionState<T>>) {
+  const toast = useToast();
+  return useActionState(async (prev: ActionState<T>, form: FormData) => {
+    const r = await serverAction(prev, form);
+    if (r.status === "ok" && r.message) toast("success", r.message);
+    return r;
+  }, { status: "idle" } as ActionState<T>);
 }

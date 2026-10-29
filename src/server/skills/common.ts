@@ -1,7 +1,7 @@
 import type { Briefing } from "@/lib/content/briefing";
 
 /** Blocos com conteúdo fornecido por usuários (dados, nunca instruções). */
-export const DATA_TAGS = ["contexto_global_da_agencia", "contexto_do_cliente", "memoria_do_cliente", "briefing", "pauta", "titulos_recentes", "peca_para_revisao"] as const;
+export const DATA_TAGS = ["contexto_global_da_agencia", "contexto_do_cliente", "memoria_do_cliente", "briefing", "pauta", "titulos_recentes", "peca_para_revisao", "tema_do_mes"] as const;
 
 /** Regras editoriais compartilhadas por todas as skills de IA. */
 export const SHARED_RULES = `

@@ -60,6 +60,8 @@ export async function deleteContents(auth: AuthContext, ids: string[]): Promise<
       "UPDATE ai_runs SET content_item_id = NULL, input_summary = '{}'::jsonb, output = NULL WHERE organization_id = $1 AND content_item_id = ANY($2::uuid[])",
       [org, delIds],
     );
+    // Pauta da linha editorial volta a ficar planejada (a peça pode ser criada de novo).
+    await tx.query("UPDATE editorial_items SET status = 'planned', content_item_id = NULL WHERE content_item_id = ANY($1::uuid[])", [delIds]);
     await allowPurge(tx);
     await tx.query("DELETE FROM content_items WHERE id = ANY($1::uuid[]) AND organization_id = $2", [delIds, org]);
     for (const r of deletable) {

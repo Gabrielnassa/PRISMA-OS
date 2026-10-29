@@ -23,6 +23,9 @@ x-app: &app
     OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     OPENAI_MODEL: ${OPENAI_MODEL:-gpt-6.1-sol}
     AI_PROVIDER: ${AI_PROVIDER:-}
+    # Opcional: pasta do Google Drive de cada cliente (conta de serviço, em base64).
+    GOOGLE_SERVICE_ACCOUNT_JSON: ${GOOGLE_SERVICE_ACCOUNT_JSON:-}
+    DRIVE_IMPORT_MAX_MB: ${DRIVE_IMPORT_MAX_MB:-100}
     # Opcional: cores da marca pelo @ do Instagram (API oficial da Meta).
     META_ACCESS_TOKEN: ${META_ACCESS_TOKEN:-}
     META_IG_USER_ID: ${META_IG_USER_ID:-}

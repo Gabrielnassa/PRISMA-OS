@@ -9,10 +9,16 @@ import { instagramStatus } from "@/server/integrations/instagram";
 import { listContents } from "@/server/services/content";
 import { getCostSummary } from "@/server/services/costs";
 import { getClientDeletionSummary } from "@/server/services/deletion";
+import { getPackageOverview } from "@/server/services/packages";
+import { currentMonth, getEditorialPlan, shiftMonth } from "@/server/services/editorial";
+import { getDriveLink } from "@/server/services/drive";
+import { driveStatus } from "@/server/integrations/google-drive";
+import { getProvider } from "@/server/ai/gateway";
+import { EDITORIAL_FORMAT_LABELS, monthLabel } from "@/lib/content/editorial";
 import { can } from "@/server/authz/permissions";
 import { NotFoundError } from "@/server/errors";
 import { brandCompleteness } from "@/lib/brand";
-import { Alert, Badge, Card, CardHeader, EmptyState, LinkButton, PageHeader, TabLinks, formatDateTime, formatUsd } from "@/components/ui";
+import { Alert, Badge, Card, CardHeader, EmptyState, LinkButton, PageHeader, Stat, StatGroup, TabLinks, formatDateTime, formatRelative, formatUsd } from "@/components/ui";
 import { ContentTable } from "@/components/content-table";
 import { toContentRows } from "@/components/content-rows";
 import { MediaUploader } from "@/components/media-uploader";
@@ -21,6 +27,8 @@ import { deleteMediaAction } from "../../midia/actions";
 import { memoryStatusAction } from "../actions";
 import { deleteContentsAction } from "../../conteudos/actions";
 import { DeleteClientCard } from "./delete-client";
+import { ApproveForm, EditorialItems, PackageForm, ProposeForm } from "./editorial-panel";
+import { DrivePanel } from "./drive-panel";
 import { BrandForm } from "./brand-form";
 import { AddMemoryForm } from "./memory-panel";
 import { BudgetForm, ClientSettingsForm } from "./settings-forms";
@@ -30,15 +38,16 @@ export const metadata: Metadata = { title: "Cliente" };
 const TABS = [
   ["visao", "Visão geral"],
   ["marca", "Perfil da marca"],
+  ["editorial", "Linha editorial"],
   ["memoria", "Memória"],
   ["arquivos", "Arquivos"],
   ["conteudos", "Conteúdos"],
 ] as const;
 
-export default async function ClientPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ aba?: string; novo?: string }> }) {
+export default async function ClientPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ aba?: string; novo?: string; mes?: string }> }) {
   const auth = await requireAuth();
   const { id } = await params;
-  const { aba, novo } = await searchParams;
+  const { aba, novo, mes } = await searchParams;
   const tab = TABS.some(([t]) => t === aba) ? aba! : "visao";
   const client = await getClient(auth, id).catch((err) => {
     if (err instanceof NotFoundError) notFound();
@@ -71,6 +80,7 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
       {tab === "memoria" ? <MemoryTab auth={auth} clientId={client.id} /> : null}
       {tab === "arquivos" ? <FilesTab auth={auth} clientId={client.id} /> : null}
       {tab === "conteudos" ? <ContentsTab auth={auth} clientId={client.id} /> : null}
+      {tab === "editorial" ? <EditorialTab auth={auth} clientId={client.id} month={mes} archived={client.status === "archived"} /> : null}
     </>
   );
 }
@@ -215,9 +225,26 @@ async function MemoryTab({ auth, clientId }: { auth: Auth; clientId: string }) {
 }
 
 async function FilesTab({ auth, clientId }: { auth: Auth; clientId: string }) {
-  const media = await listMedia(auth, { clientId, limit: 200 });
+  const [media, drive] = await Promise.all([listMedia(auth, { clientId, limit: 200 }), getDriveLink(auth, clientId)]);
+  const ds = driveStatus();
   return (
     <div className="flex flex-col gap-6">
+      <Card>
+        <CardHeader
+          title="Pasta do Google Drive"
+          description="Coloque as fotos e os vídeos do cliente numa pasta do Drive e traga para a biblioteca com um clique."
+          actions={drive?.lastImportAt ? <span className="text-[12.5px] text-ink-400" title={formatDateTime(drive.lastImportAt)}>Última importação {formatRelative(drive.lastImportAt)}</span> : null}
+        />
+        <DrivePanel
+          clientId={clientId}
+          folderLink={drive ? `https://drive.google.com/drive/folders/${drive.folderId}` : ""}
+          folderName={drive?.folderName ?? null}
+          configured={ds.configured}
+          serviceEmail={ds.serviceEmail}
+          canEdit={can(auth.role, "client.update")}
+          canImport={can(auth.role, "media.upload")}
+        />
+      </Card>
       {can(auth.role, "media.upload") ? (
         <Card>
           <CardHeader title="Enviar arquivos" description="Prefira fotografias reais do cliente ou imagens licenciadas." />
@@ -236,5 +263,89 @@ async function ContentsTab({ auth, clientId }: { auth: Auth; clientId: string })
     <Card>
       <ContentTable items={toContentRows(items)} showClient={false} onDelete={can(auth.role, "content.delete") ? deleteContentsAction : undefined} />
     </Card>
+  );
+}
+
+async function EditorialTab({ auth, clientId, month: requested, archived }: { auth: Auth; clientId: string; month?: string; archived: boolean }) {
+  const month = requested && /^\d{4}-(0[1-9]|1[0-2])$/.test(requested) ? requested : currentMonth();
+  const [overview, plan] = await Promise.all([getPackageOverview(auth, clientId), getEditorialPlan(auth, clientId, month)]);
+  const { pkg, estimate, produced } = overview;
+  const total = pkg.posts + pkg.carousels + pkg.stories + pkg.videos;
+  const canEdit = can(auth.role, "content.create") && !archived;
+  const isCurrent = month === currentMonth();
+  const pendingPieces = plan ? plan.items.filter((i) => i.status === "planned" && i.format !== "video").length : 0;
+  const blank = plan ? plan.items.filter((i) => i.status === "planned" && i.format !== "video" && (i.title === "Pauta a definir" || i.brief.trim().length < 10)).length : 0;
+  const href = (m: string) => `/clientes/${clientId}?aba=editorial&mes=${m}`;
+  const counts: Array<[keyof typeof produced, string]> = [
+    ["carousels", "carousel"],
+    ["posts", "post"],
+    ["stories", "story"],
+    ["videos", "video"],
+  ];
+  return (
+    <div className="flex flex-col gap-6">
+      <StatGroup className="md:grid-cols-3">
+        <Stat label="Pacote do mês" value={total ? `${total} peça${total === 1 ? "" : "s"}` : "—"} hint={total ? counts.filter(([k]) => pkg[k]).map(([k, f]) => `${pkg[k]} ${EDITORIAL_FORMAT_LABELS[f as "post"].toLowerCase()}${pkg[k] === 1 ? "" : "s"}`).join(" · ") : "Defina abaixo quantas peças o cliente contratou."} />
+        <Stat label="Produzido neste mês" value={total ? `${produced.posts + produced.carousels + produced.stories + produced.videos} de ${total}` : "—"} hint="Peças criadas no mês e vídeos marcados como feitos." />
+        <Stat
+          label="Custo de IA estimado"
+          tone="iris"
+          value={estimate.totalUsd === null ? "—" : formatUsd(estimate.totalUsd, 2)}
+          hint={estimate.totalUsd === null ? estimate.note : `${estimate.aiPieces} peças × ${formatUsd(estimate.perPieceUsd, 3)}${estimate.planUsd ? ` + pauta ${formatUsd(estimate.planUsd, 3)}` : ""} · ${estimate.basis === "measured" ? "média real" : "estimativa pela tarifa"}`}
+        />
+      </StatGroup>
+      {estimate.totalUsd !== null ? <p className="-mt-3 text-[12.5px] text-ink-400">{estimate.note} Gasto real do cliente neste mês: {formatUsd(overview.monthSpendUsd, 2)}.</p> : null}
+
+      {can(auth.role, "client.package") ? (
+        <Card>
+          <CardHeader title="Pacote mensal" description="Quantas peças por mês o cliente contratou. A linha editorial é montada a partir daqui." />
+          <PackageForm clientId={clientId} pkg={pkg} />
+        </Card>
+      ) : null}
+
+      <Card>
+        <CardHeader
+          title={`Linha editorial · ${monthLabel(month)}`}
+          description={
+            plan
+              ? plan.status === "approved"
+                ? `Aprovada${plan.approvedByName ? ` por ${plan.approvedByName}` : ""} em ${formatDateTime(plan.approvedAt)}.`
+                : `Rascunho${plan.fromAi ? " proposto pela IA" : ""}: revise, ajuste e aprove.`
+              : "Uma pauta para cada peça do pacote. A IA propõe; a equipe revisa e aprova; aí as peças são criadas."
+          }
+          actions={
+            <span className="flex items-center gap-1">
+              <LinkButton href={href(shiftMonth(month, -1))} variant="ghost" size="sm" aria-label="Mês anterior">
+                ←
+              </LinkButton>
+              {!isCurrent ? (
+                <LinkButton href={href(currentMonth())} variant="ghost" size="sm">
+                  Mês atual
+                </LinkButton>
+              ) : null}
+              <LinkButton href={href(shiftMonth(month, 1))} variant="ghost" size="sm" aria-label="Próximo mês">
+                →
+              </LinkButton>
+            </span>
+          }
+        />
+        {plan && plan.items.length ? <EditorialItems items={plan.items} month={month} canEdit={canEdit} /> : null}
+        {plan && canEdit ? (
+          <div className="border-t border-ink-800 px-5 py-4">
+            <ApproveForm planId={plan.id} approved={plan.status === "approved"} pending={pendingPieces} blank={blank} />
+          </div>
+        ) : null}
+        {canEdit && (!plan || plan.status === "draft") ? (
+          <div className={plan ? "border-t border-ink-800" : ""}>
+            {total === 0 ? (
+              <p className="p-5 text-[13.5px] text-ink-400">Defina o pacote mensal do cliente para montar a linha editorial.</p>
+            ) : (
+              <ProposeForm clientId={clientId} month={month} hasPlan={Boolean(plan)} aiReady={Boolean(getProvider())} />
+            )}
+          </div>
+        ) : null}
+        {!plan && !canEdit ? <p className="p-5 text-[13.5px] text-ink-400">Nenhuma linha editorial para este mês.</p> : null}
+      </Card>
+    </div>
   );
 }

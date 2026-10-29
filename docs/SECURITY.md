@@ -83,6 +83,7 @@ A organização pode exigir que o aprovador seja diferente de quem enviou (Confi
 
 - Somente variáveis de ambiente (`.env` fora do Git; `.env.example` sem valores reais).
 - A chave da IA (Anthropic ou OpenAI) nunca chega ao navegador; a interface mostra apenas se há provedor configurado. Na OpenAI, as chamadas usam `store: false`: as respostas não ficam guardadas na conta.
+- A chave da conta de serviço do Google (`GOOGLE_SERVICE_ACCOUNT_JSON`) fica só no servidor; o acesso ao Drive é somente leitura e limitado às pastas compartilhadas com a conta de serviço.
 - O token da Meta (`META_ACCESS_TOKEN`) também fica só no servidor e vai no cabeçalho `Authorization`, nunca na URL (que pode parar em logs).
 - Erros inesperados são registrados no servidor e o usuário recebe mensagem genérica.
 

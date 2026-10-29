@@ -3,6 +3,7 @@ import { requireAuth } from "@/server/auth/next";
 import { healthChecks } from "@/server/services/health";
 import { providerStatus } from "@/server/ai/gateway";
 import { instagramStatus } from "@/server/integrations/instagram";
+import { driveStatus } from "@/server/integrations/google-drive";
 import { can } from "@/server/authz/permissions";
 import { Badge, Card, CardHeader, PageHeader } from "@/components/ui";
 import { TestProviderForm } from "./test-form";
@@ -22,7 +23,7 @@ const PLANNED = [
 
 export default async function IntegrationsPage() {
   const auth = await requireAuth();
-  const [{ checks }, provider, instagram] = [await healthChecks(), providerStatus(), instagramStatus()];
+  const [{ checks }, provider, instagram, drive] = [await healthChecks(), providerStatus(), instagramStatus(), driveStatus()];
   return (
     <>
       <PageHeader title="Integrações" description="Status verificado em tempo real. Integrações não conectadas aparecem como pendentes — nunca simuladas." />
@@ -47,6 +48,24 @@ export default async function IntegrationsPage() {
                   <code className="rounded-[4px] bg-ink-800 px-1 font-mono text-[12.5px] text-ink-100">AI_PROVIDER</code> escolhe qual usar.
                 </li>
                 <li>Reinicie a aplicação e o worker e use “Testar conexão”.</li>
+              </ol>
+            ) : null}
+          </div>
+        </Card>
+        <Card>
+          <CardHeader
+            title="Google Drive: fotos e vídeos dos clientes"
+            description="Leitura das pastas de cada cliente pela API oficial do Drive, com uma conta de serviço do Google. Só leitura."
+            actions={drive.configured ? <Badge tone="success">Configurado</Badge> : <Badge>Não configurado</Badge>}
+          />
+          <div className="space-y-3 p-5 text-sm">
+            <p className="text-ink-400">{drive.detail}</p>
+            {!drive.configured ? (
+              <ol className="list-decimal space-y-1 pl-5 text-ink-300">
+                <li>No Google Cloud (console.cloud.google.com), crie um projeto, ative a API do Google Drive e crie uma conta de serviço.</li>
+                <li>Gere uma chave JSON da conta de serviço e defina o conteúdo dela (ou em base64) em <code className="rounded-[4px] bg-ink-800 px-1 font-mono text-[12.5px] text-ink-100">GOOGLE_SERVICE_ACCOUNT_JSON</code> no ambiente do servidor.</li>
+                <li>Em cada pasta de cliente no Drive, use Compartilhar e adicione o e-mail da conta de serviço como Leitor.</li>
+                <li>Na página do cliente, aba Arquivos, cole o link da pasta e use “Importar agora”.</li>
               </ol>
             ) : null}
           </div>

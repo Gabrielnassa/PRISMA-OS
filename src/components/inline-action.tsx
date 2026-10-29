@@ -1,10 +1,9 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
 import type { ActionState } from "@/server/actions";
 import { ActionForm, useFormPending } from "./form";
 import { cx } from "./ui";
-import { useToast } from "./toast";
+import { useToastAction } from "./toast";
 
 function InlineButton({ label, pendingText, tone }: { label: string; pendingText: string; tone: "neutral" | "danger" }) {
   const pending = useFormPending();
@@ -42,11 +41,7 @@ export function InlineAction({
   tone?: "neutral" | "danger";
   className?: string;
 }) {
-  const [state, dispatch] = useActionState(action, { status: "idle" });
-  const toast = useToast();
-  useEffect(() => {
-    if (state.status === "ok" && state.message) toast("success", state.message);
-  }, [state, toast]);
+  const [state, dispatch] = useToastAction(action);
   return (
     <ActionForm action={dispatch} state={state} confirmMessage={confirmMessage} confirmLabel={label} danger={tone === "danger"} className={className}>
       {Object.entries(fields).map(([name, value]) => (

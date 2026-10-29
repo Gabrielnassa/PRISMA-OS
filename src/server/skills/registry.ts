@@ -1,18 +1,19 @@
 import { artDirectorSkill } from "./art-director";
 import { copywriterSkill } from "./copywriter";
+import { editorialSkill } from "./editorial";
 import { ideasSkill } from "./ideas";
 import { reviewerSkill } from "./reviewer";
 import type { SkillMeta } from "./types";
 
-export { artDirectorSkill, copywriterSkill, ideasSkill, reviewerSkill };
+export { artDirectorSkill, copywriterSkill, editorialSkill, ideasSkill, reviewerSkill };
 
 /** Skills implementadas nesta versão (exibidas em Agentes e skills). */
-export const SKILLS: SkillMeta[] = [ideasSkill, copywriterSkill, artDirectorSkill, reviewerSkill];
+export const SKILLS: SkillMeta[] = [editorialSkill, ideasSkill, copywriterSkill, artDirectorSkill, reviewerSkill];
 
 /** Skills previstas na especificação e ainda não implementadas (transparência no roadmap). */
 export const PLANNED_SKILLS: Array<{ name: string; specSection: string; phase: string }> = [
   { name: "Estrategista de marketing", specSection: "9.1", phase: "Fase 3" },
-  { name: "Planejador editorial (calendário completo)", specSection: "9.2", phase: "Fase 3" },
+  { name: "Calendário editorial com publicação agendada", specSection: "9.2", phase: "Fase 4" },
   { name: "Produtor de vídeos", specSection: "9.6", phase: "Fase 5" },
   { name: "Desenvolvedor de landing pages", specSection: "9.7", phase: "Fase 5" },
   { name: "Especialista em anúncios", specSection: "9.8", phase: "Fase 6" },

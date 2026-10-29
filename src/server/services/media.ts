@@ -54,12 +54,15 @@ export async function uploadMedia(
   clientId: string,
   file: { filename: string; data: Buffer },
   meta: z.input<typeof UploadMediaSchema>,
+  limits: { maxMb?: number } = {},
 ): Promise<{ id: string; duplicate: boolean }> {
   assertCan(auth.role, "media.upload");
   const opts = UploadMediaSchema.parse(meta);
-  const maxBytes = env().MAX_UPLOAD_MB * 1024 * 1024;
+  // Envio pela tela: MAX_UPLOAD_MB. Importação do Drive pode passar um limite próprio.
+  const maxMb = limits.maxMb ?? env().MAX_UPLOAD_MB;
+  const maxBytes = maxMb * 1024 * 1024;
   if (file.data.length === 0) throw new ValidationError("O arquivo está vazio.");
-  if (file.data.length > maxBytes) throw new ValidationError(`O arquivo excede o limite de ${env().MAX_UPLOAD_MB} MB.`);
+  if (file.data.length > maxBytes) throw new ValidationError(`O arquivo excede o limite de ${maxMb} MB.`);
   const type = sniffType(file.data);
   if (!type) throw new ValidationError("Formato não suportado. Envie PNG, JPEG, GIF, SVG, PDF, MP4 ou MOV.");
   // O renderizador final (resvg) não decodifica WebP: a foto sumiria da peça exportada.

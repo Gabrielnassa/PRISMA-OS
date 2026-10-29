@@ -29,6 +29,8 @@ Central operacional de marketing com IA para agências que atendem vários clien
 | Auditoria de ações, custos por execução de IA (por modelo, inclusive fallback), tetos mensais por cliente | Histórico, Custos e consumo |
 | Saúde do sistema e teste real de conexão com a IA | Integrações, `GET /api/health` |
 | IA à escolha: Claude (Anthropic) ou ChatGPT (OpenAI), com custos por modelo nos dois | Integrações, `.env` |
+| Pacote mensal por cliente com custo de IA estimado e linha editorial do mês (IA propõe, equipe aprova, peças criadas com as fotos do cliente) | Clientes → Linha editorial |
+| Importação de fotos e vídeos da pasta do Google Drive de cada cliente | Clientes → Arquivos |
 
 ## Rodar pelo GitHub (Codespaces)
 
