@@ -67,3 +67,16 @@ Observação para o dono: a assinatura do ChatGPT (Plus/Pro) **não** dá chave 
 - Antes de cada push: `npm run typecheck`, `npm run lint`, `npm test`, `npm run test:e2e`, `npm run build` e `npm run test:e2e:prod`.
 - Conferir visualmente cada página (desktop e celular) com capturas.
 - Ao final: resumo em português para o dono, com o que mudou, prints e como atualizar o Codespace (`bash .devcontainer/atualizar.sh`).
+
+## E. Pedidos do sócio (29/10/2026)
+
+Como a agência trabalha: cada cliente tem um **pacote mensal**, normalmente 8 posts (4 cards ou carrosséis e 4 vídeos curtos). As fotos e os vídeos do cliente ficam numa pasta (ex.: Google Drive).
+
+1. **Pacote e estimativa de custo por cliente**: cadastrar o pacote do mês por cliente (quantidade por formato); mostrar quanto foi produzido no mês × o contratado e uma estimativa do custo de IA por cliente, calculada com o custo médio real por peça quando houver execuções reais e, antes disso, com a tarifa vigente e um consumo típico, sempre identificada como **estimativa**. Usar isso também para sugerir o teto mensal.
+2. **Linha editorial com aprovação**: a IA propõe as pautas do mês de acordo com o pacote e o perfil da marca; a equipe edita e aprova; ao aprovar, o sistema cria as peças na fila usando as fotos da biblioteca do cliente; tudo passa pela aprovação de versão que já existe. (Começo da fase 3: calendário editorial.)
+3. **Pasta do Google Drive por cliente**: ligar uma pasta do Drive a cada cliente e importar fotos e vídeos para a biblioteca, sem duplicar (hash), com botão "Importar agora" e, se possível, sincronização periódica pela fila. Credenciais só por variável de ambiente (conta de serviço do Google com a pasta compartilhada com ela, ou OAuth). Sem credencial, a tela explica o que falta; nada simulado. Testar contra API simulada se o Google não estiver acessível daqui.
+4. **Publicar depois de aprovar (Instagram/Facebook)**: precisa da conta Meta Business de cada cliente conectada (OAuth) e de permissões revisadas pela Meta (`instagram_content_publish`). Nesta etapa: deixar o desenho pronto e documentado (conexão por cliente, botão "Publicar"/"Agendar" só para versão aprovada, confirmação explícita, registro na auditoria). Implementar só a parte que dá para testar de verdade; nada de publicar automaticamente sem confirmação.
+5. **Vídeos**: a biblioteca já aceita MP4 e MOV; criação/edição de vídeo fica para a fase seguinte. No pacote, os vídeos contam como itens planejados e acompanhados, feitos fora do sistema por enquanto.
+6. **Teste com cliente real**: deixar o caminho pronto para subir as fotos de um cliente piloto e gerar com a chave real (Claude ou OpenAI) assim que ela estiver configurada.
+
+Ordem sugerida: C (chave) → A → B → E1 → E2 → E3 → E4 (preparação).
