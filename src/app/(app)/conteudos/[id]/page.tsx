@@ -21,6 +21,8 @@ import { GenerationStatus } from "./generation-status";
 import { QualityPanel } from "./quality-panel";
 import { AiReviewPanel, ApprovalPanel, CommentsPanel, RetryPanel } from "./review-panels";
 import { PublishForm } from "@/components/publish-form";
+import { AssignmentForm } from "./assignment";
+import { assignableMembers } from "@/server/services/tasks";
 import { PublicationList } from "@/components/publication-list";
 import { compatibility, listPublications, needsPublicUrl, publicUrlProblem, type PublicationKind } from "@/server/services/publications";
 import { listAccounts, NETWORK_LABELS } from "@/server/services/social-accounts";
@@ -45,6 +47,11 @@ const ACTION_LABELS: Record<string, string> = {
   "ai.run_failed": "Execução de IA falhou",
 };
 
+/** Hoje em Brasília (AAAA-MM-DD). */
+function todayBrasilia(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
+}
+
 export default async function ContentPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ comparar?: string; com?: string }> }) {
   const auth = await requireAuth();
   const { id } = await params;
@@ -60,6 +67,7 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
   ]);
   const provider = providerStatus();
   const approvedVersion = detail.status === "approved" ? detail.versions.find((v) => v.id === detail.approvedVersionId) : undefined;
+  const members = await assignableMembers(auth, detail.clientId);
   const [publications, accounts, approvedDoc] = await Promise.all([
     listPublications(auth, { contentId: id }),
     approvedVersion && can(auth.role, "social.publish") ? listAccounts(auth, detail.clientId) : Promise.resolve([]),
@@ -202,6 +210,10 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
 
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
         <div className="flex min-w-0 flex-col gap-6">
+          <Card>
+            <CardHeader title="Responsável e prazo" description={detail.dueDate && !["approved", "published", "archived"].includes(detail.status) && detail.dueDate < todayBrasilia() ? "Prazo vencido" : undefined} />
+            <AssignmentForm contentId={id} members={members} assigneeId={detail.assignee?.id ?? null} dueDate={detail.dueDate} canEdit={can(auth.role, "content.edit")} />
+          </Card>
           {current ? (
             <ApprovalPanel
               contentId={id}
@@ -219,7 +231,14 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
             <Card>
               <CardHeader title="Publicar" description={`Versão ${publish.versionNumber}, a aprovada`} />
               <div className="p-5">
-                <PublishForm target={{ contentId: id }} accounts={publish.accounts} defaultCaption={publish.caption} defaultTitle={detail.title} isVideo={false} />
+                <PublishForm
+                  target={{ contentId: id }}
+                  accounts={publish.accounts}
+                  defaultCaption={publish.caption}
+                  defaultTitle={detail.title}
+                  isVideo={false}
+                  suggestedAt={detail.dueDate && detail.dueDate > todayBrasilia() ? `${detail.dueDate}T10:00` : null}
+                />
               </div>
             </Card>
           ) : null}

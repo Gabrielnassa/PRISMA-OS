@@ -40,7 +40,7 @@ import { ChoosePageForm } from "./redes-panel";
 import { disconnectAccountAction } from "../actions";
 import { listAccounts, NETWORK_LABELS, pendingPages, type Network, type SocialAccount } from "@/server/services/social-accounts";
 import { APP_PROVIDERS, appCredentials, type AppProvider } from "@/server/services/integration-apps";
-import { listPublications, PUBLICATION_STATUS_LABELS } from "@/server/services/publications";
+import { feedPreview, listPublications, PUBLICATION_STATUS_LABELS } from "@/server/services/publications";
 import { buttonClass } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Cliente" };
@@ -76,7 +76,14 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
         }
         title={client.name}
         description={client.segment || "Segmento não informado"}
-        actions={can(auth.role, "content.create") && client.status !== "archived" ? <LinkButton href={`/criar?cliente=${client.id}`}>Criar conteúdo</LinkButton> : null}
+        actions={
+          <>
+            <LinkButton href={`/relatorios/${client.id}`} variant="secondary">
+              Relatório do mês
+            </LinkButton>
+            {can(auth.role, "content.create") && client.status !== "archived" ? <LinkButton href={`/criar?cliente=${client.id}`}>Criar conteúdo</LinkButton> : null}
+          </>
+        }
       />
       <TabLinks tabs={TABS.map(([t, label]) => ({ id: t, label, href: `/clientes/${client.id}?aba=${t}` }))} active={tab} />
       {novo === "1" && tab === "marca" ? (
@@ -440,11 +447,12 @@ function AccountRow({ a, canConnect }: { a: SocialAccount; canConnect: boolean }
 
 async function RedesTab({ auth, clientId, ok, erro, escolher, archived }: { auth: Auth; clientId: string; ok?: string; erro?: string; escolher?: string; archived: boolean }) {
   const canConnect = can(auth.role, "social.connect") && !archived;
-  const [accounts, ready, pubs, pending] = await Promise.all([
+  const [accounts, ready, pubs, pending, feed] = await Promise.all([
     listAccounts(auth, clientId),
     Promise.all(APP_PROVIDERS.map(async (p) => [p, Boolean(await appCredentials(auth.organizationId, p).catch(() => null))] as const)),
     listPublications(auth, { clientId, limit: 8 }),
     escolher ? pendingPages(auth, escolher).catch(() => null) : null,
+    feedPreview(auth, clientId),
   ]);
   const configured = Object.fromEntries(ready) as Record<AppProvider, boolean>;
   return (
@@ -493,6 +501,32 @@ async function RedesTab({ auth, clientId, ok, erro, escolher, archived }: { auth
           );
         })}
       </div>
+      {feed.length ? (
+        <Card>
+          <CardHeader title="Prévia do feed do Instagram" description="Aprovadas sem data no topo, depois agendadas e publicadas" />
+          <ul className="grid max-w-xl grid-cols-3 gap-1 p-5">
+            {feed.map((t) => (
+              <li key={t.contentId} className="relative">
+                <Link href={`/conteudos/${t.contentId}`} title={t.title} className="block">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`/api/contents/${t.contentId}/versions/${t.versionId}/slides/0`} alt={t.title} className="aspect-[4/5] w-full bg-ink-850 object-cover" loading="lazy" />
+                  <span
+                    className={
+                      t.state === "published"
+                        ? "absolute bottom-1 left-1 rounded bg-black/70 px-1.5 text-[10.5px] text-emerald-200"
+                        : t.state === "scheduled"
+                          ? "absolute bottom-1 left-1 rounded bg-black/70 px-1.5 text-[10.5px] text-sky-200"
+                          : "absolute bottom-1 left-1 rounded bg-black/70 px-1.5 text-[10.5px] text-amber-200"
+                    }
+                  >
+                    {t.state === "published" ? "No ar" : t.state === "scheduled" ? (t.date ? `${t.date.slice(8, 10)}/${t.date.slice(5, 7)}` : "Agendada") : "Sem data"}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : null}
       <Card>
         <CardHeader title="Publicações recentes" actions={<LinkButton href={`/publicacoes?cliente=${clientId}`} variant="ghost" size="sm">Ver todas</LinkButton>} />
         {pubs.length ? (

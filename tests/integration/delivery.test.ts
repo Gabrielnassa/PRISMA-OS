@@ -245,3 +245,44 @@ describe("vídeo da biblioteca", () => {
     expect(bodyOf(init.init)).toMatchObject({ source_info: { source: "FILE_UPLOAD", video_size: mp4.length, total_chunk_count: 1 }, post_info: { privacy_level: "SELF_ONLY" } });
   });
 });
+
+describe("relatório do mês", () => {
+  it("conta entregas, publicações com métricas e aprovações; o link do cliente é só do mês e do cliente", async () => {
+    const { owner } = await newOrg();
+    const { id: clientId } = await createClient(owner, { name: "Coli Loterias" });
+    await setPackage(owner, clientId, { posts: 4, carousels: 0, stories: 0, videos: 0 });
+    const { contentId, approvalId } = await pieceAwaitingApproval(owner, clientId);
+    const { decideApproval } = await import("../../src/server/services/content");
+    await decideApproval(owner, approvalId, { decision: "approved", note: "Ok" });
+    // Uma publicação já no ar, com métricas lidas da rede.
+    const { many: q, systemCtx: sys, withTx: tx } = await import("../../src/server/db");
+    const piece = await getContent(owner, contentId);
+    await tx(sys("teste"), (t) =>
+      q(
+        t,
+        `INSERT INTO publications (organization_id, client_id, content_item_id, content_version_id, network, account_label, kind, status, scheduled_at, published_at, external_url, metrics)
+         VALUES ($1, $2, $3, $4, 'instagram', '@coli', 'image', 'published', now(), now(), 'https://www.instagram.com/p/x/', '{"likes": 40, "comments": 5, "reach": 900}')`,
+        [owner.organizationId, clientId, contentId, piece.approvedVersionId],
+      ),
+    );
+    const { monthlyReport, createReportLink, publicReport, publicReportCover } = await import("../../src/server/services/reports");
+    const month = currentMonth();
+    const r = await monthlyReport(owner, clientId, month);
+    expect(r).toMatchObject({ clientName: "Coli Loterias", contracted: 4, delivered: 1 });
+    expect(r.pieces.map((p) => p.contentId)).toEqual([contentId]);
+    expect(r.posts).toHaveLength(1);
+    expect(r.totals).toMatchObject({ likes: 40, comments: 5, reach: 900, withMetrics: 1 });
+    expect(r.approvals).toMatchObject({ approved: 1, adjustments: 0 });
+
+    const link = await createReportLink(owner, clientId, month);
+    const token = link.url.split("/").pop()!;
+    expect((await publicReport(token))!.pieces).toHaveLength(1);
+    expect((await publicReportCover(token, contentId))!.subarray(1, 4).toString()).toBe("PNG");
+    expect(await publicReportCover(token, crypto.randomUUID())).toBeNull();
+    expect(await publicReport("token-invalido-para-o-relatorio-123")).toBeNull();
+
+    const other = await newOrg("Outra");
+    await expect(monthlyReport(other.owner, clientId, month)).rejects.toThrow();
+    await expect(createReportLink(other.owner, clientId, month)).rejects.toThrow();
+  });
+});

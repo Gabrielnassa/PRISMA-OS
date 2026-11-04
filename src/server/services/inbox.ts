@@ -73,3 +73,16 @@ export async function markInboxRead(auth: AuthContext, id?: string): Promise<voi
     ),
   );
 }
+
+export async function unreadCount(auth: AuthContext): Promise<number> {
+  return withTx(userCtx(auth.userId), async (tx) => (await one<{ n: number }>(tx, "SELECT count(*)::int AS n FROM notifications WHERE organization_id = $1 AND user_id = $2 AND read_at IS NULL", [auth.organizationId, auth.userId])).n);
+}
+
+/** Abre um aviso: marca como lido e devolve o destino (só caminhos internos). */
+export async function openInboxItem(auth: AuthContext, id: string): Promise<string> {
+  if (!z.string().uuid().safeParse(id).success) return "/avisos";
+  const row = await withTx(userCtx(auth.userId), (tx) => many<{ href: string | null }>(tx, "SELECT href FROM notifications WHERE id = $1 AND user_id = $2", [id, auth.userId]));
+  await markInboxRead(auth, id);
+  const href = row[0]?.href;
+  return href && href.startsWith("/") && !href.startsWith("//") ? href : "/avisos";
+}

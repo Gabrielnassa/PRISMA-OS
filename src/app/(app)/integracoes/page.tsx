@@ -11,7 +11,7 @@ import { APP_PROVIDER_INFO, listAppStatus, type AppProvider, type AppStatus } fr
 import { publicUrlProblem } from "@/server/services/publications";
 import { getSmtpStatus } from "@/server/services/email";
 import { listWebhooks, WEBHOOK_EVENT_LABELS, WEBHOOK_EVENTS } from "@/server/services/webhooks";
-import { Alert, Badge, Card, CardHeader, PageHeader, SectionTitle, formatDateTime } from "@/components/ui";
+import { Alert, Badge, Card, CardHeader, Dot, PageHeader, SectionTitle, formatDateTime } from "@/components/ui";
 import { CopyButton } from "@/components/copy-button";
 import { InlineAction } from "@/components/inline-action";
 import { TestProviderForm } from "./test-form";
@@ -54,9 +54,18 @@ function StatusBadge({ ok, demo }: { ok: boolean; demo?: boolean }) {
 function AppCard({ s, canManage }: { s: AppStatus; canManage: boolean }) {
   const info = APP_PROVIDER_INFO[s.provider];
   return (
-    <Card>
-      <CardHeader title={`${info.label}: ${info.networks}`} actions={<StatusBadge ok={s.configured} />} />
-      <div className="space-y-4 p-5 text-sm">
+    <Card className="flex h-full flex-col">
+      <div className="border-b border-ink-800 px-5 pb-3.5 pt-4">
+        <h3 className="text-[15px] font-semibold tracking-[-0.015em] text-ink-50">{info.networks}</h3>
+        <div className="mt-1 flex items-center gap-2 text-[13px] text-ink-400">
+          <span>{info.app}</span>
+          <span aria-hidden>·</span>
+          <Dot tone={s.configured ? "success" : "neutral"} className="text-[13px]">
+            {s.configured ? "Conectado" : "Não conectado"}
+          </Dot>
+        </div>
+      </div>
+      <div className="flex flex-1 flex-col gap-5 p-5 text-sm">
         {s.source === "env" ? (
           <p className="text-ink-300">
             Chaves definidas na configuração do servidor ({code(info.env[0])}). App {code(s.publicId ?? "")}.
@@ -65,24 +74,24 @@ function AppCard({ s, canManage }: { s: AppStatus; canManage: boolean }) {
           <AppKeysForm provider={s.provider} publicLabel={info.publicLabel} secretLabel={info.secretLabel} publicId={s.publicId} secretHint={s.secretHint} />
         ) : null}
         {s.redirectUri ? (
-          <div>
-            <div className="text-[12.5px] font-medium text-ink-300">Endereço de retorno do login</div>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <code className="select-all break-all rounded-[4px] bg-ink-950 px-2 py-1 font-mono text-[12px] text-ink-100 ring-1 ring-ink-700">{s.redirectUri}</code>
+          <div className="flex flex-col gap-1.5">
+            <div className="text-[13px] font-medium text-ink-200">Endereço de retorno do login</div>
+            <code className="select-all break-all rounded-[6px] bg-ink-950 px-3 py-2 font-mono text-[12px] leading-relaxed text-ink-100 ring-1 ring-ink-700">{s.redirectUri}</code>
+            <div>
               <CopyButton text={s.redirectUri} />
             </div>
           </div>
         ) : null}
-        <details className="group">
-          <summary className="cursor-pointer text-[13px] text-iris-300 hover:underline">Como criar o app</summary>
-          <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-[13px] leading-relaxed text-ink-300">
-            {APP_STEPS[s.provider].map((step, i) => (
-              <li key={i}>{step}</li>
-            ))}
-          </ol>
-        </details>
-        {canManage && s.source === "saved" ? (
-          <div className="border-t border-ink-800 pt-3">
+        <div className="mt-auto flex flex-col gap-3 border-t border-ink-800 pt-4">
+          <details className="group">
+            <summary className="cursor-pointer text-[13px] text-iris-300 hover:underline">Como criar o app</summary>
+            <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-[13px] leading-relaxed text-ink-300">
+              {APP_STEPS[s.provider].map((step, i) => (
+                <li key={i}>{step}</li>
+              ))}
+            </ol>
+          </details>
+          {canManage && s.source === "saved" ? (
             <InlineAction
               action={removeAppAction}
               fields={{ provider: s.provider }}
@@ -90,8 +99,8 @@ function AppCard({ s, canManage }: { s: AppStatus; canManage: boolean }) {
               tone="danger"
               confirmMessage={`Remover as chaves da ${info.label}? As contas já conectadas param de renovar o acesso e as publicações agendadas nessa plataforma vão falhar.`}
             />
-          </div>
-        ) : null}
+          ) : null}
+        </div>
       </div>
     </Card>
   );

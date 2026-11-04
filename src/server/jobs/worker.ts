@@ -6,6 +6,7 @@ import { GENERATE_JOB, markGenerationFailed } from "../services/content";
 import { METRICS_JOB, PUBLISH_JOB, handleMetrics, handlePublish, markPublicationFailed } from "../services/publications";
 import { WEBHOOK_JOB, handleWebhook } from "../services/webhooks";
 import { EMAIL_JOB, handleEmail } from "../services/email";
+import { runMaintenance } from "../services/maintenance";
 
 type Handler = (job: Job, auth: NonNullable<Awaited<ReturnType<typeof workerAuth>>>) => Promise<Record<string, unknown>>;
 
@@ -88,11 +89,17 @@ export async function runWorkerLoop(opts: { pollMs: number; lockTimeoutMs: numbe
   const id = workerId();
   log("info", "worker.started", { workerId: id });
   let lastRecovery = 0;
+  let lastMaintenance = 0;
   while (!opts.signal.aborted) {
     try {
       if (Date.now() - lastRecovery > 30_000) {
         await recoverStale(opts.lockTimeoutMs);
         lastRecovery = Date.now();
+      }
+      if (Date.now() - lastMaintenance > 3_600_000) {
+        lastMaintenance = Date.now();
+        const cleaned = await runMaintenance().catch((err: unknown) => ({ error: (err as Error).message }));
+        log("info", "worker.maintenance", cleaned);
       }
       const processed = await processNextJob(id, { heartbeatMs: Math.max(5_000, Math.floor(opts.lockTimeoutMs / 4)) });
       if (!processed) await new Promise((r) => setTimeout(r, opts.pollMs));

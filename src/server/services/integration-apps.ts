@@ -17,10 +17,10 @@ import { audit, userActor } from "./audit";
 export const APP_PROVIDERS = ["meta", "tiktok", "google"] as const;
 export type AppProvider = (typeof APP_PROVIDERS)[number];
 
-export const APP_PROVIDER_INFO: Record<AppProvider, { label: string; networks: string; publicLabel: string; secretLabel: string; env: [string, string] }> = {
-  meta: { label: "Meta", networks: "Instagram e Facebook", publicLabel: "ID do app", secretLabel: "Chave secreta do app", env: ["META_APP_ID", "META_APP_SECRET"] },
-  tiktok: { label: "TikTok", networks: "TikTok", publicLabel: "Client key", secretLabel: "Client secret", env: ["TIKTOK_CLIENT_KEY", "TIKTOK_CLIENT_SECRET"] },
-  google: { label: "Google", networks: "YouTube", publicLabel: "ID do cliente OAuth", secretLabel: "Chave secreta do cliente", env: ["GOOGLE_OAUTH_CLIENT_ID", "GOOGLE_OAUTH_CLIENT_SECRET"] },
+export const APP_PROVIDER_INFO: Record<AppProvider, { label: string; networks: string; app: string; publicLabel: string; secretLabel: string; env: [string, string] }> = {
+  meta: { label: "Meta", networks: "Instagram e Facebook", app: "App da Meta", publicLabel: "ID do app", secretLabel: "Chave secreta do app", env: ["META_APP_ID", "META_APP_SECRET"] },
+  tiktok: { label: "TikTok", networks: "TikTok", app: "App da TikTok", publicLabel: "Client key", secretLabel: "Client secret", env: ["TIKTOK_CLIENT_KEY", "TIKTOK_CLIENT_SECRET"] },
+  google: { label: "Google", networks: "YouTube", app: "App do Google", publicLabel: "ID do cliente OAuth", secretLabel: "Chave secreta do cliente", env: ["GOOGLE_OAUTH_CLIENT_ID", "GOOGLE_OAUTH_CLIENT_SECRET"] },
 };
 
 const context = (orgId: string, provider: string) => `app:${orgId}:${provider}`;

@@ -1,8 +1,9 @@
 import { requireAuth } from "@/server/auth/next";
 import { providerStatus } from "@/server/ai/gateway";
-import { ROLE_LABELS } from "@/server/authz/permissions";
+import { can, ROLE_LABELS } from "@/server/authz/permissions";
 import { Sidebar, type ShellInfo } from "@/components/shell/sidebar";
 import { ToastProvider } from "@/components/toast";
+import { unreadCount } from "@/server/services/inbox";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const auth = await requireAuth();
@@ -11,6 +12,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     organizationName: auth.organizationName,
     userName: auth.userName,
     roleLabel: ROLE_LABELS[auth.role],
+    isAdmin: can(auth.role, "users.manage"),
+    unread: await unreadCount(auth),
     ai: provider.configured
       ? provider.isDemo
         ? { state: "demo", label: "IA em demonstração", detail: provider.detail }

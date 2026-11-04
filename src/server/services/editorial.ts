@@ -360,7 +360,11 @@ export async function approveEditorialPlan(auth: AuthContext, planId: string): P
         // O id da pauta é a chave da criação: aprovar de novo não duplica a peça.
         requestId: it.id,
       });
-      await withTx(userCtx(auth.userId), (tx) => tx.query("UPDATE editorial_items SET status = 'in_production', content_item_id = $2 WHERE id = $1", [it.id, r.contentId]));
+      await withTx(userCtx(auth.userId), async (tx) => {
+        await tx.query("UPDATE editorial_items SET status = 'in_production', content_item_id = $2 WHERE id = $1", [it.id, r.contentId]);
+        // O prazo da peça é a data da pauta.
+        await tx.query("UPDATE content_items SET due_date = (SELECT planned_date FROM editorial_items WHERE id = $2) WHERE id = $1 AND due_date IS NULL", [r.contentId, it.id]);
+      });
       created++;
     } catch (err) {
       if (err instanceof RateLimitError || err instanceof BudgetExceededError) {

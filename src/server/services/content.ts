@@ -96,6 +96,8 @@ export interface ContentDetail {
   updatedAt: string;
   current: { id: string; number: number; source: string; document: ContentDocument; hash: string } | null;
   approvedVersionId: string | null;
+  assignee: { id: string; name: string } | null;
+  dueDate: string | null;
   versions: VersionSummary[];
   quality: QualityReport | null;
   approvals: ApprovalRecord[];
@@ -336,10 +338,10 @@ export async function getContent(auth: AuthContext, contentId: string): Promise<
     const item = await maybeOne<{
       id: string; client_id: string; client_name: string; title: string; channel: Channel; format: ContentFormat; objective: Objective;
       briefing: Briefing; status: ContentStatus; last_error: string | null; created_at: Date; updated_at: Date;
-      current_version_id: string | null; approved_version_id: string | null;
+      current_version_id: string | null; approved_version_id: string | null; assignee_id: string | null; assignee_name: string | null; due_date: Date | null;
     }>(
       tx,
-      `SELECT ci.*, c.name AS client_name FROM content_items ci JOIN clients c ON c.id = ci.client_id
+      `SELECT ci.*, c.name AS client_name, au.name AS assignee_name FROM content_items ci JOIN clients c ON c.id = ci.client_id LEFT JOIN users au ON au.id = ci.assignee_id
        WHERE ci.id = $1 AND ci.organization_id = $2`,
       [contentId, auth.organizationId],
     );
@@ -421,6 +423,8 @@ export async function getContent(auth: AuthContext, contentId: string): Promise<
       updatedAt: item.updated_at.toISOString(),
       current,
       approvedVersionId: item.approved_version_id,
+      assignee: item.assignee_id ? { id: item.assignee_id, name: item.assignee_name ?? "" } : null,
+      dueDate: item.due_date ? item.due_date.toISOString().slice(0, 10) : null,
       versions: versions.map((v) => ({
         id: v.id,
         number: v.version_number,

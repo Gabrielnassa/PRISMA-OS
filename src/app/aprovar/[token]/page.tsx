@@ -14,6 +14,7 @@ const DECIDED = {
 } as const;
 
 function Piece({ token, item, scoped }: { token: string; item: PublicApprovalItem; scoped: boolean }) {
+  // No link de um pedido, o título já está no topo da página.
   const src = (i: number) => `/api/publico/aprovacao/${token}/${i}${scoped ? `?pedido=${item.approvalId}` : ""}`;
   return (
     <article className="grid gap-6 border-t border-ink-800 py-8 first:border-t-0 first:pt-0 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
@@ -36,7 +37,7 @@ function Piece({ token, item, scoped }: { token: string; item: PublicApprovalIte
           <div className="text-[12.5px] text-ink-400">
             {item.format} · versão {item.versionNumber}
           </div>
-          <h2 className="mt-1 font-display text-[24px] font-medium leading-tight tracking-[-0.03em] text-ink-50">{item.title}</h2>
+          {scoped ? <h2 className="mt-1 font-display text-[24px] font-medium leading-tight tracking-[-0.03em] text-ink-50">{item.title}</h2> : null}
         </div>
         {item.caption || item.hashtags.length ? (
           <div className="rounded-[var(--radius-card)] border border-ink-700/80 bg-ink-900 p-5 text-[14px]">

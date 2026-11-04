@@ -7,9 +7,12 @@ import { listClients } from "@/server/services/clients";
 import { providerStatus } from "@/server/ai/gateway";
 import { can } from "@/server/authz/permissions";
 import { CONTENT_STATUSES, STATUS_LABELS, type ContentStatus } from "@/lib/content/status";
-import { Alert, Card, CardHeader, EmptyState, LinkButton, PageHeader, Select, Stat, StatGroup, Table, Td, Th, buttonClass, cx, formatDateTime, formatRelative, formatUsd } from "@/components/ui";
+import { Alert, Badge, Card, CardHeader, EmptyState, LinkButton, PageHeader, Select, Stat, StatGroup, Table, Td, Th, buttonClass, cx, formatDateTime, formatRelative, formatUsd } from "@/components/ui";
 import { StatusBadge } from "@/components/status";
 import { MonthBoard } from "@/components/month-board";
+import { myTasks } from "@/server/services/tasks";
+import { listPublications } from "@/server/services/publications";
+import { NETWORK_LABELS } from "@/server/services/social-accounts";
 import { monthByClient } from "@/server/services/month";
 import { currentMonth } from "@/server/services/editorial";
 import { monthLabel } from "@/lib/content/editorial";
@@ -33,6 +36,11 @@ function today(): string {
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
+/** Se a data cai nos próximos `days` dias. */
+function withinDays(iso: string, days: number): boolean {
+  return new Date(iso).getTime() < Date.now() + days * 86_400_000;
+}
+
 const oneOf = <T extends string>(list: readonly T[], v: string | undefined): T | undefined => (list as readonly string[]).includes(v ?? "") ? (v as T) : undefined;
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ cliente?: string; periodo?: string; canal?: string; status?: string }> }) {
@@ -44,7 +52,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const channel = oneOf<Channel>(CHANNELS, sp.canal);
   const status = oneOf<ContentStatus>(CONTENT_STATUSES, sp.status);
   const month = currentMonth();
-  const [data, months] = await Promise.all([getDashboard(auth, { clientId, period, channel, status }), monthByClient(auth, month)]);
+  const [data, months, tasks, upcoming, failedPubs] = await Promise.all([
+    getDashboard(auth, { clientId, period, channel, status }),
+    monthByClient(auth, month),
+    myTasks(auth),
+    listPublications(auth, { clientId, status: "scheduled", limit: 50 }),
+    listPublications(auth, { clientId, status: "failed", limit: 50 }),
+  ]);
+  const weekAhead = upcoming.filter((p) => withinDays(p.scheduledAt, 7)).slice(0, 8);
   const periodLabel = DASHBOARD_PERIOD_LABELS[period].toLowerCase();
   const provider = providerStatus();
 
@@ -133,6 +148,47 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               }
             />
           </StatGroup>
+
+          <div className="mt-6 grid gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader title="Minhas tarefas" description={tasks.length ? undefined : "Nada com você agora"} />
+              {tasks.length ? (
+                <ul className="divide-y divide-ink-800/70">
+                  {tasks.map((t) => (
+                    <li key={`${t.kind}-${t.contentId}`}>
+                      <Link href={`/conteudos/${t.contentId}`} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-ink-850/60">
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-[14px] font-medium text-ink-100">{t.title}</div>
+                          <div className="mt-0.5 text-[12.5px] text-ink-400">
+                            {t.clientName} · {t.kind === "approval" ? "aprovar" : STATUS_LABELS[t.status].toLowerCase()}
+                          </div>
+                        </div>
+                        {t.dueDate ? <Badge tone={t.overdue ? "danger" : "neutral"}>{t.overdue ? "Atrasada" : `até ${t.dueDate.slice(8, 10)}/${t.dueDate.slice(5, 7)}`}</Badge> : null}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </Card>
+            <Card>
+              <CardHeader
+                title="Próximos 7 dias nas redes"
+                actions={failedPubs.length ? <Link href="/publicacoes?status=failed"><Badge tone="danger">{failedPubs.length === 1 ? "1 publicação falhou" : `${failedPubs.length} publicações falharam`}</Badge></Link> : <LinkButton href="/publicacoes" variant="ghost" size="sm">Ver todas</LinkButton>}
+                description={weekAhead.length ? undefined : "Nada agendado"}
+              />
+              {weekAhead.length ? (
+                <ul className="divide-y divide-ink-800/70">
+                  {weekAhead.map((p) => (
+                    <li key={p.id} className="flex items-center gap-3 px-5 py-3 text-[13.5px]">
+                      <span className="w-24 shrink-0 tabular text-[12.5px] text-ink-400">{formatDateTime(p.scheduledAt)}</span>
+                      <span className="min-w-0 flex-1 truncate text-ink-100">{p.contentTitle ?? p.title}</span>
+                      <span className="shrink-0 text-[12.5px] text-ink-400">{NETWORK_LABELS[p.network]}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </Card>
+          </div>
 
           <div className="mt-6">
             <MonthBoard rows={clientId ? months.filter((m) => m.clientId === clientId) : months} month={month} monthName={monthLabel(month)} />

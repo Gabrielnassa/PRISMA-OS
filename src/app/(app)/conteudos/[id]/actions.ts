@@ -22,6 +22,7 @@ import { assertCan } from "@/server/authz/permissions";
 import { ValidationError } from "@/server/errors";
 import { createApprovalLink } from "@/server/services/approval-links";
 import { queueEmail } from "@/server/services/email";
+import { setAssignment } from "@/server/services/tasks";
 import type { QualityReport } from "@/server/quality/checks";
 
 export async function saveVersionAction(
@@ -156,5 +157,14 @@ export async function emailApprovalLinkAction(_prev: ActionState, form: FormData
     });
     if (!sent) throw new ValidationError("O e-mail ainda não está configurado em Integrações. Copie o link ou envie pelo WhatsApp.");
     return { message: `Link enviado para ${email}.` };
+  });
+}
+
+export async function assignAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const auth = await requireAuth();
+  return runAction(async () => {
+    await setAssignment(auth, str(form, "contentId"), { assigneeId: str(form, "assigneeId") || null, dueDate: str(form, "dueDate") || null });
+    refresh();
+    return { message: "Responsável e prazo salvos." };
   });
 }

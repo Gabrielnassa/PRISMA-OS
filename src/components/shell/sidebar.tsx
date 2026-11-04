@@ -7,8 +7,10 @@ import { Icon } from "../icons";
 import { cx } from "../ui";
 import { PrismaWordmark } from "../brand/logo";
 import { logoutAction } from "@/app/(app)/actions";
+import { CommandPalette, SearchButton } from "./command-palette";
 
-type Item = { href: string; label: string; icon: keyof typeof Icon };
+/** `admin`: só aparece para proprietários e administradores (as páginas também recusam os demais). */
+type Item = { href: string; label: string; icon: keyof typeof Icon; admin?: boolean };
 
 const SECTIONS: Array<{ title: string; items: Item[] }> = [
   {
@@ -35,8 +37,9 @@ const SECTIONS: Array<{ title: string; items: Item[] }> = [
     title: "Gestão",
     items: [
       { href: "/integracoes", label: "Integrações", icon: "integrations" },
-      { href: "/custos", label: "Custos", icon: "costs" },
-      { href: "/usuarios", label: "Equipe", icon: "users" },
+      { href: "/custos", label: "Custos", icon: "costs", admin: true },
+      { href: "/usuarios", label: "Equipe", icon: "users", admin: true },
+      { href: "/historico", label: "Histórico", icon: "reports", admin: true },
       { href: "/configuracoes", label: "Configurações", icon: "settings" },
     ],
   },
@@ -46,6 +49,8 @@ export interface ShellInfo {
   organizationName: string;
   userName: string;
   roleLabel: string;
+  isAdmin: boolean;
+  unread: number;
   ai: { state: "ready" | "demo" | "off"; label: string; detail: string };
 }
 
@@ -58,14 +63,14 @@ function initials(name: string) {
   return ((parts[0]?.[0] ?? "") + (parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? "") : "")).toUpperCase() || "?";
 }
 
-function Nav({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+function Nav({ pathname, onNavigate, isAdmin }: { pathname: string; onNavigate?: () => void; isAdmin: boolean }) {
   return (
     <nav aria-label="Navegação principal" className="flex flex-col gap-6">
       {SECTIONS.map((section) => (
         <div key={section.title}>
           <div className="mb-1.5 px-3 text-[11.5px] font-medium text-ink-400">{section.title}</div>
           <ul className="flex flex-col gap-px">
-            {section.items.map((item) => {
+            {section.items.filter((item) => isAdmin || !item.admin).map((item) => {
               const IconCmp = Icon[item.icon];
               const active = isActive(pathname, item.href);
               return (
@@ -97,6 +102,11 @@ const AI_DOT = { ready: "bg-emerald-400", demo: "bg-amber-400", off: "bg-red-400
 function Footer({ info }: { info: ShellInfo }) {
   return (
     <div className="mt-auto border-t border-ink-800 px-3 pb-3 pt-3">
+      <Link href="/avisos" className="mb-1 flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] text-ink-300 hover:bg-white/[0.04] hover:text-ink-50">
+        <Icon.bell width={15} height={15} className="text-ink-400" />
+        <span className="flex-1">Avisos</span>
+        {info.unread ? <span className="rounded-full bg-iris-500 px-1.5 text-[11px] font-semibold leading-[18px] text-white tabular">{info.unread > 99 ? "99+" : info.unread}</span> : null}
+      </Link>
       <Link href="/integracoes" title={info.ai.detail} className="mb-2 flex items-center gap-2 rounded-full px-3 py-1.5 text-[12px] text-ink-400 hover:bg-white/[0.04] hover:text-ink-200">
         <span aria-hidden className={cx("size-1.5 shrink-0 rounded-full", AI_DOT[info.ai.state])} />
         <span className="truncate">{info.ai.label}</span>
@@ -121,11 +131,12 @@ function Footer({ info }: { info: ShellInfo }) {
 
 function Workspace({ name }: { name: string }) {
   return (
-    <div className="px-5 pb-5 pt-4">
+    <div className="px-5 pb-4 pt-4">
       <div className="text-[11.5px] text-ink-400">Agência</div>
       <div className="truncate text-[13.5px] font-medium text-ink-100" title={name}>
         {name}
       </div>
+      <SearchButton className="mt-3" />
     </div>
   );
 }
@@ -147,6 +158,7 @@ export function Sidebar({ info }: { info: ShellInfo }) {
   }, [open]);
   return (
     <>
+      <CommandPalette />
       <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-ink-800 bg-ink-950 lg:flex">
         <div className="flex h-14 shrink-0 items-center border-b border-ink-800 px-5">
           <Link href="/" aria-label="PRISMA OS, início">
@@ -155,7 +167,7 @@ export function Sidebar({ info }: { info: ShellInfo }) {
         </div>
         <Workspace name={info.organizationName} />
         <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-6">
-          <Nav pathname={pathname} />
+          <Nav pathname={pathname} isAdmin={info.isAdmin} />
         </div>
         <Footer info={info} />
       </aside>
@@ -173,7 +185,11 @@ export function Sidebar({ info }: { info: ShellInfo }) {
         <Link href="/" aria-label="PRISMA OS, início">
           <PrismaWordmark />
         </Link>
-        <Link href="/integracoes" className="ml-auto inline-flex items-center gap-2 text-[12px] text-ink-400" title={info.ai.detail}>
+        <Link href="/avisos" className="relative ml-auto inline-flex size-9 items-center justify-center rounded-full text-ink-300 hover:bg-ink-850" aria-label={info.unread ? `Avisos, ${info.unread} não lidos` : "Avisos"}>
+          <Icon.bell width={17} height={17} />
+          {info.unread ? <span className="absolute right-1 top-1 size-2 rounded-full bg-iris-400" /> : null}
+        </Link>
+        <Link href="/integracoes" className="inline-flex items-center gap-2 text-[12px] text-ink-400" title={info.ai.detail}>
           <span aria-hidden className={cx("size-1.5 rounded-full", AI_DOT[info.ai.state])} />
           <span className="hidden sm:inline">{info.ai.label}</span>
         </Link>
@@ -191,7 +207,7 @@ export function Sidebar({ info }: { info: ShellInfo }) {
             </div>
             <Workspace name={info.organizationName} />
             <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-6">
-              <Nav pathname={pathname} onNavigate={() => setOpen(false)} />
+              <Nav pathname={pathname} onNavigate={() => setOpen(false)} isAdmin={info.isAdmin} />
             </div>
             <Footer info={info} />
           </div>

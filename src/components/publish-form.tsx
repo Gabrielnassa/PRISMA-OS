@@ -34,16 +34,19 @@ export function PublishForm({
   defaultCaption,
   defaultTitle,
   isVideo,
+  suggestedAt,
 }: {
   target: { contentId?: string; mediaAssetId?: string };
   accounts: PublishAccount[];
   defaultCaption: string;
   defaultTitle: string;
   isVideo: boolean;
+  /** Data e hora sugeridas (horário de Brasília, "AAAA-MM-DDTHH:MM"), ex.: a data da pauta. */
+  suggestedAt?: string | null;
 }) {
   const [state, action] = useToastAction(scheduleAction);
   const [selected, setSelected] = useState<string[]>(accounts.filter((a) => !a.blocked).map((a) => a.id));
-  const [when, setWhen] = useState<"now" | "later">("now");
+  const [when, setWhen] = useState<"now" | "later">(suggestedAt ? "later" : "now");
   const [caption, setCaption] = useState(defaultCaption);
   const [tiktok, loadTikTok, loadingTikTok] = useActionState(tiktokOptionsAction, { status: "idle" });
   const chosen = accounts.filter((a) => selected.includes(a.id));
@@ -99,8 +102,9 @@ export function PublishForm({
         <label className="flex items-center gap-2 text-[13px] text-ink-200">
           <input type="radio" name="when" value="later" checked={when === "later"} onChange={() => setWhen("later")} /> Agendar
         </label>
+        {when === "later" && suggestedAt ? <span className="text-[12px] text-ink-400">Sugerido pela data da pauta</span> : null}
         {when === "later" ? (
-          <Input type="datetime-local" name="scheduledAt" aria-label="Data e hora (Brasília)" min={nowLocal()} defaultValue={nowLocal(60)} required className="w-auto" />
+          <Input type="datetime-local" name="scheduledAt" aria-label="Data e hora (Brasília)" min={nowLocal()} defaultValue={suggestedAt ?? nowLocal(60)} required className="w-auto" />
         ) : null}
       </fieldset>
 

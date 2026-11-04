@@ -150,3 +150,17 @@
     transition: none !important;
   }
 }
+
+/* Impressão (relatório em PDF): papel branco, cores preservadas. */
+@media print {
+  html,
+  body {
+    background: #ffffff !important;
+    color: #18181b;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  @page {
+    margin: 14mm;
+  }
+}

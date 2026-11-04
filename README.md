@@ -41,12 +41,21 @@ Central operacional de marketing com IA para agências que atendem vários clien
 | E-mails para a equipe (pedido de aprovação, decisão, publicação com falha) pelo SMTP da agência | Integrações → E-mail |
 | Webhooks assinados (HMAC) para n8n, Zapier e Make | Integrações → Webhooks |
 | Agenda privada (ICS) com pautas e publicações para Google Agenda, Apple Calendário ou Outlook | Calendário |
+| Link do mês: o cliente aprova ou pede ajuste em todas as peças pendentes num só link | Aprovações |
+| Relatório do mês por cliente (entregas, publicações, alcance, curtidas, aprovações), em PDF ou por link para o cliente | Cliente → Relatório do mês |
+| Responsável e prazo por peça (prazo vem da data da pauta), "Minhas tarefas" e próximos 7 dias nas redes | Peça, Início |
+| Avisos dentro do sistema (sino), busca rápida (Ctrl+K), histórico da agência e prévia do feed do Instagram | Menu, Histórico, Cliente → Redes |
+| Instalação num servidor (Hostinger) com HTTPS automático, backup diário e atualização em um comando | [servidor/LEIA-ME.md](servidor/LEIA-ME.md) |
 
 ## Rodar pelo GitHub (Codespaces)
 
 [![Abrir no GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Gabrielnassa/PRISMA-OS?ref=claude/session-vagl59)
 
 Sem instalar nada: o botão cria um Codespace (computador na nuvem do GitHub) que prepara o banco, o site e o worker. O endereço é privado, só a sua conta do GitHub abre. O passo a passo abre sozinho no Codespace ([.devcontainer/COMO-USAR.md](.devcontainer/COMO-USAR.md)). O GitHub desliga o Codespace depois de 30 minutos parado e apaga Codespaces sem uso por muito tempo, então faça backups.
+
+## Instalar num servidor (acesso de qualquer lugar)
+
+Num VPS da Hostinger (ou outro Ubuntu) com um domínio: `sudo bash servidor/instalar.sh` instala tudo com HTTPS, backup diário e o primeiro acesso. Passo a passo em [servidor/LEIA-ME.md](servidor/LEIA-ME.md). É o caminho para publicar nas redes sociais.
 
 ## Instalar no seu Mac (uso interno da agência)
 

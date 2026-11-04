@@ -24,15 +24,15 @@ export function AppKeysForm({
   const [state, action] = useToastAction(saveAppAction);
   const err = (k: string) => (state.status === "error" ? state.fieldErrors?.[k] : undefined);
   return (
-    <ActionForm action={action} state={state} resetOnSuccess className="grid gap-3 sm:grid-cols-2">
+    <ActionForm action={action} state={state} resetOnSuccess className="flex flex-col gap-3">
       <input type="hidden" name="provider" value={provider} />
       <Field label={publicLabel} htmlFor={`${provider}-id`} error={err("publicId")}>
         <Input id={`${provider}-id`} name="publicId" defaultValue={publicId ?? ""} autoComplete="off" spellCheck={false} required />
       </Field>
       <Field label={secretLabel} htmlFor={`${provider}-secret`} error={err("secret")} hint={secretHint ? `Salva: ${secretHint}. Deixe vazio para manter.` : undefined}>
-        <Input id={`${provider}-secret`} name="secret" type="password" autoComplete="new-password" spellCheck={false} placeholder={secretHint ?? ""} />
+        <Input id={`${provider}-secret`} name="secret" type="password" autoComplete="new-password" spellCheck={false} />
       </Field>
-      <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
+      <div className="flex flex-wrap items-center gap-3">
         <SubmitButton size="sm" variant="secondary">
           Salvar chaves
         </SubmitButton>

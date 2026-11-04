@@ -145,7 +145,7 @@ test("ciclo completo: briefing → texto → arte → revisão → aprovação �
   await expect(page.getByText("Versão aprovada", { exact: true })).toBeVisible();
   // O cliente vê a decisão da equipe no mesmo link.
   await client.reload();
-  await expect(client.getByText("Peça aprovada")).toBeVisible();
+  await expect(client.getByText("Aprovada", { exact: true })).toBeVisible();
   await visitor.close();
   // Publicar: sem contas conectadas, a tela orienta a conectar.
   await expect(page.getByText("Nenhuma conta conectada para este cliente.")).toBeVisible();

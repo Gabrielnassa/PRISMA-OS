@@ -11,7 +11,7 @@ test("integrações: chaves dos apps, redes do cliente, avisos e agenda", async 
   await page.goto("/integracoes");
   await expect(page.getByRole("heading", { name: "Redes sociais" })).toBeVisible();
 
-  const meta = page.locator("section").filter({ has: page.getByRole("heading", { name: "Meta: Instagram e Facebook" }) });
+  const meta = page.locator("section").filter({ has: page.getByRole("heading", { name: "Instagram e Facebook" }) });
   await meta.getByLabel("ID do app").fill("1234567890123");
   await meta.getByLabel("Chave secreta do app").fill("segredo-do-app-meta-123");
   await meta.getByRole("button", { name: "Salvar chaves" }).click();
@@ -21,6 +21,9 @@ test("integrações: chaves dos apps, redes do cliente, avisos e agenda", async 
   // A chave secreta nunca volta para a tela: só o final.
   await expect(meta.getByLabel("Chave secreta do app")).toHaveValue("");
   await expect(meta.getByText("Salva: ••••-123. Deixe vazio para manter.")).toBeVisible();
+  await page.getByRole("heading", { name: "Redes sociais" }).scrollIntoViewIfNeeded();
+  await page.evaluate(() => window.scrollBy(0, -24));
+  await shot(page, "13-integracoes");
 
   // E-mail e webhook.
   const email = page.locator("section").filter({ has: page.getByRole("heading", { name: "E-mail", exact: true }) });
@@ -36,7 +39,6 @@ test("integrações: chaves dos apps, redes do cliente, avisos e agenda", async 
   await hooks.getByRole("button", { name: "Adicionar webhook" }).click();
   await expect(hooks.getByText(/^whsec_/)).toBeVisible();
   await expect(hooks.getByText("https://hooks.exemplo.com/prisma")).toBeVisible();
-  await shot(page, "13-integracoes");
 
   // Aba Redes do cliente: Meta pronta para conectar; TikTok e YouTube sem chaves.
   await page.goto("/clientes");
@@ -49,6 +51,32 @@ test("integrações: chaves dos apps, redes do cliente, avisos e agenda", async 
   await expect(connect).toHaveAttribute("href", /\/api\/conexoes\/meta\/iniciar\?cliente=/);
   await expect(page.getByText("Falta cadastrar as chaves do app em")).toHaveCount(2);
   await shot(page, "14-redes-do-cliente");
+
+  // Relatório do mês do cliente (página clara, imprimível).
+  await page.getByRole("link", { name: "Relatório do mês" }).first().click().catch(async () => page.goto(`/relatorios/${clientUrl.split("/").pop()}`));
+  await page.goto(`/relatorios/${clientUrl.split("/").pop()}`);
+  await expect(page.getByRole("heading", { name: /Relatório de/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Imprimir ou salvar PDF" })).toBeVisible();
+  await page.getByRole("button", { name: "Link para o cliente" }).click();
+  const reportUrl = (await page.getByText(/\/relatorio\/[A-Za-z0-9_-]{20,}/).first().textContent())!.split(" ")[0]!;
+  const visitor = await page.context().browser()!.newContext();
+  const outsider = await visitor.newPage();
+  await outsider.goto(`http://localhost:${process.env.E2E_PORT ?? 3100}${new URL(reportUrl).pathname}`);
+  await expect(outsider.getByText("Coli Loterias Redes")).toBeVisible();
+  await visitor.close();
+  await shot(page, "15-relatorio");
+
+  // Busca rápida (Ctrl+K), avisos e histórico.
+  await page.goto("/");
+  await page.keyboard.press("Control+k");
+  await page.getByRole("textbox", { name: "Buscar" }).fill("Coli Loterias Redes");
+  await expect(page.getByRole("option").filter({ hasText: "Coli Loterias Redes" }).first()).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/\/clientes\/[0-9a-f-]+$/);
+  await page.goto("/avisos");
+  await expect(page.getByRole("heading", { name: "Avisos" })).toBeVisible();
+  await page.goto("/historico");
+  await expect(page.getByText("Chaves de app salvas").first()).toBeVisible();
 
   // Publicações: vazio, com o envio de vídeo disponível.
   await page.goto("/publicacoes");

@@ -548,3 +548,40 @@ export async function handleMetrics(job: Job): Promise<Record<string, unknown>> 
   if (!p || p.status !== "published") return { skipped: true };
   return { ...(await storeMetrics(id, p.network, p.external_id, p.social_account_id)) };
 }
+
+export interface FeedTile {
+  contentId: string;
+  versionId: string;
+  title: string;
+  state: "scheduled" | "published" | "approved";
+  date: string | null;
+}
+
+/**
+ * Prévia da grade do Instagram do cliente: o que está agendado (mais recente
+ * primeiro, como aparecerá no topo), o que já foi publicado pelo sistema e as
+ * peças aprovadas ainda sem data. Só post e carrossel (o que vai para o feed).
+ */
+export async function feedPreview(auth: AuthContext, clientId: string, limit = 18): Promise<FeedTile[]> {
+  if (!z.string().uuid().safeParse(clientId).success) throw new NotFoundError("Cliente não encontrado.");
+  return withTx(userCtx(auth.userId), async (tx) => {
+    const rows = await many<{ content_id: string; version_id: string; title: string; state: FeedTile["state"]; at: Date | null }>(
+      tx,
+      `WITH ig AS (
+         SELECT DISTINCT ON (p.content_item_id) p.content_item_id, p.content_version_id, p.status, coalesce(p.published_at, p.scheduled_at) AS at
+         FROM publications p WHERE p.client_id = $1 AND p.network = 'instagram' AND p.kind IN ('image', 'carousel') AND p.status IN ('scheduled', 'publishing', 'published') AND p.content_item_id IS NOT NULL
+         ORDER BY p.content_item_id, (p.status = 'published') DESC, coalesce(p.published_at, p.scheduled_at) DESC)
+       SELECT ci.id AS content_id, coalesce(ig.content_version_id, ci.approved_version_id) AS version_id, ci.title,
+              CASE WHEN ig.status = 'published' THEN 'published' WHEN ig.status IS NOT NULL THEN 'scheduled' ELSE 'approved' END AS state, ig.at
+       FROM content_items ci LEFT JOIN ig ON ig.content_item_id = ci.id
+       WHERE ci.client_id = $1 AND ci.organization_id = $2 AND ci.format IN ('post', 'carousel') AND ci.status <> 'archived'
+         AND (ig.content_item_id IS NOT NULL OR (ci.status = 'approved' AND ci.approved_version_id IS NOT NULL))
+       ORDER BY (ig.at IS NULL) , ig.at DESC NULLS LAST, ci.updated_at DESC
+       LIMIT $3`,
+      [clientId, auth.organizationId, limit],
+    );
+    // Aprovadas sem data entram no topo (são as próximas a postar).
+    const tiles = rows.map((r) => ({ contentId: r.content_id, versionId: r.version_id, title: r.title, state: r.state, date: r.at?.toISOString() ?? null }));
+    return [...tiles.filter((t) => t.state === "approved"), ...tiles.filter((t) => t.state !== "approved")];
+  });
+}
