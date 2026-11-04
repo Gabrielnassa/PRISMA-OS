@@ -1,0 +1,19 @@
+# HTTPS automático para o domínio do PRISMA OS (certificado do Let's Encrypt).
+{
+	email {$PRISMA_TLS_EMAIL}
+}
+
+{$PRISMA_DOMAIN} {
+	encode zstd gzip
+	# Envio de vídeos e arquivos grandes (o limite real é o do sistema).
+	request_body {
+		max_size 600MB
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+	reverse_proxy web:3000 {
+		header_up X-Forwarded-Proto {scheme}
+	}
+}

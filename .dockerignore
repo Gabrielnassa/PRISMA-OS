@@ -17,3 +17,7 @@ docs/img
 mac
 *.tsbuildinfo
 .DS_Store
+servidor/config.env
+servidor/app.env
+servidor/backups
+backups

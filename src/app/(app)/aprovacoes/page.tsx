@@ -5,7 +5,8 @@ import { listPendingApprovals } from "@/server/services/content";
 import { listClients } from "@/server/services/clients";
 import { can } from "@/server/authz/permissions";
 import { FORMAT_LABELS } from "@/lib/content/document";
-import { Badge, Card, EmptyState, PageHeader, formatDateTime, formatRelative } from "@/components/ui";
+import { Badge, Card, CardHeader, EmptyState, PageHeader, formatDateTime, formatRelative } from "@/components/ui";
+import { ClientLinkPanel } from "./client-link";
 
 export const metadata: Metadata = { title: "Aprovações" };
 
@@ -15,6 +16,7 @@ export default async function ApprovalsPage({ searchParams }: { searchParams: Pr
   const clients = await listClients(auth);
   const client = clients.find((c) => c.id === cliente);
   const items = await listPendingApprovals(auth, client?.id);
+  const byClient = [...items.reduce((m, a) => m.set(a.clientId, { clientId: a.clientId, clientName: a.clientName, count: (m.get(a.clientId)?.count ?? 0) + 1 }), new Map<string, { clientId: string; clientName: string; count: number }>()).values()];
   return (
     <>
       <PageHeader
@@ -28,6 +30,22 @@ export default async function ApprovalsPage({ searchParams }: { searchParams: Pr
             ver de todos os clientes
           </Link>
         </p>
+      ) : null}
+      {items.length > 0 && can(auth.role, "approval.share") ? (
+        <Card className="mb-6">
+          <CardHeader title="Enviar para o cliente aprovar" description="Um link por cliente com todas as peças pendentes. O cliente responde peça por peça, sem login." />
+          <ul className="divide-y divide-ink-800">
+            {byClient.map((c) => (
+              <li key={c.clientId} className="flex flex-wrap items-start justify-between gap-3 px-5 py-4">
+                <div className="min-w-0">
+                  <div className="font-medium text-ink-50">{c.clientName}</div>
+                  <div className="text-[12.5px] text-ink-400">{c.count === 1 ? "1 peça aguardando" : `${c.count} peças aguardando`}</div>
+                </div>
+                <ClientLinkPanel clientId={c.clientId} clientName={c.clientName} pending={c.count} />
+              </li>
+            ))}
+          </ul>
+        </Card>
       ) : null}
       {items.length === 0 ? (
         <EmptyState title="Nada aguardando aprovação" />
@@ -48,7 +66,7 @@ export default async function ApprovalsPage({ searchParams }: { searchParams: Pr
                     <Badge>{a.clientName}</Badge>
                     <Badge>{FORMAT_LABELS[a.format]}</Badge>
                     <Badge tone="accent">v{a.versionNumber}</Badge>
-                    {a.warningCount ? <Badge tone="warning">{a.warningCount} alerta(s) de qualidade</Badge> : null}
+                    {a.warningCount ? <Badge tone="warning">{a.warningCount === 1 ? "1 alerta" : `${a.warningCount} alertas`}</Badge> : null}
                   </div>
                   <p className="text-xs text-ink-400">
                     Pedido por {a.requestedByName ?? "—"} <span title={formatDateTime(a.requestedAt)}>{formatRelative(a.requestedAt)}</span>

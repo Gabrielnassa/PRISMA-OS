@@ -20,3 +20,8 @@ next-env.d.ts
 /.devcontainer/.env
 /.devcontainer/.chave-secreta
 /backups/
+
+# Servidor (configuração com senhas e backups)
+/servidor/config.env
+/servidor/app.env
+/servidor/backups/

@@ -1,6 +1,7 @@
 import { many, systemCtx, withTx } from "../db";
 import { publicBase } from "./integration-apps";
 import { queueEmail } from "./email";
+import { approversOf, notifyUsers } from "./inbox";
 
 /**
  * Avisos por e-mail para a equipe. Só saem com o e-mail (SMTP) configurado
@@ -42,6 +43,12 @@ export async function notifyApprovalRequested(o: { organizationId: string; clien
         [o.organizationId, o.clientId, o.requestedBy],
       ),
     );
+    await notifyUsers(o.organizationId, await approversOf(o.organizationId, o.clientId, o.requestedBy), {
+      kind: "approval.requested",
+      title: `Para aprovar: ${o.title}`,
+      body: `${o.clientName} · versão ${o.versionNumber}, enviada por ${o.requestedByName}`,
+      href: `/conteudos/${o.contentId}`,
+    });
     await queueEmail(o.organizationId, {
       to: rows.map((r) => r.email),
       subject: `Para aprovar: ${o.title} (${o.clientName})`,
@@ -57,6 +64,12 @@ export async function notifyApprovalRequested(o: { organizationId: string; clien
 export async function notifyApprovalDecided(organizationId: string, o: { requestedBy: string | null; contentId: string; title: string; clientName: string; decision: "approved" | "rejected"; by: string; note: string }): Promise<void> {
   await safe(async () => {
     if (!o.requestedBy) return;
+    await notifyUsers(organizationId, [o.requestedBy], {
+      kind: o.decision === "approved" ? "approval.approved" : "approval.rejected",
+      title: `${o.decision === "approved" ? "Aprovada" : "Pedido de ajuste"}: ${o.title}`,
+      body: `${o.by}${o.note ? `: “${o.note.slice(0, 200)}”` : ""}`,
+      href: `/conteudos/${o.contentId}`,
+    });
     await queueEmail(organizationId, {
       to: await emailsOf(organizationId, [o.requestedBy]),
       subject: `${o.decision === "approved" ? "Aprovada" : "Pedido de ajuste"}: ${o.title} (${o.clientName})`,
@@ -72,6 +85,7 @@ export async function notifyApprovalDecided(organizationId: string, o: { request
 export async function notifyPublicationFailed(organizationId: string, o: { requestedBy: string | null; network: string; account: string; title: string; error: string }): Promise<void> {
   await safe(async () => {
     if (!o.requestedBy) return;
+    await notifyUsers(organizationId, [o.requestedBy], { kind: "publication.failed", title: `Publicação não saiu: ${o.title}`, body: `${o.network} · ${o.error.slice(0, 300)}`, href: "/publicacoes?status=failed" });
     await queueEmail(organizationId, {
       to: await emailsOf(organizationId, [o.requestedBy]),
       subject: `Publicação não saiu: ${o.title} (${o.network})`,

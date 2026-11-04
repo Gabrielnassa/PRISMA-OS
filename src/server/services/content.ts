@@ -668,6 +668,7 @@ export async function decideApproval(
 export interface ApprovalQueueItem {
   approvalId: string;
   contentId: string;
+  clientId: string;
   title: string;
   clientName: string;
   format: ContentFormat;
@@ -682,11 +683,11 @@ export interface ApprovalQueueItem {
 export async function listPendingApprovals(auth: AuthContext, clientId?: string): Promise<ApprovalQueueItem[]> {
   return withTx(userCtx(auth.userId), async (tx) => {
     const rows = await many<{
-      id: string; content_item_id: string; title: string; client_name: string; format: ContentFormat; version_number: number; content_version_id: string;
+      id: string; content_item_id: string; client_id: string; title: string; client_name: string; format: ContentFormat; version_number: number; content_version_id: string;
       requested_by_name: string | null; requested_at: Date; request_note: string; warning_count: number | null;
     }>(
       tx,
-      `SELECT a.id, a.content_item_id, ci.title, c.name AS client_name, ci.format, v.version_number, a.content_version_id,
+      `SELECT a.id, a.content_item_id, a.client_id, ci.title, c.name AS client_name, ci.format, v.version_number, a.content_version_id,
               u.name AS requested_by_name, a.requested_at, a.request_note,
               (SELECT warning_count FROM quality_reports q WHERE q.content_version_id = a.content_version_id ORDER BY created_at DESC LIMIT 1) AS warning_count
        FROM approvals a
@@ -701,6 +702,7 @@ export async function listPendingApprovals(auth: AuthContext, clientId?: string)
     return rows.map((r) => ({
       approvalId: r.id,
       contentId: r.content_item_id,
+      clientId: r.client_id,
       title: r.title,
       clientName: r.client_name,
       format: r.format,

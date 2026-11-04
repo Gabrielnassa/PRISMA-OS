@@ -1,0 +1,104 @@
+# PRISMA OS num servidor (VPS da Hostinger ou qualquer Ubuntu com Docker):
+# banco, migrations, site, worker e o Caddy, que cuida do HTTPS (certificado
+# gratuito do Let's Encrypt, renovado sozinho). A configuração e as senhas
+# ficam em servidor/config.env, criado pelo instalar.sh. Só as portas 80 e
+# 443 ficam abertas; o banco e o site não são acessíveis de fora.
+name: prisma-os
+
+x-app: &app
+  image: prisma-os-app:servidor
+  init: true
+  build:
+    context: ..
+    dockerfile: Dockerfile
+  # Chaves opcionais (IA, Google Drive, apps das redes): servidor/app.env.
+  env_file:
+    - path: app.env
+      required: false
+  environment:
+    NODE_ENV: production
+    TZ: America/Sao_Paulo
+    DATABASE_URL: postgres://prisma_app_login:${PRISMA_APP_PASSWORD:?}@postgres:5432/prisma_os
+    MIGRATION_DATABASE_URL: postgres://prisma_owner:${PRISMA_OWNER_PASSWORD:?}@postgres:5432/prisma_os
+    APP_URL: https://${PRISMA_DOMAIN:?}
+    STORAGE_LOCAL_DIR: /app/storage
+    # Atrás do Caddy: o IP de quem acessa vem no X-Forwarded-For.
+    TRUST_PROXY: "true"
+    APP_SECRET_KEY: ${APP_SECRET_KEY:?}
+  volumes:
+    - storage:/app/storage
+  logging:
+    driver: json-file
+    options: { max-size: "20m", max-file: "5" }
+
+services:
+  postgres:
+    image: postgres:16.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      PRISMA_OWNER_PASSWORD: ${PRISMA_OWNER_PASSWORD:?}
+      PRISMA_APP_PASSWORD: ${PRISMA_APP_PASSWORD:?}
+      TZ: America/Sao_Paulo
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../docker/init-db.sh:/docker-entrypoint-initdb.d/10-init.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d prisma_os"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "5" }
+
+  migrate:
+    <<: *app
+    command: ["npm", "run", "db:migrate"]
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    <<: *app
+    command: ["npm", "start"]
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  worker:
+    <<: *app
+    command: ["npm", "run", "worker"]
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  caddy:
+    image: caddy:2.8
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      PRISMA_DOMAIN: ${PRISMA_DOMAIN:?}
+      PRISMA_TLS_EMAIL: ${PRISMA_TLS_EMAIL:-}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "5" }
+
+volumes:
+  pgdata:
+  storage:
+  caddy_data:
+  caddy_config:

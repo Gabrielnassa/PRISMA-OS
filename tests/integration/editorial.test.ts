@@ -15,6 +15,7 @@ import {
   setEditorialItemStatus,
   updateEditorialItem,
 } from "../../src/server/services/editorial";
+import { currentMonth as currentMonthOf } from "../../src/server/services/editorial";
 import { processNextJob } from "../../src/server/jobs/worker";
 import { FakeProvider, addMember, newOrg, samplePng } from "./helpers";
 
@@ -114,7 +115,8 @@ describe("linha editorial", () => {
     const video = plan.items.find((i) => i.format === "video")!;
     await setEditorialItemStatus(owner, video.id, "done");
     const o = await getPackageOverview(owner, clientId);
-    expect(o.produced.videos).toBe(0); // novembro ainda não é o mês corrente neste teste
+    // O resumo conta o mês corrente: o vídeo de novembro só entra quando novembro é o mês atual.
+    expect(o.produced.videos).toBe(currentMonthOf() === MONTH ? 1 : 0);
 
     // Excluir a peça devolve a pauta para "planejada".
     await deleteContent(owner, produced[0]!.contentItemId!);

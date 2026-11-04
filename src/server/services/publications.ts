@@ -16,6 +16,7 @@ import { publicBase } from "./integration-apps";
 import { accountAccess, markNeedsReconnect, NETWORK_LABELS, type Network } from "./social-accounts";
 import { emitEvent } from "./webhooks";
 import { notifyPublicationFailed } from "./notifications";
+import { notifyUsers } from "./inbox";
 import { facebookMetrics, instagramMetrics, publishFacebook, publishInstagram, type FbState, type IgState, type PostMetrics } from "../integrations/social/meta";
 import { tiktokPublishPhotos, tiktokPublishVideo, waitTikTok } from "../integrations/social/tiktok";
 import { youtubeMetrics, youtubeUpload } from "../integrations/social/youtube";
@@ -484,6 +485,7 @@ export async function handlePublish(job: Job, auth: AuthContext): Promise<Record
         });
       }
     });
+    await notifyUsers(pub.organization_id, [job.created_by], { kind: "publication.published", title: `Publicado no ${NETWORK_LABELS[pub.network]}: ${pub.title}`, body: externalUrl ?? "", href: pub.content_item_id ? `/conteudos/${pub.content_item_id}` : "/publicacoes" });
     await emitEvent(pub.organization_id, "publication.published", { publicationId: pub.id, clientId: pub.client_id, network: pub.network, url: externalUrl, contentId: pub.content_item_id });
     for (let i = 1; i <= images.length; i++) await storage().delete(`publish/${pub.id}/${i}.jpg`).catch(() => undefined);
     return { publicationId: pub.id, externalId, externalUrl };

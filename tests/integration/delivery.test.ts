@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createClient } from "../../src/server/services/clients";
 import { createContent, getContent, submitForApproval } from "../../src/server/services/content";
 import { uploadMedia } from "../../src/server/services/media";
-import { createApprovalLink, decideByLink, getPublicApproval, renderPublicSlide } from "../../src/server/services/approval-links";
+import { createApprovalLink, createClientApprovalLink, decideByLink, getPublicApproval, renderPublicSlide } from "../../src/server/services/approval-links";
 import { createWebhook, isAllowedWebhookUrl } from "../../src/server/services/webhooks";
 import { saveSmtp, setMailSender, type MailMessage } from "../../src/server/services/email";
 import { calendarFeedIcs, createCalendarFeed } from "../../src/server/services/calendar-feed";
@@ -58,7 +58,9 @@ describe("aprovação pelo cliente por link", () => {
     const token = link.url.split("/").pop()!;
 
     const view = await getPublicApproval(token);
-    expect(view).toMatchObject({ clientName: "Coli Loterias", title: "Mega da Virada", status: "pending", requestNote: "Confere o valor da cota", slideCount: 1 });
+    expect(view).toMatchObject({ scope: "single", clientName: "Coli Loterias" });
+    expect(view!.items).toHaveLength(1);
+    expect(view!.items[0]).toMatchObject({ title: "Mega da Virada", status: "pending", requestNote: "Confere o valor da cota", slideCount: 1 });
     const png = await renderPublicSlide(token, 0);
     expect(png!.subarray(1, 4).toString()).toBe("PNG");
     expect(await renderPublicSlide(token, 5)).toBeNull();
@@ -69,7 +71,7 @@ describe("aprovação pelo cliente por link", () => {
     const piece = await getContent(owner, contentId);
     expect(piece.status).toBe("approved");
     expect(piece.approvals[0]).toMatchObject({ status: "approved", decidedByName: "Maria Coli (cliente)", decisionNote: "Pode postar" });
-    expect((await getPublicApproval(token))!.status).toBe("approved");
+    expect((await getPublicApproval(token))!.items[0]!.status).toBe("approved");
     await expect(decideByLink(token, { decision: "approved", name: "Maria Coli" })).rejects.toThrow(/já foi respondido/);
     await expect(createApprovalLink(owner, approvalId)).rejects.toThrow(/já foi decidido/);
 
@@ -85,6 +87,42 @@ describe("aprovação pelo cliente por link", () => {
     const token = (await createApprovalLink(owner, approvalId)).url.split("/").pop()!;
     await decideByLink(token, { decision: "rejected", name: "João", note: "O valor da cota é quinze reais." });
     expect((await getContent(owner, contentId)).status).toBe("rejected");
+  });
+});
+
+describe("link do mês (todas as peças do cliente)", () => {
+  it("mostra as pendentes do cliente, decide peça por peça e não alcança outro cliente", async () => {
+    const { owner } = await newOrg();
+    const { id: clientId } = await createClient(owner, { name: "Coli Loterias" });
+    const { id: otherClient } = await createClient(owner, { name: "Padaria" });
+    await expect(createClientApprovalLink(owner, clientId)).rejects.toThrow(/Nada deste cliente/);
+    const first = await pieceAwaitingApproval(owner, clientId);
+    const second = await pieceAwaitingApproval(owner, clientId);
+    const foreign = await pieceAwaitingApproval(owner, otherClient);
+    const link = await createClientApprovalLink(owner, clientId);
+    expect(link.pending).toBe(2);
+    const token = link.url.split("/").pop()!;
+    const view = (await getPublicApproval(token))!;
+    expect(view.scope).toBe("client");
+    expect(view.items.map((i) => i.approvalId).sort()).toEqual([first.approvalId, second.approvalId].sort());
+
+    // Imagem e decisão exigem um pedido do próprio cliente.
+    expect(await renderPublicSlide(token, 0)).toBeNull();
+    expect(await renderPublicSlide(token, 0, foreign.approvalId)).toBeNull();
+    expect((await renderPublicSlide(token, 0, first.approvalId))!.subarray(1, 4).toString()).toBe("PNG");
+    await expect(decideByLink(token, { approvalId: foreign.approvalId, decision: "approved", name: "Maria" })).rejects.toThrow(/não encontrada/);
+
+    await decideByLink(token, { approvalId: first.approvalId, decision: "approved", name: "Maria" });
+    await decideByLink(token, { approvalId: second.approvalId, decision: "rejected", name: "Maria", note: "Trocar a foto da capa." });
+    const after = (await getPublicApproval(token))!;
+    expect(after.items.map((i) => i.status).sort()).toEqual(["approved", "rejected"]);
+    expect((await getContent(owner, first.contentId)).status).toBe("approved");
+    expect((await getContent(owner, foreign.contentId)).status).toBe("awaiting_approval");
+
+    // Quem pediu recebe o aviso no sistema.
+    const { listInbox } = await import("../../src/server/services/inbox");
+    const inbox = await listInbox(owner);
+    expect(inbox.items.some((n) => n.kind === "approval.rejected" && n.title.includes("Pedido de ajuste"))).toBe(true);
   });
 });
 
