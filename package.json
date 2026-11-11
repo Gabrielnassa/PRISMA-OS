@@ -29,7 +29,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "knip": "knip --include files,dependencies,unlisted,binaries",
-    "prepare": "husky"
+    "prepare": "husky",
+    "seed:demo": "tsx --conditions=react-server scripts/seed-demo.ts",
+    "test:visual": "playwright test -c playwright.visual.config.ts",
+    "capturas": "node scripts/capturas.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.1.0",
