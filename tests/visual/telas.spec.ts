@@ -30,6 +30,11 @@ async function login(page: Page) {
 
 async function snap(page: Page, name: string) {
   await page.waitForLoadState("networkidle");
+  // Textos que dependem da máquina (caminho da pasta de arquivos, tempo de resposta do banco)
+  // mudam a quebra de linha: viram um texto fixo antes da foto.
+  await page
+    .locator("[data-ambiente]")
+    .evaluateAll((els) => els.forEach((e) => (e.textContent = "Detalhe do ambiente")));
   // Dígitos de largura fixa: sem isso, a hora do dia muda a largura de uma data e, no celular, a
   // quebra de linha (e a altura da página) muda junto. As máscaras cobrem o texto, não o layout.
   await page.addStyleTag({

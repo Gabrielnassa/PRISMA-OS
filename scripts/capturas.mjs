@@ -23,6 +23,8 @@ if (!fs.existsSync(path.join(root, ".next/BUILD_ID"))) {
 }
 
 const DB = "prisma-capturas-db";
+// Pasta do projeto dentro do contêiner (mude para conferir que as capturas não dependem do caminho).
+const WORKDIR = process.env.CAPTURAS_WORKDIR ?? "/work";
 const PORT = process.env.CAPTURAS_DB_PORT ?? "55432";
 const docker = (args, opts = {}) => execFileSync("docker", args, { stdio: "inherit", ...opts });
 const quiet = (args) => {
@@ -66,9 +68,9 @@ try {
     "--ipc",
     "host",
     "-v",
-    `${root}:/work`,
+    `${root}:${WORKDIR}`,
     "-w",
-    "/work",
+    WORKDIR,
     "-e",
     "E2E_PORT",
     "-e",

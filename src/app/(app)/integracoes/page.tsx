@@ -252,7 +252,9 @@ export default async function IntegrationsPage() {
                 </Badge>
                 <div>
                   <div className="font-medium text-ink-100">{c.name}</div>
-                  <div className="text-xs text-ink-400">{c.detail}</div>
+                  <div data-ambiente className="text-xs text-ink-400">
+                    {c.detail}
+                  </div>
                 </div>
               </li>
             ))}
