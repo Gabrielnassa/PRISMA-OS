@@ -10,7 +10,13 @@ import { ReportToolbar } from "./toolbar";
 
 export const metadata: Metadata = { title: "Relatório" };
 
-export default async function ReportPage({ params, searchParams }: { params: Promise<{ clientId: string }>; searchParams: Promise<{ mes?: string }> }) {
+export default async function ReportPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ clientId: string }>;
+  searchParams: Promise<{ mes?: string }>;
+}) {
   const auth = await requireAuth();
   const { clientId } = await params;
   const month = assertMonth((await searchParams).mes, currentMonth());

@@ -9,8 +9,15 @@ function mockFetch(responses: Array<{ status: number; body: unknown }>, captured
   return (async (input: RequestInfo | URL, init?: RequestInit) => {
     const next = responses.shift();
     if (!next) throw new Error("sem resposta simulada");
-    captured.push({ url: String(input), body: JSON.parse(String(init?.body ?? "{}")), headers: new Headers(init?.headers) });
-    return new Response(JSON.stringify(next.body), { status: next.status, headers: { "content-type": "application/json", "request-id": "req_test" } });
+    captured.push({
+      url: String(input),
+      body: JSON.parse(String(init?.body ?? "{}")),
+      headers: new Headers(init?.headers),
+    });
+    return new Response(JSON.stringify(next.body), {
+      status: next.status,
+      headers: { "content-type": "application/json", "request-id": "req_test" },
+    });
   }) as typeof fetch;
 }
 
@@ -26,7 +33,14 @@ const message = (text: string, stop = "end_turn") => ({
 });
 
 const provider = (fetchImpl: typeof fetch) =>
-  new AnthropicProvider({ apiKey: "sk-test", model: "claude-opus-5-5", effort: "medium", fallbacks: true, timeoutMs: 10_000, fetch: fetchImpl });
+  new AnthropicProvider({
+    apiKey: "sk-test",
+    model: "claude-opus-5-5",
+    effort: "medium",
+    fallbacks: true,
+    timeoutMs: 10_000,
+    fetch: fetchImpl,
+  });
 
 const schema = z.object({ title: z.string() });
 const req = { system: "sistema", context: "contexto", task: "tarefa", schema };
@@ -48,7 +62,15 @@ describe("provedor Anthropic (API simulada)", () => {
   });
 
   it("classifica limite de requisições como recuperável", async () => {
-    const p = provider(mockFetch([{ status: 429, body: { type: "error", error: { type: "rate_limit_error", message: "x" } } }, { status: 429, body: { type: "error", error: { type: "rate_limit_error", message: "x" } } }], []));
+    const p = provider(
+      mockFetch(
+        [
+          { status: 429, body: { type: "error", error: { type: "rate_limit_error", message: "x" } } },
+          { status: 429, body: { type: "error", error: { type: "rate_limit_error", message: "x" } } },
+        ],
+        [],
+      ),
+    );
     const err = await p.generateStructured(req).catch((e) => e);
     expect(err).toBeInstanceOf(IntegrationError);
     expect(err.retryable).toBe(true);
@@ -56,14 +78,38 @@ describe("provedor Anthropic (API simulada)", () => {
   });
 
   it("classifica chave inválida como definitiva", async () => {
-    const p = provider(mockFetch([{ status: 401, body: { type: "error", error: { type: "authentication_error", message: "invalid x-api-key" } } }], []));
+    const p = provider(
+      mockFetch(
+        [
+          {
+            status: 401,
+            body: { type: "error", error: { type: "authentication_error", message: "invalid x-api-key" } },
+          },
+        ],
+        [],
+      ),
+    );
     const err = await p.generateStructured(req).catch((e) => e);
     expect(err.retryable).toBe(false);
     expect(err.code).toBe("auth_failed");
   });
 
   it("trata recusa do modelo sem tentar novamente", async () => {
-    const p = provider(mockFetch([{ status: 200, body: { ...message(""), stop_reason: "refusal", stop_details: { type: "refusal", category: null, explanation: null } } }], []));
+    const p = provider(
+      mockFetch(
+        [
+          {
+            status: 200,
+            body: {
+              ...message(""),
+              stop_reason: "refusal",
+              stop_details: { type: "refusal", category: null, explanation: null },
+            },
+          },
+        ],
+        [],
+      ),
+    );
     const err = await p.generateStructured(req).catch((e) => e);
     expect(err.code).toBe("refused");
     expect(err.retryable).toBe(false);
@@ -71,10 +117,21 @@ describe("provedor Anthropic (API simulada)", () => {
 
   it("mantém enum no esquema enviado e remove restrições não suportadas", async () => {
     const captured: Captured[] = [];
-    const p = provider(mockFetch([{ status: 200, body: message('{"kind":"cta","title":"Ok","items":["a"]}') }], captured));
-    const enumSchema = z.object({ kind: z.enum(["cover", "content", "cta"]), title: z.string().max(80), items: z.array(z.string()).min(1).max(5) });
+    const p = provider(
+      mockFetch([{ status: 200, body: message('{"kind":"cta","title":"Ok","items":["a"]}') }], captured),
+    );
+    const enumSchema = z.object({
+      kind: z.enum(["cover", "content", "cta"]),
+      title: z.string().max(80),
+      items: z.array(z.string()).min(1).max(5),
+    });
     await p.generateStructured({ ...req, schema: enumSchema });
-    type Node = { enum?: string[]; additionalProperties?: boolean; minItems?: number; properties: Record<string, Node> };
+    type Node = {
+      enum?: string[];
+      additionalProperties?: boolean;
+      minItems?: number;
+      properties: Record<string, Node>;
+    };
     const sent = (captured[0]!.body.output_config as { format: { schema: Node } }).format.schema;
     expect(sent.properties.kind!.enum).toEqual(["cover", "content", "cta"]);
     expect(sent.additionalProperties).toBe(false);
@@ -86,10 +143,23 @@ describe("provedor Anthropic (API simulada)", () => {
 
   it("ANTHROPIC_EFFORT, quando definido, substitui o esforço da skill", async () => {
     const captured: Captured[] = [];
-    const forced = new AnthropicProvider({ apiKey: "sk-test", model: "claude-opus-5-5", effort: "high", fallbacks: true, timeoutMs: 10_000, fetch: mockFetch([{ status: 200, body: message('{"title":"x"}') }], captured) });
+    const forced = new AnthropicProvider({
+      apiKey: "sk-test",
+      model: "claude-opus-5-5",
+      effort: "high",
+      fallbacks: true,
+      timeoutMs: 10_000,
+      fetch: mockFetch([{ status: 200, body: message('{"title":"x"}') }], captured),
+    });
     await forced.generateStructured({ ...req, effort: "low" });
     expect((captured[0]!.body.output_config as { effort: string }).effort).toBe("high");
-    const perSkill = new AnthropicProvider({ apiKey: "sk-test", model: "claude-opus-5-5", fallbacks: true, timeoutMs: 10_000, fetch: mockFetch([{ status: 200, body: message('{"title":"x"}') }], captured) });
+    const perSkill = new AnthropicProvider({
+      apiKey: "sk-test",
+      model: "claude-opus-5-5",
+      fallbacks: true,
+      timeoutMs: 10_000,
+      fetch: mockFetch([{ status: 200, body: message('{"title":"x"}') }], captured),
+    });
     await perSkill.generateStructured({ ...req, effort: "low" });
     expect((captured[1]!.body.output_config as { effort: string }).effort).toBe("low");
   });
@@ -104,8 +174,24 @@ describe("provedor Anthropic (API simulada)", () => {
         cache_read_input_tokens: 0,
         cache_creation_input_tokens: 0,
         iterations: [
-          { type: "message", model: "claude-opus-5-5", input_tokens: 900, output_tokens: 40, cache_read_input_tokens: 0, cache_creation_input_tokens: 0, cache_creation: null },
-          { type: "fallback_message", model: "claude-opus-5", input_tokens: 900, output_tokens: 300, cache_read_input_tokens: 0, cache_creation_input_tokens: 0, cache_creation: null },
+          {
+            type: "message",
+            model: "claude-opus-5-5",
+            input_tokens: 900,
+            output_tokens: 40,
+            cache_read_input_tokens: 0,
+            cache_creation_input_tokens: 0,
+            cache_creation: null,
+          },
+          {
+            type: "fallback_message",
+            model: "claude-opus-5",
+            input_tokens: 900,
+            output_tokens: 300,
+            cache_read_input_tokens: 0,
+            cache_creation_input_tokens: 0,
+            cache_creation: null,
+          },
         ],
       },
     };

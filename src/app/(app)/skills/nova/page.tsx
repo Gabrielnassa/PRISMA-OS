@@ -10,7 +10,12 @@ export const metadata: Metadata = { title: "Nova skill" };
 export default async function NewSkillPage() {
   const auth = await requireAuth();
   if (!can(auth.role, "skills.manage")) {
-    return <EmptyState title="Sem permissão" description="Só proprietários e administradores criam skills. As existentes podem ser usadas em Skills." />;
+    return (
+      <EmptyState
+        title="Sem permissão"
+        description="Só proprietários e administradores criam skills. As existentes podem ser usadas em Skills."
+      />
+    );
   }
   const clients = (await listClients(auth)).filter((c) => c.status !== "archived");
   return (

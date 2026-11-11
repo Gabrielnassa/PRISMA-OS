@@ -1,13 +1,37 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { requireAuth } from "@/server/auth/next";
-import { DASHBOARD_PERIODS, DASHBOARD_PERIOD_LABELS, getDashboard, type DashboardPeriod } from "@/server/services/dashboard";
+import {
+  DASHBOARD_PERIODS,
+  DASHBOARD_PERIOD_LABELS,
+  getDashboard,
+  type DashboardPeriod,
+} from "@/server/services/dashboard";
 import { CHANNELS, CHANNEL_LABELS, type Channel } from "@/lib/content/document";
 import { listClients } from "@/server/services/clients";
 import { providerStatus } from "@/server/ai/gateway";
 import { can } from "@/server/authz/permissions";
 import { CONTENT_STATUSES, STATUS_LABELS, type ContentStatus } from "@/lib/content/status";
-import { Alert, Badge, Card, CardHeader, EmptyState, LinkButton, PageHeader, Select, Stat, StatGroup, Table, Td, Th, buttonClass, cx, formatDateTime, formatRelative, formatUsd } from "@/components/ui";
+import {
+  Alert,
+  Badge,
+  Card,
+  CardHeader,
+  EmptyState,
+  LinkButton,
+  PageHeader,
+  Select,
+  Stat,
+  StatGroup,
+  Table,
+  Td,
+  Th,
+  buttonClass,
+  cx,
+  formatDateTime,
+  formatRelative,
+  formatUsd,
+} from "@/components/ui";
 import { StatusBadge } from "@/components/status";
 import { MonthBoard } from "@/components/month-board";
 import { myTasks } from "@/server/services/tasks";
@@ -32,7 +56,12 @@ const PIPELINE_BAR: Partial<Record<ContentStatus, string>> = {
 
 /** Ex.: "Quarta-feira, 28 de outubro" (só a primeira letra maiúscula). */
 function today(): string {
-  const t = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long", timeZone: "America/Sao_Paulo" }).format(new Date());
+  const t = new Intl.DateTimeFormat("pt-BR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: "America/Sao_Paulo",
+  }).format(new Date());
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
@@ -41,9 +70,14 @@ function withinDays(iso: string, days: number): boolean {
   return new Date(iso).getTime() < Date.now() + days * 86_400_000;
 }
 
-const oneOf = <T extends string>(list: readonly T[], v: string | undefined): T | undefined => (list as readonly string[]).includes(v ?? "") ? (v as T) : undefined;
+const oneOf = <T extends string>(list: readonly T[], v: string | undefined): T | undefined =>
+  (list as readonly string[]).includes(v ?? "") ? (v as T) : undefined;
 
-export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ cliente?: string; periodo?: string; canal?: string; status?: string }> }) {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cliente?: string; periodo?: string; canal?: string; status?: string }>;
+}) {
   const auth = await requireAuth();
   const sp = await searchParams;
   const clients = await listClients(auth);
@@ -72,7 +106,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       />
 
       {clients.length > 0 ? (
-        <form className="mb-8 grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_160px_170px_190px_auto]" action="/" aria-label="Filtros do dashboard">
+        <form
+          className="mb-8 grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_160px_170px_190px_auto]"
+          action="/"
+          aria-label="Filtros do dashboard"
+        >
           <Select name="cliente" defaultValue={clientId ?? ""} aria-label="Cliente">
             <option value="">Todos os clientes</option>
             {clients.map((c) => (
@@ -113,7 +151,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {!provider.configured ? (
         <div className="mb-8">
           <Alert tone="warning" title="IA não conectada">
-            Conecte uma chave em <Link href="/integracoes" className="underline">Integrações</Link> para gerar textos. Até lá, as peças podem ser montadas manualmente.
+            Conecte uma chave em{" "}
+            <Link href="/integracoes" className="underline">
+              Integrações
+            </Link>{" "}
+            para gerar textos. Até lá, as peças podem ser montadas manualmente.
           </Alert>
         </div>
       ) : provider.isDemo ? (
@@ -128,16 +170,35 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <EmptyState
           title="Nenhum cliente ainda"
           description="Cadastre o primeiro cliente para começar."
-          action={can(auth.role, "client.create") ? <LinkButton href="/clientes">Cadastrar cliente</LinkButton> : undefined}
+          action={
+            can(auth.role, "client.create") ? <LinkButton href="/clientes">Cadastrar cliente</LinkButton> : undefined
+          }
         />
       ) : (
         <>
           <StatGroup className="md:grid-cols-3 xl:grid-cols-6">
-            <Stat label="Clientes ativos" value={data.clients.active} hint={data.clients.total !== data.clients.active ? `${data.clients.total} no total` : undefined} />
+            <Stat
+              label="Clientes ativos"
+              value={data.clients.active}
+              hint={data.clients.total !== data.clients.active ? `${data.clients.total} no total` : undefined}
+            />
             <Stat label="Produzidos" value={data.producedInPeriod} hint={DASHBOARD_PERIOD_LABELS[period]} />
             <Stat label="Aprovados" value={data.approvedInPeriod} hint={DASHBOARD_PERIOD_LABELS[period]} />
-            <Stat label="Aguardando aprovação" value={data.pendingApprovals} tone={data.pendingApprovals > 0 ? "warning" : undefined} />
-            <Stat label="Falhas de geração" value={data.failedJobs} tone={data.failedJobs > 0 ? "danger" : undefined} hint={data.runningJobs ? `${DASHBOARD_PERIOD_LABELS[period]} · ${data.runningJobs} em andamento` : DASHBOARD_PERIOD_LABELS[period]} />
+            <Stat
+              label="Aguardando aprovação"
+              value={data.pendingApprovals}
+              tone={data.pendingApprovals > 0 ? "warning" : undefined}
+            />
+            <Stat
+              label="Falhas de geração"
+              value={data.failedJobs}
+              tone={data.failedJobs > 0 ? "danger" : undefined}
+              hint={
+                data.runningJobs
+                  ? `${DASHBOARD_PERIOD_LABELS[period]} · ${data.runningJobs} em andamento`
+                  : DASHBOARD_PERIOD_LABELS[period]
+              }
+            />
             <Stat
               label="Consumo de IA"
               value={formatUsd(data.ai.costUsd)}
@@ -156,14 +217,21 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 <ul className="divide-y divide-ink-800/70">
                   {tasks.map((t) => (
                     <li key={`${t.kind}-${t.contentId}`}>
-                      <Link href={`/conteudos/${t.contentId}`} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-ink-850/60">
+                      <Link
+                        href={`/conteudos/${t.contentId}`}
+                        className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-ink-850/60"
+                      >
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-[14px] font-medium text-ink-100">{t.title}</div>
                           <div className="mt-0.5 text-[12.5px] text-ink-400">
                             {t.clientName} · {t.kind === "approval" ? "aprovar" : STATUS_LABELS[t.status].toLowerCase()}
                           </div>
                         </div>
-                        {t.dueDate ? <Badge tone={t.overdue ? "danger" : "neutral"}>{t.overdue ? "Atrasada" : `até ${t.dueDate.slice(8, 10)}/${t.dueDate.slice(5, 7)}`}</Badge> : null}
+                        {t.dueDate ? (
+                          <Badge tone={t.overdue ? "danger" : "neutral"}>
+                            {t.overdue ? "Atrasada" : `até ${t.dueDate.slice(8, 10)}/${t.dueDate.slice(5, 7)}`}
+                          </Badge>
+                        ) : null}
                       </Link>
                     </li>
                   ))}
@@ -173,14 +241,28 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             <Card>
               <CardHeader
                 title="Próximos 7 dias nas redes"
-                actions={failedPubs.length ? <Link href="/publicacoes?status=failed"><Badge tone="danger">{failedPubs.length === 1 ? "1 publicação falhou" : `${failedPubs.length} publicações falharam`}</Badge></Link> : <LinkButton href="/publicacoes" variant="ghost" size="sm">Ver todas</LinkButton>}
+                actions={
+                  failedPubs.length ? (
+                    <Link href="/publicacoes?status=failed">
+                      <Badge tone="danger">
+                        {failedPubs.length === 1 ? "1 publicação falhou" : `${failedPubs.length} publicações falharam`}
+                      </Badge>
+                    </Link>
+                  ) : (
+                    <LinkButton href="/publicacoes" variant="ghost" size="sm">
+                      Ver todas
+                    </LinkButton>
+                  )
+                }
                 description={weekAhead.length ? undefined : "Nada agendado"}
               />
               {weekAhead.length ? (
                 <ul className="divide-y divide-ink-800/70">
                   {weekAhead.map((p) => (
                     <li key={p.id} className="flex items-center gap-3 px-5 py-3 text-[13.5px]">
-                      <span className="w-24 shrink-0 tabular text-[12.5px] text-ink-400">{formatDateTime(p.scheduledAt)}</span>
+                      <span className="tabular w-24 shrink-0 text-[12.5px] text-ink-400">
+                        {formatDateTime(p.scheduledAt)}
+                      </span>
                       <span className="min-w-0 flex-1 truncate text-ink-100">{p.contentTitle ?? p.title}</span>
                       <span className="shrink-0 text-[12.5px] text-ink-400">{NETWORK_LABELS[p.network]}</span>
                     </li>
@@ -191,26 +273,51 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </div>
 
           <div className="mt-6">
-            <MonthBoard rows={clientId ? months.filter((m) => m.clientId === clientId) : months} month={month} monthName={monthLabel(month)} />
+            <MonthBoard
+              rows={clientId ? months.filter((m) => m.clientId === clientId) : months}
+              month={month}
+              monthName={monthLabel(month)}
+            />
           </div>
 
           <div className="mt-6 grid gap-6 xl:grid-cols-3">
             <Card className="xl:col-span-2">
-              <CardHeader title="Atividade recente" actions={<LinkButton href="/conteudos" variant="ghost" size="sm">Ver todos</LinkButton>} />
+              <CardHeader
+                title="Atividade recente"
+                actions={
+                  <LinkButton href="/conteudos" variant="ghost" size="sm">
+                    Ver todos
+                  </LinkButton>
+                }
+              />
               {data.recent.length === 0 ? (
                 <div className="p-5">
-                  <EmptyState title="Nenhuma peça ainda" action={can(auth.role, "content.create") ? <LinkButton href="/criar" size="sm">Criar o primeiro</LinkButton> : undefined} />
+                  <EmptyState
+                    title="Nenhuma peça ainda"
+                    action={
+                      can(auth.role, "content.create") ? (
+                        <LinkButton href="/criar" size="sm">
+                          Criar o primeiro
+                        </LinkButton>
+                      ) : undefined
+                    }
+                  />
                 </div>
               ) : (
                 <ul className="divide-y divide-ink-800/70">
                   {data.recent.map((r) => (
                     <li key={r.id}>
-                      <Link href={`/conteudos/${r.id}`} className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-ink-850/60">
+                      <Link
+                        href={`/conteudos/${r.id}`}
+                        className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-ink-850/60"
+                      >
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-[14px] font-medium text-ink-100">{r.title}</div>
                           <div className="mt-0.5 flex gap-2 text-[12.5px] text-ink-400">
                             <span className="truncate">{r.clientName}</span>
-                            <span className="shrink-0 text-[12px] text-ink-400" title={formatDateTime(r.updatedAt)}>{formatRelative(r.updatedAt)}</span>
+                            <span className="shrink-0 text-[12px] text-ink-400" title={formatDateTime(r.updatedAt)}>
+                              {formatRelative(r.updatedAt)}
+                            </span>
                           </div>
                         </div>
                         <StatusBadge status={r.status} />
@@ -229,13 +336,19 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                   const total = Math.max(1, ...PIPELINE.map((p) => data.contentByStatus[p] ?? 0));
                   return (
                     <li key={s}>
-                      <Link href={`/conteudos?status=${s}${clientId ? `&cliente=${clientId}` : ""}`} className={cx("group block", status && status !== s && "opacity-50")}>
+                      <Link
+                        href={`/conteudos?status=${s}${clientId ? `&cliente=${clientId}` : ""}`}
+                        className={cx("group block", status && status !== s && "opacity-50")}
+                      >
                         <div className="mb-1.5 flex items-baseline justify-between text-[13px]">
                           <span className="text-ink-300 group-hover:text-ink-100">{STATUS_LABELS[s]}</span>
                           <span className="tabular text-[12px] text-ink-200">{n}</span>
                         </div>
                         <div className="h-[3px] rounded-full bg-ink-800">
-                          <div className={cx("h-[3px] rounded-full", n > 0 ? PIPELINE_BAR[s] : "")} style={{ width: `${(n / total) * 100}%` }} />
+                          <div
+                            className={cx("h-[3px] rounded-full", n > 0 ? PIPELINE_BAR[s] : "")}
+                            style={{ width: `${(n / total) * 100}%` }}
+                          />
                         </div>
                       </Link>
                     </li>
@@ -271,14 +384,17 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 {data.perClient.map((c) => (
                   <tr key={c.clientId}>
                     <Td>
-                      <Link href={`/clientes/${c.clientId}`} className="font-medium text-ink-100 underline-offset-4 hover:underline">
+                      <Link
+                        href={`/clientes/${c.clientId}`}
+                        className="font-medium text-ink-100 underline-offset-4 hover:underline"
+                      >
                         {c.name}
                       </Link>
                     </Td>
                     <Td className="text-right">{c.contents}</Td>
                     <Td className="text-right">{c.pending}</Td>
                     <Td className="text-right">{c.approved}</Td>
-                    <Td className="text-right tabular text-[12.5px]">{formatUsd(c.costUsd)}</Td>
+                    <Td className="tabular text-right text-[12.5px]">{formatUsd(c.costUsd)}</Td>
                   </tr>
                 ))}
               </tbody>

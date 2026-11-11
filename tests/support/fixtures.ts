@@ -15,9 +15,39 @@ export function sampleDocument(overrides: Partial<ContentDocument> = {}): Conten
       handle: "@estudioexemplo",
     },
     slides: [
-      { id: "s1-aaaa", kind: "cover", fields: { kicker: "Guia rápido", title: "Três decisões que mudam a reforma do seu apartamento", body: "", highlight: "", footer: "" } },
-      { id: "s2-bbbb", kind: "content", fields: { kicker: "Decisão 1", title: "Planeje a iluminação antes do acabamento", body: "Pontos de luz definidos no projeto evitam quebra-quebra depois. Combine luz geral, de tarefa e de destaque em cada ambiente.", highlight: "", footer: "" } },
-      { id: "s3-cccc", kind: "cta", fields: { kicker: "", title: "Quer revisar o seu projeto com a gente?", body: "Agende uma conversa de 30 minutos pelo link da bio.", highlight: "", footer: "estudioexemplo.com.br" } },
+      {
+        id: "s1-aaaa",
+        kind: "cover",
+        fields: {
+          kicker: "Guia rápido",
+          title: "Três decisões que mudam a reforma do seu apartamento",
+          body: "",
+          highlight: "",
+          footer: "",
+        },
+      },
+      {
+        id: "s2-bbbb",
+        kind: "content",
+        fields: {
+          kicker: "Decisão 1",
+          title: "Planeje a iluminação antes do acabamento",
+          body: "Pontos de luz definidos no projeto evitam quebra-quebra depois. Combine luz geral, de tarefa e de destaque em cada ambiente.",
+          highlight: "",
+          footer: "",
+        },
+      },
+      {
+        id: "s3-cccc",
+        kind: "cta",
+        fields: {
+          kicker: "",
+          title: "Quer revisar o seu projeto com a gente?",
+          body: "Agende uma conversa de 30 minutos pelo link da bio.",
+          highlight: "",
+          footer: "estudioexemplo.com.br",
+        },
+      },
     ],
     caption: "Reforma sem retrabalho começa no planejamento.",
     hashtags: ["#arquitetura", "#reforma"],

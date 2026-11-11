@@ -3,7 +3,22 @@ import Link from "next/link";
 import { requireAuth } from "@/server/auth/next";
 import { getCostSummary } from "@/server/services/costs";
 import { can } from "@/server/authz/permissions";
-import { Badge, Card, CardHeader, Dot, EmptyState, PageHeader, Stat, StatGroup, Table, Td, Th, formatDateTime, formatNumber, formatUsd } from "@/components/ui";
+import {
+  Badge,
+  Card,
+  CardHeader,
+  Dot,
+  EmptyState,
+  PageHeader,
+  Stat,
+  StatGroup,
+  Table,
+  Td,
+  Th,
+  formatDateTime,
+  formatNumber,
+  formatUsd,
+} from "@/components/ui";
 import { PriceForm } from "./price-form";
 import { plural } from "@/lib/text";
 import { monthLabel } from "@/lib/content/editorial";
@@ -19,7 +34,8 @@ const RUN_STATUS: Record<string, { label: string; tone: "success" | "info" | "da
 
 export default async function CostsPage() {
   const auth = await requireAuth();
-  if (!can(auth.role, "costs.view")) return <EmptyState title="Acesso restrito" description="Custos ficam visíveis para administradores." />;
+  if (!can(auth.role, "costs.view"))
+    return <EmptyState title="Acesso restrito" description="Custos ficam visíveis para administradores." />;
   const s = await getCostSummary(auth);
   return (
     <>
@@ -29,14 +45,25 @@ export default async function CostsPage() {
       />
       <StatGroup className="lg:grid-cols-5">
         <Stat label="Custo no mês" value={formatUsd(s.totals.costUsd, 2)} />
-        <Stat label="Execuções" value={s.totals.runs} hint={s.totals.failed ? `${s.totals.failed} sem sucesso` : undefined} />
+        <Stat
+          label="Execuções"
+          value={s.totals.runs}
+          hint={s.totals.failed ? `${s.totals.failed} sem sucesso` : undefined}
+        />
         <Stat label="Tokens de entrada" value={formatNumber(s.totals.inputTokens)} />
         <Stat label="Tokens de saída" value={formatNumber(s.totals.outputTokens)} />
         <Stat
           label="Sem tarifa"
           value={s.totals.unpricedRuns}
           tone={s.totals.unpricedRuns ? "warning" : undefined}
-          hint={[s.totals.unpricedEstimateUsd ? `≈ ${formatUsd(s.totals.unpricedEstimateUsd, 4)} estimado` : "", s.totals.demoRuns ? `${plural(s.totals.demoRuns, "demonstração", "demonstrações")} sem custo` : ""].filter(Boolean).join(" · ") || undefined}
+          hint={
+            [
+              s.totals.unpricedEstimateUsd ? `≈ ${formatUsd(s.totals.unpricedEstimateUsd, 4)} estimado` : "",
+              s.totals.demoRuns ? `${plural(s.totals.demoRuns, "demonstração", "demonstrações")} sem custo` : "",
+            ]
+              .filter(Boolean)
+              .join(" · ") || undefined
+          }
         />
       </StatGroup>
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
@@ -57,20 +84,29 @@ export default async function CostsPage() {
                 return (
                   <tr key={c.clientId}>
                     <Td>
-                      <Link href={`/clientes/${c.clientId}`} className="text-ink-100 underline-offset-4 hover:underline">
+                      <Link
+                        href={`/clientes/${c.clientId}`}
+                        className="text-ink-100 underline-offset-4 hover:underline"
+                      >
                         {c.clientName}
                       </Link>
                     </Td>
                     <Td className="text-right">{c.runs}</Td>
-                    <Td className="text-right tabular text-[12.5px]">
+                    <Td className="tabular text-right text-[12.5px]">
                       {formatUsd(c.costUsd, 4)}
-                      {c.budgetSpendUsd > c.costUsd ? <span className="block text-[11.5px] text-amber-300">+ {formatUsd(c.budgetSpendUsd - c.costUsd, 4)} estimado</span> : null}
+                      {c.budgetSpendUsd > c.costUsd ? (
+                        <span className="block text-[11.5px] text-amber-300">
+                          + {formatUsd(c.budgetSpendUsd - c.costUsd, 4)} estimado
+                        </span>
+                      ) : null}
                     </Td>
                     <Td className="text-right">
                       {c.limitUsd === null ? (
                         <span className="text-ink-400">sem teto</span>
                       ) : (
-                        <span className={pct !== null && c.alertPct !== null && pct >= c.alertPct ? "text-amber-300" : ""}>
+                        <span
+                          className={pct !== null && c.alertPct !== null && pct >= c.alertPct ? "text-amber-300" : ""}
+                        >
                           {formatUsd(c.limitUsd)} ({pct?.toFixed(0)}%){c.hardStop ? "" : " · só alerta"}
                         </span>
                       )}
@@ -105,7 +141,7 @@ export default async function CostsPage() {
                       <div className="font-mono text-[11px] text-ink-400">{k.skillId}</div>
                     </Td>
                     <Td className="text-right">{k.runs}</Td>
-                    <Td className="text-right tabular text-[12.5px]">{formatUsd(k.costUsd, 4)}</Td>
+                    <Td className="tabular text-right text-[12.5px]">{formatUsd(k.costUsd, 4)}</Td>
                     <Td className="text-right">{k.avgDurationMs ? `${(k.avgDurationMs / 1000).toFixed(1)} s` : "—"}</Td>
                   </tr>
                 ))
@@ -131,12 +167,12 @@ export default async function CostsPage() {
           <tbody>
             {s.recent.map((r) => (
               <tr key={r.id}>
-                <Td className="whitespace-nowrap tabular text-[12px] text-ink-400">{formatDateTime(r.createdAt)}</Td>
+                <Td className="tabular text-[12px] whitespace-nowrap text-ink-400">{formatDateTime(r.createdAt)}</Td>
                 <Td>{r.clientName ?? "—"}</Td>
                 <Td className="text-xs">
                   <span title={r.skillId}>{r.skillName}</span>
                 </Td>
-                <Td className="whitespace-nowrap tabular text-[12px] text-ink-300">{r.model}</Td>
+                <Td className="tabular text-[12px] whitespace-nowrap text-ink-300">{r.model}</Td>
                 <Td>
                   <span className="inline-flex items-center gap-2">
                     <Dot tone={RUN_STATUS[r.status]?.tone ?? "danger"} title={r.errorMessage ?? undefined}>
@@ -145,10 +181,20 @@ export default async function CostsPage() {
                     {r.isDemo ? <Badge tone="warning">demo</Badge> : null}
                   </span>
                 </Td>
-                <Td className="whitespace-nowrap text-right tabular text-[12.5px]">
+                <Td className="tabular text-right text-[12.5px] whitespace-nowrap">
                   {formatNumber(r.inputTokens)} / {formatNumber(r.outputTokens)}
                 </Td>
-                <Td className="whitespace-nowrap text-right tabular text-[12.5px]">{r.isDemo ? "—" : r.costUsd === null ? <span className="text-amber-300">sem tarifa{r.estimatedCostUsd !== null ? ` (≈ ${formatUsd(r.estimatedCostUsd, 4)})` : ""}</span> : formatUsd(r.costUsd, 4)}</Td>
+                <Td className="tabular text-right text-[12.5px] whitespace-nowrap">
+                  {r.isDemo ? (
+                    "—"
+                  ) : r.costUsd === null ? (
+                    <span className="text-amber-300">
+                      sem tarifa{r.estimatedCostUsd !== null ? ` (≈ ${formatUsd(r.estimatedCostUsd, 4)})` : ""}
+                    </span>
+                  ) : (
+                    formatUsd(r.costUsd, 4)
+                  )}
+                </Td>
               </tr>
             ))}
           </tbody>
@@ -171,15 +217,19 @@ export default async function CostsPage() {
             {s.prices.map((p) => (
               <tr key={p.id}>
                 <Td className="whitespace-nowrap">
-                  <span className="text-ink-400">{p.provider} /</span> <span className="tabular text-[12.5px] text-ink-100">{p.model}</span>
+                  <span className="text-ink-400">{p.provider} /</span>{" "}
+                  <span className="tabular text-[12.5px] text-ink-100">{p.model}</span>
                 </Td>
-                <Td className="whitespace-nowrap text-right tabular text-[12.5px]">{formatUsd(Number(p.input))}</Td>
-                <Td className="whitespace-nowrap text-right tabular text-[12.5px]">{formatUsd(Number(p.output))}</Td>
-                <Td className="whitespace-nowrap text-right tabular text-[12.5px]">
-                  {p.cacheRead ? formatUsd(Number(p.cacheRead)) : "—"} / {p.cacheWrite ? formatUsd(Number(p.cacheWrite)) : "—"}
+                <Td className="tabular text-right text-[12.5px] whitespace-nowrap">{formatUsd(Number(p.input))}</Td>
+                <Td className="tabular text-right text-[12.5px] whitespace-nowrap">{formatUsd(Number(p.output))}</Td>
+                <Td className="tabular text-right text-[12.5px] whitespace-nowrap">
+                  {p.cacheRead ? formatUsd(Number(p.cacheRead)) : "—"} /{" "}
+                  {p.cacheWrite ? formatUsd(Number(p.cacheWrite)) : "—"}
                 </Td>
-                <Td className="whitespace-nowrap tabular text-[12px] text-ink-400">{formatDateTime(p.effectiveFrom)}</Td>
-                <Td className="min-w-[260px] max-w-md text-[12px] leading-relaxed text-ink-400">
+                <Td className="tabular text-[12px] whitespace-nowrap text-ink-400">
+                  {formatDateTime(p.effectiveFrom)}
+                </Td>
+                <Td className="max-w-md min-w-[260px] text-[12px] leading-relaxed text-ink-400">
                   <span className="line-clamp-2" title={p.source}>
                     {p.source}
                   </span>

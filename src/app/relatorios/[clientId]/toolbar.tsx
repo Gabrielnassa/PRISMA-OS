@@ -6,7 +6,23 @@ import { Button, buttonClass } from "@/components/ui";
 import { reportLinkAction } from "./actions";
 
 /** Barra do relatório (some na impressão): mês, imprimir/PDF e link para o cliente. */
-export function ReportToolbar({ clientId, clientName, month, prevHref, nextHref, backHref, canShare }: { clientId: string; clientName: string; month: string; prevHref: string; nextHref: string; backHref: string; canShare: boolean }) {
+export function ReportToolbar({
+  clientId,
+  clientName,
+  month,
+  prevHref,
+  nextHref,
+  backHref,
+  canShare,
+}: {
+  clientId: string;
+  clientName: string;
+  month: string;
+  prevHref: string;
+  nextHref: string;
+  backHref: string;
+  canShare: boolean;
+}) {
   const [link, create, creating] = useActionState(reportLinkAction, { status: "idle" });
   const url = link.status === "ok" ? link.data?.url : undefined;
   return (
@@ -49,8 +65,12 @@ export function ReportToolbar({ clientId, clientName, month, prevHref, nextHref,
           )
         ) : null}
       </div>
-      {link.status === "error" ? <p className="mx-auto mt-2 max-w-4xl text-[12.5px] text-red-300">{link.message}</p> : null}
-      {url ? <p className="mx-auto mt-2 max-w-4xl break-all text-[12px] text-ink-400">{url} · vale 30 dias, só leitura</p> : null}
+      {link.status === "error" ? (
+        <p className="mx-auto mt-2 max-w-4xl text-[12.5px] text-red-300">{link.message}</p>
+      ) : null}
+      {url ? (
+        <p className="mx-auto mt-2 max-w-4xl text-[12px] break-all text-ink-400">{url} · vale 30 dias, só leitura</p>
+      ) : null}
     </div>
   );
 }

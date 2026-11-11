@@ -17,7 +17,11 @@ export interface InboxItem {
   createdAt: string;
 }
 
-export async function notifyUsers(organizationId: string, userIds: Array<string | null | undefined>, n: { kind: string; title: string; body?: string; href?: string }): Promise<void> {
+export async function notifyUsers(
+  organizationId: string,
+  userIds: Array<string | null | undefined>,
+  n: { kind: string; title: string; body?: string; href?: string },
+): Promise<void> {
   const ids = [...new Set(userIds.filter((u): u is string => Boolean(u) && z.string().uuid().safeParse(u).success))];
   if (ids.length === 0) return;
   try {
@@ -25,7 +29,14 @@ export async function notifyUsers(organizationId: string, userIds: Array<string 
       tx.query(
         `INSERT INTO notifications (organization_id, user_id, kind, title, body, href)
          SELECT $1, m.user_id, $3, $4, $5, $6 FROM memberships m WHERE m.organization_id = $1 AND m.user_id = ANY($2::uuid[]) AND m.deactivated_at IS NULL`,
-        [organizationId, ids, n.kind.slice(0, 60), n.title.slice(0, 300), (n.body ?? "").slice(0, 1000), n.href && n.href.startsWith("/") ? n.href.slice(0, 500) : null],
+        [
+          organizationId,
+          ids,
+          n.kind.slice(0, 60),
+          n.title.slice(0, 300),
+          (n.body ?? "").slice(0, 1000),
+          n.href && n.href.startsWith("/") ? n.href.slice(0, 500) : null,
+        ],
       ),
     );
   } catch (err) {
@@ -50,14 +61,34 @@ export async function approversOf(organizationId: string, clientId: string, exce
 
 export async function listInbox(auth: AuthContext, limit = 30): Promise<{ items: InboxItem[]; unread: number }> {
   return withTx(userCtx(auth.userId), async (tx) => {
-    const rows = await many<{ id: string; kind: string; title: string; body: string; href: string | null; read_at: Date | null; created_at: Date }>(
+    const rows = await many<{
+      id: string;
+      kind: string;
+      title: string;
+      body: string;
+      href: string | null;
+      read_at: Date | null;
+      created_at: Date;
+    }>(
       tx,
       "SELECT id, kind, title, body, href, read_at, created_at FROM notifications WHERE organization_id = $1 AND user_id = $2 ORDER BY created_at DESC LIMIT $3",
       [auth.organizationId, auth.userId, Math.min(limit, 100)],
     );
-    const unread = await one<{ n: number }>(tx, "SELECT count(*)::int AS n FROM notifications WHERE organization_id = $1 AND user_id = $2 AND read_at IS NULL", [auth.organizationId, auth.userId]);
+    const unread = await one<{ n: number }>(
+      tx,
+      "SELECT count(*)::int AS n FROM notifications WHERE organization_id = $1 AND user_id = $2 AND read_at IS NULL",
+      [auth.organizationId, auth.userId],
+    );
     return {
-      items: rows.map((r) => ({ id: r.id, kind: r.kind, title: r.title, body: r.body, href: r.href, read: Boolean(r.read_at), createdAt: r.created_at.toISOString() })),
+      items: rows.map((r) => ({
+        id: r.id,
+        kind: r.kind,
+        title: r.title,
+        body: r.body,
+        href: r.href,
+        read: Boolean(r.read_at),
+        createdAt: r.created_at.toISOString(),
+      })),
       unread: unread.n,
     };
   });
@@ -75,13 +106,28 @@ export async function markInboxRead(auth: AuthContext, id?: string): Promise<voi
 }
 
 export async function unreadCount(auth: AuthContext): Promise<number> {
-  return withTx(userCtx(auth.userId), async (tx) => (await one<{ n: number }>(tx, "SELECT count(*)::int AS n FROM notifications WHERE organization_id = $1 AND user_id = $2 AND read_at IS NULL", [auth.organizationId, auth.userId])).n);
+  return withTx(
+    userCtx(auth.userId),
+    async (tx) =>
+      (
+        await one<{ n: number }>(
+          tx,
+          "SELECT count(*)::int AS n FROM notifications WHERE organization_id = $1 AND user_id = $2 AND read_at IS NULL",
+          [auth.organizationId, auth.userId],
+        )
+      ).n,
+  );
 }
 
 /** Abre um aviso: marca como lido e devolve o destino (só caminhos internos). */
 export async function openInboxItem(auth: AuthContext, id: string): Promise<string> {
   if (!z.string().uuid().safeParse(id).success) return "/avisos";
-  const row = await withTx(userCtx(auth.userId), (tx) => many<{ href: string | null }>(tx, "SELECT href FROM notifications WHERE id = $1 AND user_id = $2", [id, auth.userId]));
+  const row = await withTx(userCtx(auth.userId), (tx) =>
+    many<{ href: string | null }>(tx, "SELECT href FROM notifications WHERE id = $1 AND user_id = $2", [
+      id,
+      auth.userId,
+    ]),
+  );
   await markInboxRead(auth, id);
   const href = row[0]?.href;
   return href && href.startsWith("/") && !href.startsWith("//") ? href : "/avisos";

@@ -32,7 +32,17 @@ async function emailsOf(organizationId: string, userIds: string[]): Promise<stri
 }
 
 /** Peça enviada para aprovação: avisa quem aprova e tem acesso ao cliente (menos quem pediu). */
-export async function notifyApprovalRequested(o: { organizationId: string; clientId: string; contentId: string; title: string; clientName: string; requestedBy: string; requestedByName: string; versionNumber: number; note: string }): Promise<void> {
+export async function notifyApprovalRequested(o: {
+  organizationId: string;
+  clientId: string;
+  contentId: string;
+  title: string;
+  clientName: string;
+  requestedBy: string;
+  requestedByName: string;
+  versionNumber: number;
+  note: string;
+}): Promise<void> {
   await safe(async () => {
     const rows = await withTx(systemCtx("notify.approvers"), (tx) =>
       many<{ email: string }>(
@@ -61,7 +71,18 @@ export async function notifyApprovalRequested(o: { organizationId: string; clien
   });
 }
 
-export async function notifyApprovalDecided(organizationId: string, o: { requestedBy: string | null; contentId: string; title: string; clientName: string; decision: "approved" | "rejected"; by: string; note: string }): Promise<void> {
+export async function notifyApprovalDecided(
+  organizationId: string,
+  o: {
+    requestedBy: string | null;
+    contentId: string;
+    title: string;
+    clientName: string;
+    decision: "approved" | "rejected";
+    by: string;
+    note: string;
+  },
+): Promise<void> {
   await safe(async () => {
     if (!o.requestedBy) return;
     await notifyUsers(organizationId, [o.requestedBy], {
@@ -82,10 +103,18 @@ export async function notifyApprovalDecided(organizationId: string, o: { request
   });
 }
 
-export async function notifyPublicationFailed(organizationId: string, o: { requestedBy: string | null; network: string; account: string; title: string; error: string }): Promise<void> {
+export async function notifyPublicationFailed(
+  organizationId: string,
+  o: { requestedBy: string | null; network: string; account: string; title: string; error: string },
+): Promise<void> {
   await safe(async () => {
     if (!o.requestedBy) return;
-    await notifyUsers(organizationId, [o.requestedBy], { kind: "publication.failed", title: `Publicação não saiu: ${o.title}`, body: `${o.network} · ${o.error.slice(0, 300)}`, href: "/publicacoes?status=failed" });
+    await notifyUsers(organizationId, [o.requestedBy], {
+      kind: "publication.failed",
+      title: `Publicação não saiu: ${o.title}`,
+      body: `${o.network} · ${o.error.slice(0, 300)}`,
+      href: "/publicacoes?status=failed",
+    });
     await queueEmail(organizationId, {
       to: await emailsOf(organizationId, [o.requestedBy]),
       subject: `Publicação não saiu: ${o.title} (${o.network})`,

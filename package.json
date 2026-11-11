@@ -25,7 +25,14 @@
     "test:e2e:prod": "E2E_PROD=1 playwright test",
     "member:add": "tsx --conditions=react-server scripts/add-member.ts",
     "user:reset-password": "tsx --conditions=react-server scripts/reset-password.ts",
-    "primeiro-acesso": "tsx --conditions=react-server scripts/create-admin.ts"
+    "primeiro-acesso": "tsx --conditions=react-server scripts/create-admin.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "knip": "knip --include files,dependencies,unlisted,binaries",
+    "prepare": "husky",
+    "seed:demo": "tsx --conditions=react-server scripts/seed-demo.ts",
+    "test:visual": "playwright test -c playwright.visual.config.ts",
+    "capturas": "node scripts/capturas.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.1.0",
@@ -35,13 +42,12 @@
     "@fontsource/inter": "^5.3.0",
     "@fontsource/lora": "^5.3.0",
     "@fontsource/montserrat": "^5.3.0",
-    "@fontsource/newsreader": "^5.3.0",
     "@fontsource/nunito": "^5.3.0",
     "@fontsource/playfair-display": "^5.3.0",
-    "@fontsource/schibsted-grotesk": "^5.3.0",
     "@fontsource/sora": "^5.3.0",
     "@fontsource/space-grotesk": "^5.3.0",
     "@resvg/resvg-js": "^2.6.2",
+    "@shuding/opentype.js": "1.4.0-beta.0",
     "jszip": "^3.10.2",
     "next": "^16.4.2",
     "nodemailer": "^10.3.1",
@@ -64,6 +70,11 @@
     "@types/react-dom": "^19.3.0",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.4.2",
+    "husky": "^9.1.7",
+    "knip": "^6.45.1",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.10.0",
+    "prettier-plugin-tailwindcss": "^0.8.1",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3",
@@ -71,5 +82,8 @@
   },
   "overrides": {
     "fflate": "0.8.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs,cjs,json,css,yml,yaml}": "prettier --write"
   }
 }

@@ -254,3 +254,37 @@ npm run test:e2e      # Playwright (banco prisma_os_e2e, porta 3100, worker incl
 ```
 
 Se a versão do Playwright não encontrar o Chromium instalado, defina `PLAYWRIGHT_CHROMIUM_PATH`.
+
+### CI (GitHub Actions)
+
+`.github/workflows/ci.yml` roda em todo PR e em cada envio para `main`, em dois trabalhos:
+
+- **Formatação, lint, tipos, testes e build**: `format:check`, `lint`, `typecheck`, `knip` (arquivos e dependências sem uso), `npm audit --omit=dev`, `npm test` com PostgreSQL 16 e `npm run build`.
+- **Testes de navegador e comparação visual**: dentro da imagem Docker do Playwright, `test:e2e:prod` e `test:visual`. O relatório do Playwright fica anexado à execução por 14 dias.
+
+O banco do CI é preparado por `node scripts/setup-ci-db.mjs` (os mesmos papéis e bancos do `setup-local-db.sh`, sem precisar do `psql`).
+
+### Formatação
+
+Prettier com 120 colunas e ordem das classes do Tailwind. `npm run format` corrige, `npm run format:check` só confere (é o que o CI roda). O pre-commit (husky + lint-staged) formata os arquivos alterados. Commits só de formatação entram em `.git-blame-ignore-revs`; para o `git blame` local ignorá-los: `git config blame.ignoreRevsFile .git-blame-ignore-revs`.
+
+### Dados de demonstração
+
+```bash
+npm run seed:demo     # banco do .env; recusa produção e banco que já tenha a agência
+```
+
+Cria a "Agência Demonstração" (login `demo@prisma.local` / `demonstracao-123`, ou `DEMO_EMAIL` e `DEMO_PASSWORD`) com 8 clientes e cerca de 60 peças em todos os estados, linhas editoriais, aprovações, publicações com métricas, custos de IA, responsáveis, prazos e avisos. Tudo passa pelos serviços do sistema; a IA é um provedor local do script, sem chamada externa. Para popular de novo, use um banco vazio.
+
+### Comparação visual e capturas
+
+```bash
+npm run build
+npm run capturas            # regenera as referências e copia para docs/img/telas
+npm run capturas -- antes   # idem, para docs/img/antes
+npm run capturas -- --conferir   # só compara com as referências, como o CI
+```
+
+`npm run capturas` sobe sozinho um PostgreSQL 16.4 da imagem oficial (porta 55432) e o navegador da imagem do Playwright: a ordenação de texto do banco muda a ordem das listas, então um banco local com outra collation não serve de base.
+
+`tests/visual/telas.spec.ts` fotografa 10 telas, em desktop e celular, com os dados de demonstração num build de produção, e compara com `tests/visual/__snapshots__`. Datas e tempos relativos ficam mascarados. As referências são geradas na imagem `mcr.microsoft.com/playwright` da mesma versão do `@playwright/test` (é o que `npm run capturas` faz, e o que o CI usa), para a comparação não acusar diferença só por fonte do sistema. Ao atualizar o `@playwright/test`, atualize a versão da imagem no `ci.yml` e regenere as referências. `docs/img/antes` guarda as telas de antes do redesenho da Fase 1 do briefing (`docs/briefing-melhorias.pdf`).

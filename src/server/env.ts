@@ -8,7 +8,12 @@ const EnvSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   DATABASE_URL: z.string().url(),
   APP_URL: z.string().url().optional(),
-  SESSION_TTL_HOURS: z.coerce.number().int().min(1).max(24 * 30).default(72),
+  SESSION_TTL_HOURS: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(24 * 30)
+    .default(72),
   STORAGE_DRIVER: z.enum(["local"]).default("local"),
   STORAGE_LOCAL_DIR: z.string().default("./storage"),
   MAX_UPLOAD_MB: z.coerce.number().min(1).max(200).default(15),
@@ -31,7 +36,12 @@ const EnvSchema = z.object({
   // Integrações explica o problema (veja integrations/instagram.ts).
   META_ACCESS_TOKEN: z.string().trim().optional(),
   META_IG_USER_ID: z.string().trim().optional(),
-  META_GRAPH_VERSION: z.string().trim().regex(/^v\d+\.\d+$/).catch("v23.0").default("v23.0"),
+  META_GRAPH_VERSION: z
+    .string()
+    .trim()
+    .regex(/^v\d+\.\d+$/)
+    .catch("v23.0")
+    .default("v23.0"),
   // Google Drive (conta de serviço): importa fotos e vídeos da pasta de cada cliente.
   GOOGLE_SERVICE_ACCOUNT_JSON: z.string().optional(),
   // Limite por arquivo importado do Drive (vídeos costumam passar do limite de envio pela tela).
@@ -59,7 +69,9 @@ let cached: Env | undefined;
 export function env(): Env {
   if (!cached) {
     // Variáveis vazias (ex.: `AI_PROVIDER=` copiado do .env.example) valem como não definidas.
-    const defined = Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined && v.trim() !== ""));
+    const defined = Object.fromEntries(
+      Object.entries(process.env).filter(([, v]) => v !== undefined && v.trim() !== ""),
+    );
     const parsed = EnvSchema.safeParse(defined);
     if (!parsed.success) {
       const issues = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");

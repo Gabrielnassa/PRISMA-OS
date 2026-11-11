@@ -16,13 +16,21 @@ export function QualityPanel({ report, live = false }: { report: QualityReport |
       </Card>
     );
   }
-  const ordered = [...report.items].sort((a, b) => ["critical", "warning", "info"].indexOf(a.severity) - ["critical", "warning", "info"].indexOf(b.severity));
+  const ordered = [...report.items].sort(
+    (a, b) => ["critical", "warning", "info"].indexOf(a.severity) - ["critical", "warning", "info"].indexOf(b.severity),
+  );
   return (
     <Card>
       <CardHeader
         title="Verificação"
         description={live ? "Alterações ainda não salvas" : "Versão salva"}
-        actions={report.passed ? <Badge tone="success">Sem críticos</Badge> : <Badge tone="danger">{report.criticalCount === 1 ? "1 crítico" : `${report.criticalCount} críticos`}</Badge>}
+        actions={
+          report.passed ? (
+            <Badge tone="success">Sem críticos</Badge>
+          ) : (
+            <Badge tone="danger">{report.criticalCount === 1 ? "1 crítico" : `${report.criticalCount} críticos`}</Badge>
+          )
+        }
       />
       <ul className="max-h-[420px] divide-y divide-ink-800 overflow-y-auto">
         {ordered.map((item, i) => (

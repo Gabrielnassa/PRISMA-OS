@@ -6,7 +6,12 @@ export function StatusBadge({ status }: { status: ContentStatus }) {
 }
 
 export function SourceBadge({ source }: { source: string }) {
-  if (source === "demo") return <Badge tone="warning" title="Gerado sem IA pelo provedor de demonstração">Demonstração</Badge>;
+  if (source === "demo")
+    return (
+      <Badge tone="warning" title="Gerado sem IA pelo provedor de demonstração">
+        Demonstração
+      </Badge>
+    );
   if (source === "ai") return <Badge tone="accent">IA</Badge>;
   return <Badge>Manual</Badge>;
 }

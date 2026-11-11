@@ -3,7 +3,8 @@ import { migrate } from "../../src/server/db/migrate";
 
 export const TEST_MIGRATION_URL =
   process.env.TEST_MIGRATION_DATABASE_URL ?? "postgres://prisma_owner:prisma_owner_dev@localhost:5432/prisma_os_test";
-export const TEST_APP_URL = process.env.TEST_DATABASE_URL ?? "postgres://prisma_app_login:prisma_app_dev@localhost:5432/prisma_os_test";
+export const TEST_APP_URL =
+  process.env.TEST_DATABASE_URL ?? "postgres://prisma_app_login:prisma_app_dev@localhost:5432/prisma_os_test";
 
 /** Recria o schema do banco de testes e aplica todas as migrations. */
 export default async function setup(): Promise<void> {

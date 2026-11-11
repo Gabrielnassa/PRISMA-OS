@@ -18,7 +18,14 @@ export async function runAction<T>(fn: () => Promise<{ message?: string; data?: 
     // redirect()/notFound() do Next usam exceções próprias que precisam seguir adiante.
     unstable_rethrow(err);
     if (!(err instanceof AppError)) {
-      console.error(JSON.stringify({ level: "error", msg: "action.unexpected_error", error: (err as Error)?.message, stack: (err as Error)?.stack }));
+      console.error(
+        JSON.stringify({
+          level: "error",
+          msg: "action.unexpected_error",
+          error: (err as Error)?.message,
+          stack: (err as Error)?.stack,
+        }),
+      );
     }
     return {
       status: "error",

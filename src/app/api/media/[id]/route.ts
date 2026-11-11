@@ -15,7 +15,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       "content-disposition": `${download ? "attachment" : "inline"}; filename*=UTF-8''${encodeURIComponent(file.filename)}`,
     });
     // SVG enviado por usuários nunca executa scripts no domínio da aplicação.
-    if (file.mimeType === "image/svg+xml") headers.set("content-security-policy", "default-src 'none'; style-src 'unsafe-inline'; sandbox");
+    if (file.mimeType === "image/svg+xml")
+      headers.set("content-security-policy", "default-src 'none'; style-src 'unsafe-inline'; sandbox");
     return new Response(new Uint8Array(file.data), { headers });
   } catch (err) {
     return jsonError(err);

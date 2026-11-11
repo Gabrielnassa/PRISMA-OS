@@ -29,11 +29,27 @@ test("ciclo completo: briefing → texto → arte → revisão → aprovação �
 
   // 2. Arquivos: logotipo e foto real (gerados localmente)
   await page.goto(`${clientUrl}?aba=arquivos`);
-  await page.locator("#files").setInputFiles({ name: "logo.png", mimeType: "image/png", buffer: png(600, 200, '<rect width="600" height="200" fill="#0f766e"/><circle cx="100" cy="100" r="60" fill="#ffffff"/>') });
+  await page.locator("#files").setInputFiles({
+    name: "logo.png",
+    mimeType: "image/png",
+    buffer: png(
+      600,
+      200,
+      '<rect width="600" height="200" fill="#0f766e"/><circle cx="100" cy="100" r="60" fill="#ffffff"/>',
+    ),
+  });
   await page.getByLabel("Tipo").selectOption("logo");
   await page.getByRole("button", { name: "Enviar" }).click();
   await expect(page.getByText("logo.png: enviado")).toBeVisible();
-  await page.locator("#files").setInputFiles({ name: "equipe.png", mimeType: "image/png", buffer: png(1400, 1400, '<rect width="1400" height="1400" fill="#7d8f99"/><circle cx="700" cy="560" r="300" fill="#e8dccb"/><rect x="300" y="900" width="800" height="400" rx="40" fill="#3f4b52"/>') });
+  await page.locator("#files").setInputFiles({
+    name: "equipe.png",
+    mimeType: "image/png",
+    buffer: png(
+      1400,
+      1400,
+      '<rect width="1400" height="1400" fill="#7d8f99"/><circle cx="700" cy="560" r="300" fill="#e8dccb"/><rect x="300" y="900" width="800" height="400" rx="40" fill="#3f4b52"/>',
+    ),
+  });
   await page.getByLabel("Tipo").selectOption("image");
   await page.getByLabel("Descrição (texto alternativo)").fill("Equipe da clínica na recepção");
   await page.getByLabel("Origem / licença").fill("Foto própria do cliente");
@@ -64,7 +80,11 @@ test("ciclo completo: briefing → texto → arte → revisão → aprovação �
   await page.getByLabel("Formato").selectOption("carousel");
   await page.getByLabel("Número de lâminas").fill("4");
   await page.getByLabel("Título interno da pauta").fill("Cuidados com a saúde no inverno");
-  await page.getByLabel("Briefing", { exact: true }).fill("Dicas práticas para a família se cuidar no inverno. Hidratação também importa no frio. Vacinação em dia protege todos. Procure atendimento ao notar febre persistente.");
+  await page
+    .getByLabel("Briefing", { exact: true })
+    .fill(
+      "Dicas práticas para a família se cuidar no inverno. Hidratação também importa no frio. Vacinação em dia protege todos. Procure atendimento ao notar febre persistente.",
+    );
   await page.getByLabel("CTA desejado").fill("Agende pelo WhatsApp");
   await page.getByRole("checkbox", { name: /Equipe da clínica/ }).check({ force: true });
   await shot(page, "04-central-de-criacao");
@@ -89,11 +109,16 @@ test("ciclo completo: briefing → texto → arte → revisão → aprovação �
   if (prod) {
     const texts = ["Hidratação também importa no frio", "Vacinação em dia protege todos", "Agende pelo WhatsApp"];
     for (let i = 0; i < texts.length; i++) {
-      await page.getByRole("tab").nth(i + 1).click();
+      await page
+        .getByRole("tab")
+        .nth(i + 1)
+        .click();
       await page.locator("#f-title").fill(texts[i]!);
     }
     await page.getByRole("tab").first().click();
-    await page.locator("#caption").fill("Cuidados simples para a família atravessar o inverno com saúde. Agende pelo WhatsApp.");
+    await page
+      .locator("#caption")
+      .fill("Cuidados simples para a família atravessar o inverno com saúde. Agende pelo WhatsApp.");
   }
 
   // 6. Edição manual → nova versão
@@ -136,7 +161,9 @@ test("ciclo completo: briefing → texto → arte → revisão → aprovação �
   await client.goto(`http://localhost:${process.env.E2E_PORT ?? 3100}${publicPath}`);
   await expect(client.getByRole("heading", { name: "Cuidados com a saúde no inverno" })).toBeVisible();
   await expect(client.getByRole("button", { name: "Aprovar" })).toBeVisible();
-  const slide = await client.request.get(`http://localhost:${process.env.E2E_PORT ?? 3100}/api/publico/aprovacao/${publicPath.split("/").pop()}/0`);
+  const slide = await client.request.get(
+    `http://localhost:${process.env.E2E_PORT ?? 3100}/api/publico/aprovacao/${publicPath.split("/").pop()}/0`,
+  );
   expect(slide.headers()["content-type"]).toBe("image/png");
 
   // 8. Aprovação vinculada à versão exata

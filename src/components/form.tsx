@@ -90,13 +90,26 @@ export function SubmitButton({
   className,
   disabled,
   ...props
-}: Omit<ComponentProps<"button">, "type"> & { pendingText?: string; variant?: "primary" | "secondary" | "ghost" | "danger" | "light"; size?: "sm" | "md" }) {
+}: Omit<ComponentProps<"button">, "type"> & {
+  pendingText?: string;
+  variant?: "primary" | "secondary" | "ghost" | "danger" | "light";
+  size?: "sm" | "md";
+}) {
   const pending = useFormPending();
   return (
-    <button {...props} type="submit" disabled={pending || disabled} aria-busy={pending} className={cx(buttonClass(variant, size), className)}>
+    <button
+      {...props}
+      type="submit"
+      disabled={pending || disabled}
+      aria-busy={pending}
+      className={cx(buttonClass(variant, size), className)}
+    >
       {pending ? (
         <>
-          <span className="size-3.5 animate-spin rounded-full border-[1.5px] border-current border-t-transparent" aria-hidden />
+          <span
+            className="size-3.5 animate-spin rounded-full border-[1.5px] border-current border-t-transparent"
+            aria-hidden
+          />
           {pendingText ?? "Salvando..."}
         </>
       ) : (
@@ -109,7 +122,10 @@ export function SubmitButton({
 export function FormMessage({ state }: { state: ActionState<unknown> }) {
   if (state.status === "error") {
     return (
-      <p role="alert" className="flex items-start gap-2.5 rounded-md border border-red-400/20 bg-red-400/[0.06] px-3 py-2 text-[13.5px] leading-relaxed text-red-200">
+      <p
+        role="alert"
+        className="flex items-start gap-2.5 rounded-md border border-red-400/20 bg-red-400/[0.06] px-3 py-2 text-[13.5px] leading-relaxed text-red-200"
+      >
         <span aria-hidden className="mt-[7px] size-1.5 shrink-0 rounded-full bg-red-400" />
         {state.message}
       </p>
@@ -117,7 +133,10 @@ export function FormMessage({ state }: { state: ActionState<unknown> }) {
   }
   if (state.status === "ok" && state.message) {
     return (
-      <p role="status" className="flex items-start gap-2.5 rounded-md border border-emerald-400/20 bg-emerald-400/[0.06] px-3 py-2 text-[13.5px] leading-relaxed text-emerald-100">
+      <p
+        role="status"
+        className="flex items-start gap-2.5 rounded-md border border-emerald-400/20 bg-emerald-400/[0.06] px-3 py-2 text-[13.5px] leading-relaxed text-emerald-100"
+      >
         <span aria-hidden className="mt-[7px] size-1.5 shrink-0 rounded-full bg-emerald-400" />
         {state.message}
       </p>

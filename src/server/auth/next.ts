@@ -31,7 +31,11 @@ export async function requireAuth(opts: { allowPasswordChange?: boolean } = {}):
 export function clientIpFrom(h: Pick<Headers, "get">, trustProxy: boolean): string | null {
   if (!trustProxy) return null;
   const xff = h.get("x-forwarded-for");
-  const last = xff?.split(",").map((s) => s.trim()).filter(Boolean).pop();
+  const last = xff
+    ?.split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .pop();
   const ip = last || h.get("x-real-ip")?.trim() || null;
   return ip && /^[0-9a-fA-F:.]{2,45}$/.test(ip) ? ip : null;
 }

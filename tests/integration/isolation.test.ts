@@ -29,7 +29,9 @@ describe("isolamento multicliente (RLS + serviços)", () => {
     await expect(getClient(b.owner, ca.id)).rejects.toBeInstanceOf(NotFoundError);
 
     // Mesmo uma consulta sem filtro de organização é bloqueada pelo banco.
-    const visibleToB = await withTx(userCtx(b.owner.userId), (tx) => many<{ id: string }>(tx, "SELECT id FROM clients"));
+    const visibleToB = await withTx(userCtx(b.owner.userId), (tx) =>
+      many<{ id: string }>(tx, "SELECT id FROM clients"),
+    );
     expect(visibleToB.map((r) => r.id)).not.toContain(ca.id);
 
     const media = await uploadMedia(a.owner, ca.id, { filename: "foto.png", data: samplePng() }, {});
@@ -39,7 +41,10 @@ describe("isolamento multicliente (RLS + serviços)", () => {
     // Inserção cruzada direta também é recusada pelas políticas.
     await expect(
       withTx(userCtx(b.owner.userId), (tx) =>
-        tx.query("INSERT INTO client_memories (organization_id, client_id, kind, content) VALUES ($1, $2, 'fact', 'teste cruzado')", [a.owner.organizationId, ca.id]),
+        tx.query(
+          "INSERT INTO client_memories (organization_id, client_id, kind, content) VALUES ($1, $2, 'fact', 'teste cruzado')",
+          [a.owner.organizationId, ca.id],
+        ),
       ),
     ).rejects.toThrow(/row-level security/);
   });
@@ -59,7 +64,9 @@ describe("isolamento multicliente (RLS + serviços)", () => {
   it("contexto sem usuário não lê nada", async () => {
     const a = await newOrg();
     await createClient(a.owner, { name: "Invisível" });
-    const rows = await withTx({ kind: "user", userId: "00000000-0000-4000-8000-000000000000" }, (tx) => many(tx, "SELECT id FROM clients"));
+    const rows = await withTx({ kind: "user", userId: "00000000-0000-4000-8000-000000000000" }, (tx) =>
+      many(tx, "SELECT id FROM clients"),
+    );
     expect(rows).toEqual([]);
   });
 });

@@ -24,10 +24,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) throw new ValidationError("Mês inválido.");
     const client = await getClient(auth, id);
     const pieces = await approvedInMonth(auth, id, month);
-    if (pieces.length === 0) throw new ValidationError(`Nenhuma peça aprovada em ${monthLabel(month).toLowerCase()} para este cliente.`);
+    if (pieces.length === 0)
+      throw new ValidationError(`Nenhuma peça aprovada em ${monthLabel(month).toLowerCase()} para este cliente.`);
 
     const zip = new JSZip();
-    const index: string[] = [`Entrega de ${monthLabel(month)} · ${client.name}`, pieces.length === 1 ? "1 peça aprovada" : `${pieces.length} peças aprovadas`, ""];
+    const index: string[] = [
+      `Entrega de ${monthLabel(month)} · ${client.name}`,
+      pieces.length === 1 ? "1 peça aprovada" : `${pieces.length} peças aprovadas`,
+      "",
+    ];
     for (const [i, p] of pieces.entries()) {
       const version = await getVersionDocument(auth, p.id, p.approvedVersionId);
       const slides = await renderStoredDocument(auth, p.id, version.document);
@@ -36,15 +41,29 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       slides.forEach((s, k) => folder.file(`${String(k + 1).padStart(2, "0")}.png`, svgToPng(s.svg, s.width)));
       const doc = version.document;
       folder.file("legenda.txt", [doc.caption, doc.hashtags.join(" ")].filter(Boolean).join("\n\n") || "(sem legenda)");
-      folder.file("texto-alternativo.txt", doc.slides.map((s, k) => `${k + 1}. ${s.alt || "(sem texto alternativo)"}`).join("\n"));
-      index.push(`${String(i + 1).padStart(2, "0")}. ${p.plannedDate ? `${p.plannedDate.slice(8, 10)}/${p.plannedDate.slice(5, 7)} · ` : ""}${p.title} (v${version.number}, ${slides.length === 1 ? "1 imagem" : `${slides.length} imagens`})`);
-      await recordExport(auth, p.id, id, { versionId: p.approvedVersionId, versionNumber: version.number, approved: true, format: "delivery" });
+      folder.file(
+        "texto-alternativo.txt",
+        doc.slides.map((s, k) => `${k + 1}. ${s.alt || "(sem texto alternativo)"}`).join("\n"),
+      );
+      index.push(
+        `${String(i + 1).padStart(2, "0")}. ${p.plannedDate ? `${p.plannedDate.slice(8, 10)}/${p.plannedDate.slice(5, 7)} · ` : ""}${p.title} (v${version.number}, ${slides.length === 1 ? "1 imagem" : `${slides.length} imagens`})`,
+      );
+      await recordExport(auth, p.id, id, {
+        versionId: p.approvedVersionId,
+        versionNumber: version.number,
+        approved: true,
+        format: "delivery",
+      });
     }
     zip.file("LEIA-ME.txt", index.join("\n"));
     const buffer = await zip.generateAsync({ type: "uint8array", compression: "DEFLATE" });
     const name = `${slugify(client.name, 40)}-entrega-${month}.zip`;
     return new Response(buffer as unknown as BodyInit, {
-      headers: { "content-type": "application/zip", "content-disposition": `attachment; filename="${name}"`, "cache-control": "no-store" },
+      headers: {
+        "content-type": "application/zip",
+        "content-disposition": `attachment; filename="${name}"`,
+        "cache-control": "no-store",
+      },
     });
   } catch (err) {
     return jsonError(err);

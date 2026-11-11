@@ -2,7 +2,13 @@
  * Modelos de partida para criar uma skill (o usuário edita antes de salvar).
  * São exemplos de instruções, não conteúdo de clientes.
  */
-export const SKILL_EXAMPLES: Array<{ id: string; name: string; description: string; effort: "low" | "medium" | "high"; instructions: string }> = [
+export const SKILL_EXAMPLES: Array<{
+  id: string;
+  name: string;
+  description: string;
+  effort: "low" | "medium" | "high";
+  instructions: string;
+}> = [
   {
     id: "roteiro-reels",
     name: "Roteiro de Reels",

@@ -88,7 +88,10 @@ interface Cluster {
 }
 
 /** Agrupa os pixels de todas as imagens em cores representativas (maiores primeiro). */
-export function extractSwatches(images: SourceImage[], max = 8): { swatches: Swatch[]; clusters: Cluster[]; imagesUsed: number } {
+export function extractSwatches(
+  images: SourceImage[],
+  max = 8,
+): { swatches: Swatch[]; clusters: Cluster[]; imagesUsed: number } {
   // Histograma com 5 bits por canal (32 768 caixas), acumulando a média real de cada caixa.
   const bins = new Map<number, { r: number; g: number; b: number; w: number }>();
   let imagesUsed = 0;
@@ -203,7 +206,11 @@ export function assignRoles(clusters: Cluster[]): { colors: BrandColors; notes: 
   // Texto: o neutro do lado oposto ao fundo, garantindo contraste mínimo de 4,5:1.
   const darkBg = contrastRatio(background, "#000000") < contrastRatio(background, "#ffffff");
   const candidates = darkBg ? neutrals.filter((c) => c.lab.L >= 85) : neutrals.filter((c) => c.lab.L <= 30);
-  let text = candidates.sort((x, y) => y.weight - x.weight).map(hex).find((h) => contrastRatio(h, background) >= 4.5) ?? (darkBg ? "#ffffff" : "#111111");
+  let text =
+    candidates
+      .sort((x, y) => y.weight - x.weight)
+      .map(hex)
+      .find((h) => contrastRatio(h, background) >= 4.5) ?? (darkBg ? "#ffffff" : "#111111");
   if (contrastRatio(text, background) < 4.5) text = darkBg ? "#ffffff" : "#111111";
 
   // A primária vira fundo de lâminas com texto claro: se for clara demais, avisa.

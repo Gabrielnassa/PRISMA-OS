@@ -41,7 +41,8 @@ export function RunPanel({
             <>
               <input type="hidden" name="clientId" value={fixedClient.id} />
               <p className="text-sm text-ink-300">
-                Cliente: <span className="font-medium text-ink-100">{fixedClient.name}</span> (skill exclusiva deste cliente)
+                Cliente: <span className="font-medium text-ink-100">{fixedClient.name}</span> (skill exclusiva deste
+                cliente)
               </p>
             </>
           ) : (
@@ -58,8 +59,21 @@ export function RunPanel({
               </Select>
             </Field>
           )}
-          <Field label="Pedido" htmlFor="run-request" error={fe("request")} hint="O que você quer desta vez: tema, objetivo, detalhes, o que evitar. Pode colar textos de referência.">
-            <Textarea id="run-request" name="request" required minLength={3} maxLength={8000} className="min-h-36" placeholder="Ex.: Roteiro sobre os 3 erros mais comuns ao contratar o serviço, para gerar pedidos de orçamento." />
+          <Field
+            label="Pedido"
+            htmlFor="run-request"
+            error={fe("request")}
+            hint="O que você quer desta vez: tema, objetivo, detalhes, o que evitar. Pode colar textos de referência."
+          >
+            <Textarea
+              id="run-request"
+              name="request"
+              required
+              minLength={3}
+              maxLength={8000}
+              className="min-h-36"
+              placeholder="Ex.: Roteiro sobre os 3 erros mais comuns ao contratar o serviço, para gerar pedidos de orçamento."
+            />
           </Field>
           {!providerReady ? (
             <Alert tone="warning" title="IA não configurada">
@@ -86,11 +100,19 @@ export function RunResult({ result, canCreateContent }: { result: RunSkillData; 
     <Card>
       <CardHeader
         title="Resultado"
-        description={result.isDemo ? "Demonstração, sem IA" : result.costUsd !== null ? `Custo: ${formatUsd(result.costUsd, 4)}` : undefined}
+        description={
+          result.isDemo
+            ? "Demonstração, sem IA"
+            : result.costUsd !== null
+              ? `Custo: ${formatUsd(result.costUsd, 4)}`
+              : undefined
+        }
         actions={result.isDemo ? <Badge tone="warning">demonstração</Badge> : null}
       />
       <div className="space-y-4 p-5">
-        <div className="whitespace-pre-wrap rounded-lg border border-ink-700 bg-ink-850 p-4 text-sm leading-relaxed text-ink-100">{result.result}</div>
+        <div className="rounded-lg border border-ink-700 bg-ink-850 p-4 text-sm leading-relaxed whitespace-pre-wrap text-ink-100">
+          {result.result}
+        </div>
         {result.assumptions.length ? (
           <div>
             <div className="text-[12px] font-medium text-ink-400">Para confirmar com o cliente</div>

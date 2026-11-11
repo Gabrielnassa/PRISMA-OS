@@ -15,9 +15,16 @@ import { audit, userActor } from "./audit";
  * no formulário do perfil da marca e salva.
  */
 
-const MediaIdsSchema = z.array(z.string().uuid()).min(1, "Escolha pelo menos uma imagem.").max(12, "Escolha até 12 imagens.");
+const MediaIdsSchema = z
+  .array(z.string().uuid())
+  .min(1, "Escolha pelo menos uma imagem.")
+  .max(12, "Escolha até 12 imagens.");
 
-export async function suggestColorsFromMedia(auth: AuthContext, clientId: string, mediaIds: string[]): Promise<PaletteSuggestion> {
+export async function suggestColorsFromMedia(
+  auth: AuthContext,
+  clientId: string,
+  mediaIds: string[],
+): Promise<PaletteSuggestion> {
   assertCan(auth.role, "client.update");
   const ids = MediaIdsSchema.safeParse(mediaIds);
   if (!ids.success) throw new ValidationError(ids.error.issues[0]?.message ?? "Seleção inválida.");
@@ -36,7 +43,10 @@ export async function suggestColorsFromMedia(auth: AuthContext, clientId: string
     images.push({ data: await storage().get(r.storage_key), mimeType: r.mime_type, weight: r.kind === "logo" ? 3 : 1 });
   }
   const s = suggestPalette(images);
-  if (!s) throw new ValidationError("Não consegui ler as cores dessas imagens. Use PNG, JPEG, GIF ou SVG (logotipo, foto ou print do perfil).");
+  if (!s)
+    throw new ValidationError(
+      "Não consegui ler as cores dessas imagens. Use PNG, JPEG, GIF ou SVG (logotipo, foto ou print do perfil).",
+    );
   return s;
 }
 
@@ -63,7 +73,9 @@ export async function suggestColorsFromInstagram(
   const profile = await fetchInstagramProfile(handle, { fetchImpl: opts.fetchImpl });
   // Downloads em paralelo (cada um com limite de tempo e tamanho).
   const [picture, ...posts] = await Promise.all([
-    profile.profilePictureUrl ? downloadMetaImage(profile.profilePictureUrl, { fetchImpl: opts.fetchImpl }) : Promise.resolve(null),
+    profile.profilePictureUrl
+      ? downloadMetaImage(profile.profilePictureUrl, { fetchImpl: opts.fetchImpl })
+      : Promise.resolve(null),
     ...profile.mediaImageUrls.slice(0, 9).map((url) => downloadMetaImage(url, { fetchImpl: opts.fetchImpl })),
   ]);
   const images: SourceImage[] = [];
@@ -72,17 +84,25 @@ export async function suggestColorsFromInstagram(
   for (const img of postImages) images.push({ ...img, weight: 1 });
   const postsRead = postImages.length;
   const s = suggestPalette(images);
-  if (!s) throw new ValidationError(`Encontrei @${profile.username}, mas não consegui ler as imagens do perfil. Tente com o logotipo ou um print do perfil.`);
+  if (!s)
+    throw new ValidationError(
+      `Encontrei @${profile.username}, mas não consegui ler as imagens do perfil. Tente com o logotipo ou um print do perfil.`,
+    );
 
   let savedLogoId: string | null = null;
   if (opts.saveProfilePicture && picture) {
     assertCan(auth.role, "media.upload");
     const ext = picture.mimeType === "image/png" ? "png" : picture.mimeType === "image/gif" ? "gif" : "jpg";
-    const saved = await uploadMedia(auth, clientId, { filename: `instagram-${profile.username}.${ext}`, data: picture.data }, {
-      kind: "logo",
-      altText: `Foto de perfil do Instagram @${profile.username}`,
-      licenseNote: `Foto de perfil do próprio cliente no Instagram (@${profile.username}), obtida pela API oficial da Meta.`,
-    });
+    const saved = await uploadMedia(
+      auth,
+      clientId,
+      { filename: `instagram-${profile.username}.${ext}`, data: picture.data },
+      {
+        kind: "logo",
+        altText: `Foto de perfil do Instagram @${profile.username}`,
+        licenseNote: `Foto de perfil do próprio cliente no Instagram (@${profile.username}), obtida pela API oficial da Meta.`,
+      },
+    );
     savedLogoId = saved.id;
   }
   await withTx(userCtx(auth.userId), (tx) =>

@@ -22,7 +22,15 @@ export async function listMembers(auth: AuthContext): Promise<Member[]> {
   assertCan(auth.role, "users.manage");
   return withTx(userCtx(auth.userId), async (tx) => {
     // Situação e último acesso são os desta organização (não vazam dados de outros tenants).
-    const rows = await many<{ user_id: string; name: string; email: string; role: Role; deactivated_at: Date | null; last_access_at: Date | null; client_ids: string[] | null }>(
+    const rows = await many<{
+      user_id: string;
+      name: string;
+      email: string;
+      role: Role;
+      deactivated_at: Date | null;
+      last_access_at: Date | null;
+      client_ids: string[] | null;
+    }>(
       tx,
       `SELECT m.user_id, u.name, u.email, m.role, m.deactivated_at, m.last_access_at,
               array_remove(array_agg(ca.client_id), NULL) AS client_ids
@@ -62,10 +70,14 @@ function temporaryPassword(): string {
  * organização (evita vincular pessoas sem consentimento); isso é feito por um
  * operador da plataforma com `npm run member:add`.
  */
-export async function inviteMember(auth: AuthContext, input: z.input<typeof InviteSchema>): Promise<{ userId: string; temporaryPassword: string }> {
+export async function inviteMember(
+  auth: AuthContext,
+  input: z.input<typeof InviteSchema>,
+): Promise<{ userId: string; temporaryPassword: string }> {
   assertCan(auth.role, "users.manage");
   const data = InviteSchema.parse(input);
-  if (data.role === "owner" && auth.role !== "owner") throw new ForbiddenError("Somente proprietários podem conceder o papel de proprietário.");
+  if (data.role === "owner" && auth.role !== "owner")
+    throw new ForbiddenError("Somente proprietários podem conceder o papel de proprietário.");
   const password = temporaryPassword();
   const passwordHash = await hashPassword(password);
   return withTx(systemCtx("users.invite"), async (tx) => {
@@ -80,8 +92,18 @@ export async function inviteMember(auth: AuthContext, input: z.input<typeof Invi
       "INSERT INTO users (email, name, password_hash, must_change_password) VALUES ($1, $2, $3, true) RETURNING id",
       [data.email, data.name, passwordHash],
     );
-    await tx.query("INSERT INTO memberships (organization_id, user_id, role) VALUES ($1, $2, $3)", [auth.organizationId, user.id, data.role]);
-    await audit(tx, userActor(auth), { organizationId: auth.organizationId, action: "user.invited", entityType: "user", entityId: user.id, metadata: { email: data.email, role: data.role } });
+    await tx.query("INSERT INTO memberships (organization_id, user_id, role) VALUES ($1, $2, $3)", [
+      auth.organizationId,
+      user.id,
+      data.role,
+    ]);
+    await audit(tx, userActor(auth), {
+      organizationId: auth.organizationId,
+      action: "user.invited",
+      entityType: "user",
+      entityId: user.id,
+      metadata: { email: data.email, role: data.role },
+    });
     return { userId: user.id, temporaryPassword: password };
   });
 }
@@ -91,19 +113,38 @@ export async function inviteMember(auth: AuthContext, input: z.input<typeof Invi
  * exclusivamente a esta organização: a senha é global e não pode ser trocada
  * por administradores de outra agência.
  */
-export async function resetTemporaryPassword(auth: AuthContext, userId: string): Promise<{ temporaryPassword: string }> {
+export async function resetTemporaryPassword(
+  auth: AuthContext,
+  userId: string,
+): Promise<{ temporaryPassword: string }> {
   assertCan(auth.role, "users.manage");
   if (userId === auth.userId) throw new ValidationError("Para alterar a própria senha, use Configurações.");
   const target = await loadTarget(auth, userId);
   if (!target) throw new NotFoundError("Usuário não encontrado.");
-  if (target.role === "owner" && auth.role !== "owner") throw new ForbiddenError("Somente proprietários redefinem a senha de proprietários.");
+  if (target.role === "owner" && auth.role !== "owner")
+    throw new ForbiddenError("Somente proprietários redefinem a senha de proprietários.");
   const password = temporaryPassword();
   const passwordHash = await hashPassword(password);
   await withTx(systemCtx("users.reset_password"), async (tx) => {
-    const others = await one<{ n: number }>(tx, "SELECT count(*)::int AS n FROM memberships WHERE user_id = $1 AND organization_id <> $2", [userId, auth.organizationId]);
-    if (others.n > 0) throw new ForbiddenError("Esta pessoa também usa outra organização; a redefinição de senha deve ser feita por ela mesma ou pelo operador da plataforma.");
-    await tx.query("UPDATE users SET password_hash = $2, must_change_password = true, password_set_at = now() WHERE id = $1", [userId, passwordHash]);
-    await audit(tx, userActor(auth), { organizationId: auth.organizationId, action: "user.password_reset", entityType: "user", entityId: userId });
+    const others = await one<{ n: number }>(
+      tx,
+      "SELECT count(*)::int AS n FROM memberships WHERE user_id = $1 AND organization_id <> $2",
+      [userId, auth.organizationId],
+    );
+    if (others.n > 0)
+      throw new ForbiddenError(
+        "Esta pessoa também usa outra organização; a redefinição de senha deve ser feita por ela mesma ou pelo operador da plataforma.",
+      );
+    await tx.query(
+      "UPDATE users SET password_hash = $2, must_change_password = true, password_set_at = now() WHERE id = $1",
+      [userId, passwordHash],
+    );
+    await audit(tx, userActor(auth), {
+      organizationId: auth.organizationId,
+      action: "user.password_reset",
+      entityType: "user",
+      entityId: userId,
+    });
   });
   await revokeAllSessions(userId);
   return { temporaryPassword: password };
@@ -112,16 +153,25 @@ export async function resetTemporaryPassword(auth: AuthContext, userId: string):
 async function loadTarget(auth: AuthContext, userId: string) {
   if (!z.string().uuid().safeParse(userId).success) throw new NotFoundError("Usuário não encontrado.");
   return withTx(userCtx(auth.userId), (tx) =>
-    maybeOne<{ role: Role }>(tx, "SELECT role FROM memberships WHERE organization_id = $1 AND user_id = $2", [auth.organizationId, userId]),
+    maybeOne<{ role: Role }>(tx, "SELECT role FROM memberships WHERE organization_id = $1 AND user_id = $2", [
+      auth.organizationId,
+      userId,
+    ]),
   );
 }
 
-export async function updateMember(auth: AuthContext, userId: string, input: { role: Role; isActive: boolean; clientIds: string[] }): Promise<void> {
+export async function updateMember(
+  auth: AuthContext,
+  userId: string,
+  input: { role: Role; isActive: boolean; clientIds: string[] },
+): Promise<void> {
   assertCan(auth.role, "users.manage");
   const target = await loadTarget(auth, userId);
   if (!target) throw new NotFoundError("Usuário não encontrado.");
-  if ((target.role === "owner" || input.role === "owner") && auth.role !== "owner") throw new ForbiddenError("Somente proprietários alteram proprietários.");
-  if (userId === auth.userId && (input.role !== auth.role || !input.isActive)) throw new ValidationError("Você não pode alterar o próprio papel nem se desativar.");
+  if ((target.role === "owner" || input.role === "owner") && auth.role !== "owner")
+    throw new ForbiddenError("Somente proprietários alteram proprietários.");
+  if (userId === auth.userId && (input.role !== auth.role || !input.isActive))
+    throw new ValidationError("Você não pode alterar o próprio papel nem se desativar.");
   const clientIds = z.array(z.string().uuid()).max(500).parse(input.clientIds);
   await withTx(userCtx(auth.userId), async (tx) => {
     if (target.role === "owner" && (input.role !== "owner" || !input.isActive)) {
@@ -139,14 +189,31 @@ export async function updateMember(auth: AuthContext, userId: string, input: { r
        WHERE organization_id = $1 AND user_id = $2`,
       [auth.organizationId, userId, input.role, input.isActive],
     );
-    await tx.query("DELETE FROM client_access WHERE organization_id = $1 AND user_id = $2", [auth.organizationId, userId]);
+    await tx.query("DELETE FROM client_access WHERE organization_id = $1 AND user_id = $2", [
+      auth.organizationId,
+      userId,
+    ]);
     if (clientIds.length) {
-      const valid = await many<{ id: string }>(tx, "SELECT id FROM clients WHERE organization_id = $1 AND id = ANY($2::uuid[])", [auth.organizationId, clientIds]);
+      const valid = await many<{ id: string }>(
+        tx,
+        "SELECT id FROM clients WHERE organization_id = $1 AND id = ANY($2::uuid[])",
+        [auth.organizationId, clientIds],
+      );
       for (const c of valid) {
-        await tx.query("INSERT INTO client_access (organization_id, client_id, user_id) VALUES ($1, $2, $3)", [auth.organizationId, c.id, userId]);
+        await tx.query("INSERT INTO client_access (organization_id, client_id, user_id) VALUES ($1, $2, $3)", [
+          auth.organizationId,
+          c.id,
+          userId,
+        ]);
       }
     }
-    await audit(tx, userActor(auth), { organizationId: auth.organizationId, action: "user.updated", entityType: "user", entityId: userId, metadata: { role: input.role, isActive: input.isActive, clients: clientIds.length } });
+    await audit(tx, userActor(auth), {
+      organizationId: auth.organizationId,
+      action: "user.updated",
+      entityType: "user",
+      entityId: userId,
+      metadata: { role: input.role, isActive: input.isActive, clients: clientIds.length },
+    });
   });
   if (!input.isActive) await revokeAllSessions(userId, { organizationId: auth.organizationId });
 }
@@ -156,10 +223,25 @@ export async function changeOwnPassword(auth: AuthContext, input: { current: str
   if (problem) throw new ValidationError(problem);
   if (input.current === input.next) throw new ValidationError("A nova senha deve ser diferente da atual.");
   await withTx(systemCtx("users.change_password"), async (tx) => {
-    const user = await one<{ password_hash: string }>(tx, "SELECT password_hash FROM users WHERE id = $1", [auth.userId]);
-    if (!(await verifyPassword(input.current, user.password_hash))) throw new ValidationError("A senha atual não confere.");
-    await tx.query("UPDATE users SET password_hash = $2, must_change_password = false, password_set_at = now() WHERE id = $1", [auth.userId, await hashPassword(input.next)]);
-    await audit(tx, { type: "system", userId: auth.userId }, { organizationId: auth.organizationId, action: "user.password_changed", entityType: "user", entityId: auth.userId });
+    const user = await one<{ password_hash: string }>(tx, "SELECT password_hash FROM users WHERE id = $1", [
+      auth.userId,
+    ]);
+    if (!(await verifyPassword(input.current, user.password_hash)))
+      throw new ValidationError("A senha atual não confere.");
+    await tx.query(
+      "UPDATE users SET password_hash = $2, must_change_password = false, password_set_at = now() WHERE id = $1",
+      [auth.userId, await hashPassword(input.next)],
+    );
+    await audit(
+      tx,
+      { type: "system", userId: auth.userId },
+      {
+        organizationId: auth.organizationId,
+        action: "user.password_changed",
+        entityType: "user",
+        entityId: auth.userId,
+      },
+    );
   });
   await revokeAllSessions(auth.userId, { exceptSessionId: auth.sessionId });
 }

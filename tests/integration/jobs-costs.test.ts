@@ -55,9 +55,19 @@ describe("fila, recuperação de falhas e custos", () => {
 
   it("tarifa nova cadastrada pelo administrador passa a valer", async () => {
     const { owner, clientId } = await setup();
-    await addPrice(owner, { provider: "anthropic", model: "claude-opus-5-5", input: 8, output: 40, source: "Tarifa de teste" });
+    await addPrice(owner, {
+      provider: "anthropic",
+      model: "claude-opus-5-5",
+      input: 8,
+      output: 40,
+      source: "Tarifa de teste",
+    });
     setProviderOverride(new FakeProvider());
-    const out = await runAiSkill(ideasSkill, { auth: owner, clientId, input: { objective: "engagement", format: "post", theme: "Dicas", quantity: 3 } });
+    const out = await runAiSkill(ideasSkill, {
+      auth: owner,
+      clientId,
+      input: { objective: "engagement", format: "post", theme: "Dicas", quantity: 3 },
+    });
     expect(out.costUsd).toBeCloseTo((1000 * 8 + 500 * 40 + 2000 * 8) / 1e6, 6);
   });
 
@@ -68,14 +78,30 @@ describe("fila, recuperação de falhas e custos", () => {
     setProviderOverride(fake);
     const { contentId } = await createContent(owner, request(clientId));
     expect(await processNextJob("w")).toBe(true);
-    const job = await withTx(systemCtx("test"), (tx) => one<{ status: string; attempts: number; last_error: string; run_after: Date }>(tx, "SELECT status, attempts, last_error, run_after FROM jobs WHERE payload->>'contentItemId' = $1", [contentId]));
+    const job = await withTx(systemCtx("test"), (tx) =>
+      one<{ status: string; attempts: number; last_error: string; run_after: Date }>(
+        tx,
+        "SELECT status, attempts, last_error, run_after FROM jobs WHERE payload->>'contentItemId' = $1",
+        [contentId],
+      ),
+    );
     expect(job).toMatchObject({ status: "queued", attempts: 1, last_error: "sobrecarga" });
     expect(job.run_after.getTime()).toBeGreaterThan(Date.now());
     await runJobsUntilIdle();
     expect((await getContent(owner, contentId)).status).toBe("in_review");
-    const runs = await withTx(systemCtx("test"), (tx) => many<{ status: string }>(tx, "SELECT status FROM ai_runs WHERE content_item_id = $1 ORDER BY created_at", [contentId]));
+    const runs = await withTx(systemCtx("test"), (tx) =>
+      many<{ status: string }>(tx, "SELECT status FROM ai_runs WHERE content_item_id = $1 ORDER BY created_at", [
+        contentId,
+      ]),
+    );
     expect(runs.map((r) => r.status)).toEqual(["failed", "succeeded"]);
-    const attempts = await withTx(systemCtx("test"), (tx) => many<{ status: string }>(tx, "SELECT a.status FROM job_attempts a JOIN jobs j ON j.id = a.job_id WHERE j.payload->>'contentItemId' = $1 ORDER BY attempt", [contentId]));
+    const attempts = await withTx(systemCtx("test"), (tx) =>
+      many<{ status: string }>(
+        tx,
+        "SELECT a.status FROM job_attempts a JOIN jobs j ON j.id = a.job_id WHERE j.payload->>'contentItemId' = $1 ORDER BY attempt",
+        [contentId],
+      ),
+    );
     expect(attempts.map((a) => a.status)).toEqual(["failed", "succeeded"]);
   });
 
@@ -97,8 +123,18 @@ describe("fila, recuperação de falhas e custos", () => {
     const fake = new FakeProvider();
     setProviderOverride(fake);
     const key = `test:${crypto.randomUUID()}`;
-    const first = await runAiSkill(ideasSkill, { auth: owner, clientId, idempotencyKey: key, input: { objective: "engagement", format: "post", quantity: 3 } });
-    const second = await runAiSkill(ideasSkill, { auth: owner, clientId, idempotencyKey: key, input: { objective: "engagement", format: "post", quantity: 3 } });
+    const first = await runAiSkill(ideasSkill, {
+      auth: owner,
+      clientId,
+      idempotencyKey: key,
+      input: { objective: "engagement", format: "post", quantity: 3 },
+    });
+    const second = await runAiSkill(ideasSkill, {
+      auth: owner,
+      clientId,
+      idempotencyKey: key,
+      input: { objective: "engagement", format: "post", quantity: 3 },
+    });
     expect(second.reused).toBe(true);
     expect(second.runId).toBe(first.runId);
     expect(fake.calls).toBe(1);
@@ -109,9 +145,19 @@ describe("fila, recuperação de falhas e custos", () => {
     setProviderOverride(new FakeProvider());
     const { contentId } = await createContent(owner, request(clientId));
     await withTx(systemCtx("test"), async (tx) => {
-      await tx.query("UPDATE jobs SET status = 'running', attempts = 1, locked_at = now() - interval '1 hour', locked_by = 'morto' WHERE payload->>'contentItemId' = $1", [contentId]);
-      const job = await one<{ id: string; organization_id: string }>(tx, "SELECT id, organization_id FROM jobs WHERE payload->>'contentItemId' = $1", [contentId]);
-      await tx.query("INSERT INTO job_attempts (job_id, organization_id, attempt, worker_id) VALUES ($1, $2, 1, 'morto')", [job.id, job.organization_id]);
+      await tx.query(
+        "UPDATE jobs SET status = 'running', attempts = 1, locked_at = now() - interval '1 hour', locked_by = 'morto' WHERE payload->>'contentItemId' = $1",
+        [contentId],
+      );
+      const job = await one<{ id: string; organization_id: string }>(
+        tx,
+        "SELECT id, organization_id FROM jobs WHERE payload->>'contentItemId' = $1",
+        [contentId],
+      );
+      await tx.query(
+        "INSERT INTO job_attempts (job_id, organization_id, attempt, worker_id) VALUES ($1, $2, 1, 'morto')",
+        [job.id, job.organization_id],
+      );
     });
     await recoverStale(60_000);
     await runJobsUntilIdle();
@@ -165,13 +211,17 @@ describe("fila, recuperação de falhas e custos", () => {
     const a = await claimNextJob("worker-a");
     expect(a?.payload.contentItemId).toBe(contentId);
     // A ficou sem renovar a reserva: a recuperação devolve a tarefa à fila e B a assume.
-    await withTx(systemCtx("test"), (tx) => tx.query("UPDATE jobs SET locked_at = now() - interval '1 hour' WHERE id = $1", [a!.id]));
+    await withTx(systemCtx("test"), (tx) =>
+      tx.query("UPDATE jobs SET locked_at = now() - interval '1 hour' WHERE id = $1", [a!.id]),
+    );
     await recoverStale(60_000);
     const b = await claimNextJob("worker-b");
     expect(b?.id).toBe(a!.id);
     expect(await completeJob(a!, { stale: true })).toBe(false);
     expect((await failJob(a!, "erro tardio", true)).owned).toBe(false);
-    const mid = await withTx(systemCtx("test"), (tx) => one<{ status: string; locked_by: string }>(tx, "SELECT status, locked_by FROM jobs WHERE id = $1", [a!.id]));
+    const mid = await withTx(systemCtx("test"), (tx) =>
+      one<{ status: string; locked_by: string }>(tx, "SELECT status, locked_by FROM jobs WHERE id = $1", [a!.id]),
+    );
     expect(mid).toMatchObject({ status: "running", locked_by: "worker-b" });
     expect(await completeJob(b!, { ok: true })).toBe(true);
   });
@@ -196,7 +246,12 @@ describe("fila, recuperação de falhas e custos", () => {
     expect(again.reused).toBe(true);
     expect(fake.calls).toBe(1);
     // Entrada diferente com a mesma chave é uma nova execução (não reaproveita texto de outro pedido).
-    const other = await runAiSkill(ideasSkill, { auth: owner, clientId, idempotencyKey: key, input: { ...input, quantity: 4 } });
+    const other = await runAiSkill(ideasSkill, {
+      auth: owner,
+      clientId,
+      idempotencyKey: key,
+      input: { ...input, quantity: 4 },
+    });
     expect(other.reused).toBe(false);
     expect(fake.calls).toBe(2);
   });
@@ -205,15 +260,31 @@ describe("fila, recuperação de falhas e custos", () => {
     const { owner, clientId } = await setup();
     const fake = new FakeProvider();
     fake.nextUsageByModel = [
-      { model: "claude-opus-5-5", usage: { inputTokens: 1000, outputTokens: 100, cacheReadTokens: 0, cacheWriteTokens: 0 } },
-      { model: "claude-opus-5", usage: { inputTokens: 1000, outputTokens: 500, cacheReadTokens: 0, cacheWriteTokens: 0 } },
+      {
+        model: "claude-opus-5-5",
+        usage: { inputTokens: 1000, outputTokens: 100, cacheReadTokens: 0, cacheWriteTokens: 0 },
+      },
+      {
+        model: "claude-opus-5",
+        usage: { inputTokens: 1000, outputTokens: 500, cacheReadTokens: 0, cacheWriteTokens: 0 },
+      },
     ];
     setProviderOverride(fake);
-    const out = await runAiSkill(ideasSkill, { auth: owner, clientId, input: { objective: "engagement", format: "post", quantity: 3 } });
+    const out = await runAiSkill(ideasSkill, {
+      auth: owner,
+      clientId,
+      input: { objective: "engagement", format: "post", quantity: 3 },
+    });
     expect(out.model).toBe("claude-opus-5");
     // Opus 5.5: 1000×4 + 100×20 = 6000; Opus 5: 1000×5 + 500×25 = 17500 → US$ 0,0235
     expect(out.costUsd).toBeCloseTo(0.0235, 6);
-    const run = await withTx(systemCtx("test"), (tx) => one<{ input_tokens: number; usage_breakdown: unknown[] }>(tx, "SELECT input_tokens, usage_breakdown FROM ai_runs WHERE id = $1", [out.runId]));
+    const run = await withTx(systemCtx("test"), (tx) =>
+      one<{ input_tokens: number; usage_breakdown: unknown[] }>(
+        tx,
+        "SELECT input_tokens, usage_breakdown FROM ai_runs WHERE id = $1",
+        [out.runId],
+      ),
+    );
     expect(run.input_tokens).toBe(2000);
     expect(run.usage_breakdown).toHaveLength(2);
   });
@@ -221,9 +292,18 @@ describe("fila, recuperação de falhas e custos", () => {
   it("modelo sem tarifa: custo fica 'sem tarifa', mas a estimativa conta para o teto", async () => {
     const { owner, clientId } = await setup();
     const fake = new FakeProvider();
-    fake.nextUsageByModel = [{ model: "modelo-sem-tarifa", usage: { inputTokens: 1000, outputTokens: 500, cacheReadTokens: 0, cacheWriteTokens: 0 } }];
+    fake.nextUsageByModel = [
+      {
+        model: "modelo-sem-tarifa",
+        usage: { inputTokens: 1000, outputTokens: 500, cacheReadTokens: 0, cacheWriteTokens: 0 },
+      },
+    ];
     setProviderOverride(fake);
-    const out = await runAiSkill(ideasSkill, { auth: owner, clientId, input: { objective: "engagement", format: "post", quantity: 3 } });
+    const out = await runAiSkill(ideasSkill, {
+      auth: owner,
+      clientId,
+      input: { objective: "engagement", format: "post", quantity: 3 },
+    });
     expect(out.costUsd).toBeNull();
     const summary = await getCostSummary(owner);
     // Estimativa pela tarifa do modelo configurado: 1000×4 + 500×20 = US$ 0,014
@@ -231,21 +311,43 @@ describe("fila, recuperação de falhas e custos", () => {
     expect(summary.totals.unpricedEstimateUsd).toBeCloseTo(0.014, 6);
     expect(summary.byClient.find((c) => c.clientId === clientId)?.budgetSpendUsd).toBeCloseTo(0.014, 6);
     await setClientBudget(owner, clientId, { monthlyLimitUsd: 0.01, alertThresholdPct: 80, hardStop: true });
-    await expect(runAiSkill(ideasSkill, { auth: owner, clientId, input: { objective: "engagement", format: "post", quantity: 3 } })).rejects.toBeInstanceOf(BudgetExceededError);
+    await expect(
+      runAiSkill(ideasSkill, {
+        auth: owner,
+        clientId,
+        input: { objective: "engagement", format: "post", quantity: 3 },
+      }),
+    ).rejects.toBeInstanceOf(BudgetExceededError);
   });
 
   it("o custo é registrado mesmo se a pessoa perder o acesso durante a chamada", async () => {
     const { owner, clientId } = await setup();
     const editor = await addMember(owner, "editor");
-    await withTx(systemCtx("test"), (tx) => tx.query("INSERT INTO client_access (organization_id, client_id, user_id) VALUES ($1, $2, $3)", [owner.organizationId, clientId, editor.userId]));
+    await withTx(systemCtx("test"), (tx) =>
+      tx.query("INSERT INTO client_access (organization_id, client_id, user_id) VALUES ($1, $2, $3)", [
+        owner.organizationId,
+        clientId,
+        editor.userId,
+      ]),
+    );
     const fake = new FakeProvider();
     fake.delayMs = 300;
     setProviderOverride(fake);
-    const pending = runAiSkill(ideasSkill, { auth: editor, clientId, input: { objective: "engagement", format: "post", quantity: 3 } });
+    const pending = runAiSkill(ideasSkill, {
+      auth: editor,
+      clientId,
+      input: { objective: "engagement", format: "post", quantity: 3 },
+    });
     await new Promise((r) => setTimeout(r, 100));
-    await withTx(systemCtx("test"), (tx) => tx.query("DELETE FROM client_access WHERE client_id = $1 AND user_id = $2", [clientId, editor.userId]));
+    await withTx(systemCtx("test"), (tx) =>
+      tx.query("DELETE FROM client_access WHERE client_id = $1 AND user_id = $2", [clientId, editor.userId]),
+    );
     const out = await pending;
-    const run = await withTx(systemCtx("test"), (tx) => one<{ status: string; cost_usd: string | null }>(tx, "SELECT status, cost_usd::text FROM ai_runs WHERE id = $1", [out.runId]));
+    const run = await withTx(systemCtx("test"), (tx) =>
+      one<{ status: string; cost_usd: string | null }>(tx, "SELECT status, cost_usd::text FROM ai_runs WHERE id = $1", [
+        out.runId,
+      ]),
+    );
     expect(run.status).toBe("succeeded");
     expect(Number(run.cost_usd)).toBeCloseTo(0.0144, 6);
   });
@@ -275,7 +377,8 @@ describe("fila, recuperação de falhas e custos", () => {
     expect(req.context).toContain("Entrega grátis em toda a cidade");
     // Sugestões não entram no contexto até virarem fato ou preferência.
     expect(req.context).not.toContain("Talvez usar mais emojis");
-    for (const leaked of ["Empresa Vizinha", "segredo-do-outro", "Fato exclusivo do outro cliente"]) expect(req.context + req.task).not.toContain(leaked);
+    for (const leaked of ["Empresa Vizinha", "segredo-do-outro", "Fato exclusivo do outro cliente"])
+      expect(req.context + req.task).not.toContain(leaked);
     expect(req.task).toContain("Lançamento da nova coleção de outono.");
   });
 
@@ -295,7 +398,11 @@ describe("fila, recuperação de falhas e custos", () => {
   it("erro inesperado na chamada de IA aparece como mensagem genérica, sem detalhes técnicos", async () => {
     const { owner, clientId } = await setup();
     const fake = new FakeProvider();
-    fake.failures.push(Object.assign(new Error('relation "tabela_x" does not exist'), { retryable: false }) as unknown as IntegrationError);
+    fake.failures.push(
+      Object.assign(new Error('relation "tabela_x" does not exist'), {
+        retryable: false,
+      }) as unknown as IntegrationError,
+    );
     setProviderOverride(fake);
     const { contentId } = await createContent(owner, request(clientId));
     await runJobsUntilIdle();
@@ -304,8 +411,9 @@ describe("fila, recuperação de falhas e custos", () => {
     expect(detail.lastError).toContain("Falha inesperada ao chamar a IA");
     expect(detail.lastError).not.toContain("tabela_x");
     // O detalhe técnico fica no registro da execução de IA, para a operação.
-    const runs = await withTx(systemCtx("test"), (tx) => many<{ error_message: string }>(tx, "SELECT error_message FROM ai_runs WHERE content_item_id = $1", [contentId]));
+    const runs = await withTx(systemCtx("test"), (tx) =>
+      many<{ error_message: string }>(tx, "SELECT error_message FROM ai_runs WHERE content_item_id = $1", [contentId]),
+    );
     expect(runs[0]?.error_message).toContain("tabela_x");
   });
 });
-

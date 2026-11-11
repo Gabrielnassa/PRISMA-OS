@@ -15,7 +15,10 @@ export class DemoProvider implements AiProvider {
 
   async generateStructured<T>(req: StructuredRequest<T>): Promise<StructuredResult<T>> {
     const started = Date.now();
-    if (!req.demo) throw new IntegrationError("Esta skill não possui saída de demonstração.", false, { providerCode: "demo_unsupported" });
+    if (!req.demo)
+      throw new IntegrationError("Esta skill não possui saída de demonstração.", false, {
+        providerCode: "demo_unsupported",
+      });
     const data = req.schema.parse(req.demo());
     const usage = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 };
     return {

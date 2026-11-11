@@ -41,19 +41,31 @@ describe("skills personalizadas", () => {
     expect(skill.version).toBe(1);
     expect(skill.versions.map((v) => v.version)).toEqual([1]);
 
-    const r = await updateCustomSkill(owner, id, { ...base, instructions: `${base.instructions} Termine com uma pergunta.` }, 1);
+    const r = await updateCustomSkill(
+      owner,
+      id,
+      { ...base, instructions: `${base.instructions} Termine com uma pergunta.` },
+      1,
+    );
     expect(r).toEqual({ version: 2, changed: true });
     skill = await getCustomSkill(owner, id);
     expect(skill.versions.map((v) => v.version)).toEqual([2, 1]);
     expect(skill.versions[1]!.instructions).toBe(base.instructions);
 
     // Sem mudanças: nenhuma versão nova.
-    expect(await updateCustomSkill(owner, id, { ...base, instructions: skill.instructions }, 2)).toEqual({ version: 2, changed: false });
+    expect(await updateCustomSkill(owner, id, { ...base, instructions: skill.instructions }, 2)).toEqual({
+      version: 2,
+      changed: false,
+    });
     // Mudar só o cliente não cria versão de conteúdo.
-    expect(await updateCustomSkill(owner, id, { ...base, instructions: skill.instructions, clientId: clientA }, 2)).toEqual({ version: 2, changed: true });
+    expect(
+      await updateCustomSkill(owner, id, { ...base, instructions: skill.instructions, clientId: clientA }, 2),
+    ).toEqual({ version: 2, changed: true });
     expect((await getCustomSkill(owner, id)).clientId).toBe(clientA);
     // Formulário aberto na versão 1: recusado.
-    await expect(updateCustomSkill(owner, id, { ...base, name: "Outro nome" }, 1)).rejects.toBeInstanceOf(ConflictError);
+    await expect(updateCustomSkill(owner, id, { ...base, name: "Outro nome" }, 1)).rejects.toBeInstanceOf(
+      ConflictError,
+    );
   });
 
   it("recusa nome repetido (sem diferenciar maiúsculas) e campos inválidos com mensagens por campo", async () => {
@@ -75,9 +87,15 @@ describe("skills personalizadas", () => {
 
     await expect(createCustomSkill(editor, { ...base, name: "Da criação" })).rejects.toBeInstanceOf(ForbiddenError);
     await expect(setCustomSkillStatus(editor, id, "archived")).rejects.toBeInstanceOf(ForbiddenError);
-    const run = await runCustomSkill(editor, { skillId: id, clientId: clientA, request: "Tema: pão de fermentação natural" });
+    const run = await runCustomSkill(editor, {
+      skillId: id,
+      clientId: clientA,
+      request: "Tema: pão de fermentação natural",
+    });
     expect(run.isDemo).toBe(true);
-    await expect(runCustomSkill(viewer, { skillId: id, clientId: clientA, request: "Tema qualquer" })).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(
+      runCustomSkill(viewer, { skillId: id, clientId: clientA, request: "Tema qualquer" }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
   it("skill exclusiva de um cliente: invisível para quem não acessa o cliente e não roda em outro cliente", async () => {
@@ -89,11 +107,18 @@ describe("skills personalizadas", () => {
 
     expect((await listCustomSkills(editor)).map((s) => s.id)).toEqual([general.id]);
     await expect(getCustomSkill(editor, exclusive.id)).rejects.toBeInstanceOf(NotFoundError);
-    await expect(runCustomSkill(editor, { skillId: exclusive.id, clientId: clientB, request: "Tentativa" })).rejects.toBeInstanceOf(NotFoundError);
-    await expect(runCustomSkill(owner, { skillId: exclusive.id, clientId: clientB, request: "Cliente errado" })).rejects.toBeInstanceOf(ValidationError);
+    await expect(
+      runCustomSkill(editor, { skillId: exclusive.id, clientId: clientB, request: "Tentativa" }),
+    ).rejects.toBeInstanceOf(NotFoundError);
+    await expect(
+      runCustomSkill(owner, { skillId: exclusive.id, clientId: clientB, request: "Cliente errado" }),
+    ).rejects.toBeInstanceOf(ValidationError);
     // Filtro por cliente: as gerais e as do cliente.
     expect((await listCustomSkills(owner, { clientId: clientB })).map((s) => s.name)).toEqual(["Geral"]);
-    expect((await listCustomSkills(owner, { clientId: clientA })).map((s) => s.name).sort()).toEqual(["Geral", "Só da padaria"]);
+    expect((await listCustomSkills(owner, { clientId: clientA })).map((s) => s.name).sort()).toEqual([
+      "Geral",
+      "Só da padaria",
+    ]);
   });
 
   it("outra organização não enxerga nem executa", async () => {
@@ -103,7 +128,9 @@ describe("skills personalizadas", () => {
     const otherClient = await createClient(other.owner, { name: "Cliente de fora" });
     expect(await listCustomSkills(other.owner)).toEqual([]);
     await expect(getCustomSkill(other.owner, id)).rejects.toBeInstanceOf(NotFoundError);
-    await expect(runCustomSkill(other.owner, { skillId: id, clientId: otherClient.id, request: "Tentativa" })).rejects.toBeInstanceOf(NotFoundError);
+    await expect(
+      runCustomSkill(other.owner, { skillId: id, clientId: otherClient.id, request: "Tentativa" }),
+    ).rejects.toBeInstanceOf(NotFoundError);
     await expect(listCustomSkillRuns(other.owner, id)).resolves.toEqual([]);
     void clientA;
   });
@@ -112,9 +139,13 @@ describe("skills personalizadas", () => {
     const { owner } = await setup();
     const { id } = await createCustomSkill(owner, base);
     await expect(
-      withTx(userCtx(owner.userId), (tx) => tx.query("UPDATE custom_skill_versions SET instructions = 'alterado' WHERE skill_id = $1", [id])),
+      withTx(userCtx(owner.userId), (tx) =>
+        tx.query("UPDATE custom_skill_versions SET instructions = 'alterado' WHERE skill_id = $1", [id]),
+      ),
     ).rejects.toThrow(/permission denied/);
-    await expect(withTx(userCtx(owner.userId), (tx) => tx.query("DELETE FROM custom_skill_versions WHERE skill_id = $1", [id]))).rejects.toThrow(/permission denied/);
+    await expect(
+      withTx(userCtx(owner.userId), (tx) => tx.query("DELETE FROM custom_skill_versions WHERE skill_id = $1", [id])),
+    ).rejects.toThrow(/permission denied/);
   });
 
   it("executa com o contexto do cliente, registra versão, pedido, resultado e custo", async () => {
@@ -124,7 +155,11 @@ describe("skills personalizadas", () => {
     const fake = new FakeProvider();
     setProviderOverride(fake);
 
-    const out = await runCustomSkill(owner, { skillId: id, clientId: clientA, request: "Lançamento do pão de queijo recheado" });
+    const out = await runCustomSkill(owner, {
+      skillId: id,
+      clientId: clientA,
+      request: "Lançamento do pão de queijo recheado",
+    });
     expect(out.isDemo).toBe(false);
     expect(out.output.result).toContain("Lançamento do pão de queijo recheado");
     expect(out.costUsd).toBeGreaterThan(0);
@@ -136,7 +171,12 @@ describe("skills personalizadas", () => {
 
     const runs = await listCustomSkillRuns(owner, id);
     expect(runs).toHaveLength(1);
-    expect(runs[0]).toMatchObject({ version: "2", status: "succeeded", request: "Lançamento do pão de queijo recheado", clientName: "Padaria Pão Bom" });
+    expect(runs[0]).toMatchObject({
+      version: "2",
+      status: "succeeded",
+      request: "Lançamento do pão de queijo recheado",
+      clientName: "Padaria Pão Bom",
+    });
     expect(runs[0]!.result).toBe(out.output.result);
 
     const forBriefing = await getCustomSkillRunText(owner, out.runId);
@@ -153,19 +193,36 @@ describe("skills personalizadas", () => {
     const fake = new FakeProvider();
     setProviderOverride(fake);
     const key = crypto.randomUUID();
-    const first = await runCustomSkill(owner, { skillId: id, clientId: clientA, request: "Pedido único", requestKey: key });
-    const second = await runCustomSkill(owner, { skillId: id, clientId: clientA, request: "Pedido único", requestKey: key });
+    const first = await runCustomSkill(owner, {
+      skillId: id,
+      clientId: clientA,
+      request: "Pedido único",
+      requestKey: key,
+    });
+    const second = await runCustomSkill(owner, {
+      skillId: id,
+      clientId: clientA,
+      request: "Pedido único",
+      requestKey: key,
+    });
     expect(second.reused).toBe(true);
     expect(second.runId).toBe(first.runId);
     expect(fake.calls).toBe(1);
     // Chave nova (o formulário gera outra depois de cada execução): nova execução.
-    await runCustomSkill(owner, { skillId: id, clientId: clientA, request: "Pedido único", requestKey: crypto.randomUUID() });
+    await runCustomSkill(owner, {
+      skillId: id,
+      clientId: clientA,
+      request: "Pedido único",
+      requestKey: crypto.randomUUID(),
+    });
     expect(fake.calls).toBe(2);
 
     await setCustomSkillStatus(owner, id, "archived");
     expect(await listCustomSkills(owner)).toEqual([]);
     expect((await listCustomSkills(owner, { includeArchived: true }))[0]?.status).toBe("archived");
-    await expect(runCustomSkill(owner, { skillId: id, clientId: clientA, request: "Depois de arquivar" })).rejects.toBeInstanceOf(ValidationError);
+    await expect(
+      runCustomSkill(owner, { skillId: id, clientId: clientA, request: "Depois de arquivar" }),
+    ).rejects.toBeInstanceOf(ValidationError);
     await setCustomSkillStatus(owner, id, "active");
     expect((await listCustomSkills(owner))[0]?.runsThisMonth).toBe(2);
   });

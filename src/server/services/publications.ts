@@ -17,7 +17,15 @@ import { accountAccess, markNeedsReconnect, NETWORK_LABELS, type Network } from 
 import { emitEvent } from "./webhooks";
 import { notifyPublicationFailed } from "./notifications";
 import { notifyUsers } from "./inbox";
-import { facebookMetrics, instagramMetrics, publishFacebook, publishInstagram, type FbState, type IgState, type PostMetrics } from "../integrations/social/meta";
+import {
+  facebookMetrics,
+  instagramMetrics,
+  publishFacebook,
+  publishInstagram,
+  type FbState,
+  type IgState,
+  type PostMetrics,
+} from "../integrations/social/meta";
 import { tiktokPublishPhotos, tiktokPublishVideo, waitTikTok } from "../integrations/social/tiktok";
 import { youtubeMetrics, youtubeUpload } from "../integrations/social/youtube";
 import type { Aspect, ContentFormat } from "@/lib/content/document";
@@ -43,14 +51,20 @@ export const PUBLICATION_STATUS_LABELS: Record<PublicationStatus, string> = {
   cancelled: "Cancelada",
 };
 
-export const KIND_LABELS: Record<PublicationKind, string> = { image: "Post", carousel: "Carrossel", story: "Story", video: "Vídeo" };
+export const KIND_LABELS: Record<PublicationKind, string> = {
+  image: "Post",
+  carousel: "Carrossel",
+  story: "Story",
+  video: "Vídeo",
+};
 
 const FORMAT_KIND: Record<ContentFormat, PublicationKind> = { post: "image", carousel: "carousel", story: "story" };
 
 /** O que cada rede aceita. Devolve o motivo quando não dá. */
 export function compatibility(network: Network, kind: PublicationKind, aspect: Aspect | null): string | null {
   if (network === "youtube" && kind !== "video") return "O YouTube só recebe vídeos pela API.";
-  if (network === "instagram" && (kind === "image" || kind === "carousel") && aspect === "9:16") return "No feed do Instagram a imagem vai de 4:5 a 1,91:1. Peças 9:16 entram como story.";
+  if (network === "instagram" && (kind === "image" || kind === "carousel") && aspect === "9:16")
+    return "No feed do Instagram a imagem vai de 4:5 a 1,91:1. Peças 9:16 entram como story.";
   return null;
 }
 
@@ -62,7 +76,8 @@ export function needsPublicUrl(network: Network, kind: PublicationKind): boolean
 export function publicUrlProblem(): string | null {
   const b = publicBase();
   if (!b.url) return "Defina APP_URL (o endereço do sistema) na configuração do servidor.";
-  if (!b.https || b.local) return "Instagram e TikTok baixam as imagens do endereço do sistema, que precisa ser público e com HTTPS. Isso funciona depois de hospedar com domínio próprio.";
+  if (!b.https || b.local)
+    return "Instagram e TikTok baixam as imagens do endereço do sistema, que precisa ser público e com HTTPS. Isso funciona depois de hospedar com domínio próprio.";
   return null;
 }
 
@@ -81,8 +96,20 @@ export function signedFileUrl(publicationId: string, file: string, ttlSeconds = 
 }
 
 /** Arquivo pedido pela rede durante a publicação (rota pública, conferida pela assinatura). */
-export async function readSignedFile(publicationId: string, file: string, exp: string | null, sig: string | null): Promise<{ data: Buffer; mimeType: string } | null> {
-  if (!z.string().uuid().safeParse(publicationId).success || !FILE_RE.test(file) || !exp || !sig || !/^\d{1,12}$/.test(exp)) return null;
+export async function readSignedFile(
+  publicationId: string,
+  file: string,
+  exp: string | null,
+  sig: string | null,
+): Promise<{ data: Buffer; mimeType: string } | null> {
+  if (
+    !z.string().uuid().safeParse(publicationId).success ||
+    !FILE_RE.test(file) ||
+    !exp ||
+    !sig ||
+    !/^\d{1,12}$/.test(exp)
+  )
+    return null;
   if (Number(exp) < Date.now() / 1000) return null;
   if (!verifySignature(`${publicationId}/${file}/${exp}`, sig)) return null;
   const row = await withTx(systemCtx("publication.file"), (tx) =>
@@ -94,7 +121,10 @@ export async function readSignedFile(publicationId: string, file: string, exp: s
   );
   if (!row || row.status === "cancelled") return null;
   try {
-    if (file === "video") return row.storage_key ? { data: await storage().get(row.storage_key), mimeType: row.mime_type ?? "video/mp4" } : null;
+    if (file === "video")
+      return row.storage_key
+        ? { data: await storage().get(row.storage_key), mimeType: row.mime_type ?? "video/mp4" }
+        : null;
     return { data: await storage().get(`publish/${publicationId}/${file}`), mimeType: "image/jpeg" };
   } catch {
     return null;
@@ -121,16 +151,21 @@ const ScheduleSchema = z.object({
 });
 export type ScheduleInput = z.input<typeof ScheduleSchema>;
 
-export async function schedulePublications(auth: AuthContext, raw: ScheduleInput): Promise<{ ids: string[]; scheduledAt: string }> {
+export async function schedulePublications(
+  auth: AuthContext,
+  raw: ScheduleInput,
+): Promise<{ ids: string[]; scheduledAt: string }> {
   assertCan(auth.role, "social.publish");
   const parsed = ScheduleSchema.safeParse(raw);
   if (!parsed.success) throw new ValidationError(parsed.error.issues[0]!.message);
   const input = parsed.data;
-  if (Boolean(input.contentId) === Boolean(input.mediaAssetId)) throw new ValidationError("Escolha uma peça aprovada ou um vídeo.");
+  if (Boolean(input.contentId) === Boolean(input.mediaAssetId))
+    throw new ValidationError("Escolha uma peça aprovada ou um vídeo.");
   const when = input.when === "now" ? new Date() : new Date(input.when);
   if (Number.isNaN(when.getTime())) throw new ValidationError("Data e hora inválidas.");
   if (when.getTime() < Date.now() - 2 * 60_000) throw new ValidationError("Escolha um horário no futuro.");
-  if (when.getTime() > Date.now() + 180 * 86_400_000) throw new ValidationError("Agende para no máximo 6 meses à frente.");
+  if (when.getTime() > Date.now() + 180 * 86_400_000)
+    throw new ValidationError("Agende para no máximo 6 meses à frente.");
 
   return withTx(userCtx(auth.userId), async (tx) => {
     let clientId: string;
@@ -139,14 +174,25 @@ export async function schedulePublications(auth: AuthContext, raw: ScheduleInput
     let versionId: string | null = null;
     let defaultTitle = "";
     if (input.contentId) {
-      const item = await maybeOne<{ client_id: string; format: ContentFormat; status: string; approved_version_id: string | null; title: string }>(
+      const item = await maybeOne<{
+        client_id: string;
+        format: ContentFormat;
+        status: string;
+        approved_version_id: string | null;
+        title: string;
+      }>(
         tx,
         "SELECT client_id, format, status, approved_version_id, title FROM content_items WHERE id = $1 AND organization_id = $2",
         [input.contentId, auth.organizationId],
       );
       if (!item) throw new NotFoundError("Peça não encontrada.");
-      if (item.status !== "approved" || !item.approved_version_id) throw new ConflictError("Só peças aprovadas podem ser publicadas. Envie para aprovação primeiro.");
-      const v = await one<{ document: { aspect: Aspect; slides: unknown[] } }>(tx, "SELECT document FROM content_versions WHERE id = $1", [item.approved_version_id]);
+      if (item.status !== "approved" || !item.approved_version_id)
+        throw new ConflictError("Só peças aprovadas podem ser publicadas. Envie para aprovação primeiro.");
+      const v = await one<{ document: { aspect: Aspect; slides: unknown[] } }>(
+        tx,
+        "SELECT document FROM content_versions WHERE id = $1",
+        [item.approved_version_id],
+      );
       clientId = item.client_id;
       kind = FORMAT_KIND[item.format];
       if (kind === "carousel" && v.document.slides.length < 2) kind = "image";
@@ -166,12 +212,21 @@ export async function schedulePublications(auth: AuthContext, raw: ScheduleInput
       defaultTitle = asset.filename.replace(/\.[a-z0-9]+$/i, "");
     }
 
-    const accounts = await many<{ id: string; client_id: string; network: Network; status: string; username: string | null; display_name: string; details: { privacyOptions?: string[] } }>(
+    const accounts = await many<{
+      id: string;
+      client_id: string;
+      network: Network;
+      status: string;
+      username: string | null;
+      display_name: string;
+      details: { privacyOptions?: string[] };
+    }>(
       tx,
       "SELECT id, client_id, network, status, username, display_name, details FROM social_accounts WHERE id = ANY($1::uuid[]) AND organization_id = $2",
       [input.accountIds, auth.organizationId],
     );
-    if (accounts.length !== new Set(input.accountIds).size) throw new NotFoundError("Conta não encontrada. Atualize a página.");
+    if (accounts.length !== new Set(input.accountIds).size)
+      throw new NotFoundError("Conta não encontrada. Atualize a página.");
     const problems: string[] = [];
     for (const a of accounts) {
       const name = NETWORK_LABELS[a.network];
@@ -185,7 +240,8 @@ export async function schedulePublications(auth: AuthContext, raw: ScheduleInput
       }
       if (a.network === "tiktok") {
         if (!input.tiktokPrivacy) problems.push("TikTok: escolha quem pode ver o post.");
-        else if (a.details.privacyOptions?.length && !a.details.privacyOptions.includes(input.tiktokPrivacy)) problems.push("TikTok: essa opção de privacidade não está disponível para a conta.");
+        else if (a.details.privacyOptions?.length && !a.details.privacyOptions.includes(input.tiktokPrivacy))
+          problems.push("TikTok: essa opção de privacidade não está disponível para a conta.");
         if (!input.tiktokConsent) problems.push("TikTok: confirme a declaração de uso de música da TikTok.");
       }
       if (a.network === "youtube") {
@@ -199,14 +255,27 @@ export async function schedulePublications(auth: AuthContext, raw: ScheduleInput
     for (const a of accounts) {
       const options: Record<string, unknown> = { allowComments: input.allowComments };
       if (a.network === "tiktok") options.privacy = input.tiktokPrivacy;
-      if (a.network === "youtube") Object.assign(options, { privacy: input.youtubePrivacy, madeForKids: input.madeForKids });
+      if (a.network === "youtube")
+        Object.assign(options, { privacy: input.youtubePrivacy, madeForKids: input.madeForKids });
       const pub = await one<{ id: string }>(
         tx,
         `INSERT INTO publications (organization_id, client_id, content_item_id, content_version_id, media_asset_id, social_account_id, network, account_label, kind, title, caption, options, scheduled_at, requested_by)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id`,
         [
-          auth.organizationId, clientId, input.contentId ?? null, versionId, input.mediaAssetId ?? null, a.id, a.network,
-          a.username ? `@${a.username.replace(/^@/, "")}` : a.display_name, kind, (input.title || defaultTitle).slice(0, 100), input.caption, JSON.stringify(options), when.toISOString(), auth.userId,
+          auth.organizationId,
+          clientId,
+          input.contentId ?? null,
+          versionId,
+          input.mediaAssetId ?? null,
+          a.id,
+          a.network,
+          a.username ? `@${a.username.replace(/^@/, "")}` : a.display_name,
+          kind,
+          (input.title || defaultTitle).slice(0, 100),
+          input.caption,
+          JSON.stringify(options),
+          when.toISOString(),
+          auth.userId,
         ],
       );
       await enqueueJob(tx, {
@@ -225,7 +294,13 @@ export async function schedulePublications(auth: AuthContext, raw: ScheduleInput
         action: "publication.scheduled",
         entityType: "publication",
         entityId: pub.id,
-        metadata: { network: a.network, contentId: input.contentId ?? null, mediaAssetId: input.mediaAssetId ?? null, versionId, scheduledAt: when.toISOString() },
+        metadata: {
+          network: a.network,
+          contentId: input.contentId ?? null,
+          mediaAssetId: input.mediaAssetId ?? null,
+          versionId,
+          scheduledAt: when.toISOString(),
+        },
       });
       ids.push(pub.id);
     }
@@ -237,12 +312,30 @@ export async function cancelPublication(auth: AuthContext, publicationId: string
   assertCan(auth.role, "social.publish");
   if (!z.string().uuid().safeParse(publicationId).success) throw new NotFoundError("Publicação não encontrada.");
   await withTx(userCtx(auth.userId), async (tx) => {
-    const p = await maybeOne<{ status: PublicationStatus; client_id: string }>(tx, "SELECT status, client_id FROM publications WHERE id = $1 AND organization_id = $2 FOR UPDATE", [publicationId, auth.organizationId]);
+    const p = await maybeOne<{ status: PublicationStatus; client_id: string }>(
+      tx,
+      "SELECT status, client_id FROM publications WHERE id = $1 AND organization_id = $2 FOR UPDATE",
+      [publicationId, auth.organizationId],
+    );
     if (!p) throw new NotFoundError("Publicação não encontrada.");
-    if (p.status !== "scheduled" && p.status !== "failed") throw new ConflictError(p.status === "publishing" ? "A publicação já está em andamento." : "Esta publicação não pode mais ser cancelada.");
+    if (p.status !== "scheduled" && p.status !== "failed")
+      throw new ConflictError(
+        p.status === "publishing"
+          ? "A publicação já está em andamento."
+          : "Esta publicação não pode mais ser cancelada.",
+      );
     await tx.query("UPDATE publications SET status = 'cancelled' WHERE id = $1", [publicationId]);
-    await tx.query("UPDATE jobs SET status = 'cancelled', finished_at = now() WHERE organization_id = $1 AND idempotency_key LIKE $2 AND status = 'queued'", [auth.organizationId, `publish:${publicationId}%`]);
-    await audit(tx, userActor(auth), { organizationId: auth.organizationId, clientId: p.client_id, action: "publication.cancelled", entityType: "publication", entityId: publicationId });
+    await tx.query(
+      "UPDATE jobs SET status = 'cancelled', finished_at = now() WHERE organization_id = $1 AND idempotency_key LIKE $2 AND status = 'queued'",
+      [auth.organizationId, `publish:${publicationId}%`],
+    );
+    await audit(tx, userActor(auth), {
+      organizationId: auth.organizationId,
+      clientId: p.client_id,
+      action: "publication.cancelled",
+      entityType: "publication",
+      entityId: publicationId,
+    });
   });
 }
 
@@ -251,10 +344,16 @@ export async function retryPublication(auth: AuthContext, publicationId: string)
   assertCan(auth.role, "social.publish");
   if (!z.string().uuid().safeParse(publicationId).success) throw new NotFoundError("Publicação não encontrada.");
   await withTx(userCtx(auth.userId), async (tx) => {
-    const p = await maybeOne<{ status: PublicationStatus; client_id: string }>(tx, "SELECT status, client_id FROM publications WHERE id = $1 AND organization_id = $2 FOR UPDATE", [publicationId, auth.organizationId]);
+    const p = await maybeOne<{ status: PublicationStatus; client_id: string }>(
+      tx,
+      "SELECT status, client_id FROM publications WHERE id = $1 AND organization_id = $2 FOR UPDATE",
+      [publicationId, auth.organizationId],
+    );
     if (!p) throw new NotFoundError("Publicação não encontrada.");
     if (p.status !== "failed") throw new ConflictError("Só publicações que falharam podem ser tentadas de novo.");
-    await tx.query("UPDATE publications SET status = 'scheduled', error = NULL, scheduled_at = now() WHERE id = $1", [publicationId]);
+    await tx.query("UPDATE publications SET status = 'scheduled', error = NULL, scheduled_at = now() WHERE id = $1", [
+      publicationId,
+    ]);
     await enqueueJob(tx, {
       organizationId: auth.organizationId,
       clientId: p.client_id,
@@ -264,7 +363,13 @@ export async function retryPublication(auth: AuthContext, publicationId: string)
       createdBy: auth.userId,
       maxAttempts: 6,
     });
-    await audit(tx, userActor(auth), { organizationId: auth.organizationId, clientId: p.client_id, action: "publication.retried", entityType: "publication", entityId: publicationId });
+    await audit(tx, userActor(auth), {
+      organizationId: auth.organizationId,
+      clientId: p.client_id,
+      action: "publication.retried",
+      entityType: "publication",
+      entityId: publicationId,
+    });
   });
 }
 
@@ -294,12 +399,31 @@ export interface Publication {
   requestedByName: string | null;
 }
 
-export async function listPublications(auth: AuthContext, f: { clientId?: string; contentId?: string; status?: PublicationStatus; limit?: number } = {}): Promise<Publication[]> {
+export async function listPublications(
+  auth: AuthContext,
+  f: { clientId?: string; contentId?: string; status?: PublicationStatus; limit?: number } = {},
+): Promise<Publication[]> {
   return withTx(userCtx(auth.userId), async (tx) => {
     const rows = await many<{
-      id: string; client_id: string; client_name: string; content_item_id: string | null; content_title: string | null; media_asset_id: string | null; network: Network; account_label: string;
-      kind: PublicationKind; title: string; caption: string; status: PublicationStatus; scheduled_at: Date; published_at: Date | null; external_url: string | null; error: string | null;
-      metrics: PostMetrics | null; metrics_at: Date | null; requested_by_name: string | null;
+      id: string;
+      client_id: string;
+      client_name: string;
+      content_item_id: string | null;
+      content_title: string | null;
+      media_asset_id: string | null;
+      network: Network;
+      account_label: string;
+      kind: PublicationKind;
+      title: string;
+      caption: string;
+      status: PublicationStatus;
+      scheduled_at: Date;
+      published_at: Date | null;
+      external_url: string | null;
+      error: string | null;
+      metrics: PostMetrics | null;
+      metrics_at: Date | null;
+      requested_by_name: string | null;
     }>(
       tx,
       `SELECT p.id, p.client_id, c.name AS client_name, p.content_item_id, ci.title AS content_title, p.media_asset_id, p.network, p.account_label, p.kind, p.title, p.caption,
@@ -339,13 +463,27 @@ export async function listPublications(auth: AuthContext, f: { clientId?: string
 // ---------------------------------------------------------------------------
 
 type PubRow = {
-  id: string; organization_id: string; client_id: string; content_item_id: string | null; content_version_id: string | null; media_asset_id: string | null; social_account_id: string | null;
-  network: Network; kind: PublicationKind; title: string; caption: string; options: { privacy?: string; allowComments?: boolean; madeForKids?: boolean }; status: PublicationStatus;
-  provider_state: Record<string, unknown>; account_username: string | null;
+  id: string;
+  organization_id: string;
+  client_id: string;
+  content_item_id: string | null;
+  content_version_id: string | null;
+  media_asset_id: string | null;
+  social_account_id: string | null;
+  network: Network;
+  kind: PublicationKind;
+  title: string;
+  caption: string;
+  options: { privacy?: string; allowComments?: boolean; madeForKids?: boolean };
+  status: PublicationStatus;
+  provider_state: Record<string, unknown>;
+  account_username: string | null;
 };
 
 async function saveState(id: string, state: unknown): Promise<void> {
-  await withTx(systemCtx("publication.state"), (tx) => tx.query("UPDATE publications SET provider_state = $2 WHERE id = $1", [id, JSON.stringify(state)]));
+  await withTx(systemCtx("publication.state"), (tx) =>
+    tx.query("UPDATE publications SET provider_state = $2 WHERE id = $1", [id, JSON.stringify(state)]),
+  );
 }
 
 export async function toJpeg(png: Buffer): Promise<Buffer> {
@@ -355,7 +493,12 @@ export async function toJpeg(png: Buffer): Promise<Buffer> {
 /** Imagens da versão aprovada em JPEG, guardadas para as redes baixarem. */
 async function prepareImages(auth: AuthContext, pub: PubRow): Promise<Buffer[]> {
   const v = await getVersionDocument(auth, pub.content_item_id!, pub.content_version_id!);
-  if (!v.isApproved) throw new IntegrationError("A versão agendada não é mais a aprovada (a peça mudou). Aprove de novo e reagende.", false, { providerCode: "not_approved" });
+  if (!v.isApproved)
+    throw new IntegrationError(
+      "A versão agendada não é mais a aprovada (a peça mudou). Aprove de novo e reagende.",
+      false,
+      { providerCode: "not_approved" },
+    );
   const slides = await renderStoredDocument(auth, pub.content_item_id!, v.document);
   const jpgs: Buffer[] = [];
   for (let i = 0; i < slides.length; i++) {
@@ -366,8 +509,15 @@ async function prepareImages(auth: AuthContext, pub: PubRow): Promise<Buffer[]> 
   return pub.kind === "story" || pub.kind === "image" ? jpgs.slice(0, 1) : jpgs.slice(0, 10);
 }
 
-async function loadVideo(tx: Queryable, assetId: string): Promise<{ data: Buffer; mimeType: string; filename: string }> {
-  const a = await maybeOne<{ storage_key: string; mime_type: string; filename: string }>(tx, "SELECT storage_key, mime_type, filename FROM media_assets WHERE id = $1 AND deleted_at IS NULL", [assetId]);
+async function loadVideo(
+  tx: Queryable,
+  assetId: string,
+): Promise<{ data: Buffer; mimeType: string; filename: string }> {
+  const a = await maybeOne<{ storage_key: string; mime_type: string; filename: string }>(
+    tx,
+    "SELECT storage_key, mime_type, filename FROM media_assets WHERE id = $1 AND deleted_at IS NULL",
+    [assetId],
+  );
   if (!a) throw new IntegrationError("O vídeo foi removido da biblioteca.", false, { providerCode: "video_missing" });
   return { data: await storage().get(a.storage_key), mimeType: a.mime_type, filename: a.filename };
 }
@@ -388,11 +538,17 @@ export async function handlePublish(job: Job, auth: AuthContext): Promise<Record
   });
   if (!pub) return { skipped: true };
   try {
-    if (!pub.social_account_id) throw new IntegrationError("A conta foi desconectada. Conecte de novo e reagende.", false, { providerCode: "account_missing" });
+    if (!pub.social_account_id)
+      throw new IntegrationError("A conta foi desconectada. Conecte de novo e reagende.", false, {
+        providerCode: "account_missing",
+      });
     const access = await withTx(systemCtx("publication.token"), (tx) => accountAccess(tx, pub.social_account_id!));
     const version = env().META_GRAPH_VERSION;
     const images = pub.kind === "video" ? [] : await prepareImages(auth, pub);
-    const video = pub.kind === "video" ? await withTx(systemCtx("publication.video"), (tx) => loadVideo(tx, pub.media_asset_id!)) : null;
+    const video =
+      pub.kind === "video"
+        ? await withTx(systemCtx("publication.video"), (tx) => loadVideo(tx, pub.media_asset_id!))
+        : null;
     const imageUrls = images.map((_, i) => signedFileUrl(pub.id, `${i + 1}.jpg`));
     let externalId: string;
     let externalUrl: string | null;
@@ -430,17 +586,34 @@ export async function handlePublish(job: Job, auth: AuthContext): Promise<Record
       const privacy = pub.options.privacy ?? "SELF_ONLY";
       if (!publishId) {
         publishId = video
-          ? await tiktokPublishVideo({ token: access.token, video: video.data, mimeType: video.mimeType, title: pub.caption || pub.title, privacy, disableComment: pub.options.allowComments === false })
-          : await tiktokPublishPhotos({ token: access.token, imageUrls, title: pub.title, description: pub.caption, privacy, disableComment: pub.options.allowComments === false });
+          ? await tiktokPublishVideo({
+              token: access.token,
+              video: video.data,
+              mimeType: video.mimeType,
+              title: pub.caption || pub.title,
+              privacy,
+              disableComment: pub.options.allowComments === false,
+            })
+          : await tiktokPublishPhotos({
+              token: access.token,
+              imageUrls,
+              title: pub.title,
+              description: pub.caption,
+              privacy,
+              disableComment: pub.options.allowComments === false,
+            });
         await saveState(pub.id, { publishId });
       }
       const s = await waitTikTok(access.token, publishId);
       if (s.status !== "PUBLISH_COMPLETE" && s.status !== "SEND_TO_USER_INBOX") {
-        throw new IntegrationError("A TikTok ainda está processando. Nova tentativa em instantes.", true, { providerCode: "tiktok_processing" });
+        throw new IntegrationError("A TikTok ainda está processando. Nova tentativa em instantes.", true, {
+          providerCode: "tiktok_processing",
+        });
       }
       externalId = s.postIds[0] ?? publishId;
       const user = pub.account_username?.replace(/^@/, "");
-      externalUrl = s.postIds[0] && user ? `https://www.tiktok.com/@${user}/${video ? "video" : "photo"}/${s.postIds[0]}` : null;
+      externalUrl =
+        s.postIds[0] && user ? `https://www.tiktok.com/@${user}/${video ? "video" : "photo"}/${s.postIds[0]}` : null;
     } else {
       if (!video) throw new IntegrationError("O YouTube só recebe vídeos.", false);
       const existing = pub.provider_state.videoId as string | undefined;
@@ -463,15 +636,22 @@ export async function handlePublish(job: Job, auth: AuthContext): Promise<Record
     }
 
     await withTx(systemCtx("publication.done"), async (tx) => {
-      await tx.query("UPDATE publications SET status = 'published', published_at = now(), external_id = $2, external_url = $3, error = NULL WHERE id = $1", [pub.id, externalId, externalUrl]);
-      await audit(tx, { type: "worker", userId: job.created_by }, {
-        organizationId: pub.organization_id,
-        clientId: pub.client_id,
-        action: "publication.published",
-        entityType: "publication",
-        entityId: pub.id,
-        metadata: { network: pub.network, externalId, externalUrl },
-      });
+      await tx.query(
+        "UPDATE publications SET status = 'published', published_at = now(), external_id = $2, external_url = $3, error = NULL WHERE id = $1",
+        [pub.id, externalId, externalUrl],
+      );
+      await audit(
+        tx,
+        { type: "worker", userId: job.created_by },
+        {
+          organizationId: pub.organization_id,
+          clientId: pub.client_id,
+          action: "publication.published",
+          entityType: "publication",
+          entityId: pub.id,
+          metadata: { network: pub.network, externalId, externalUrl },
+        },
+      );
       if (pub.network !== "tiktok") {
         await enqueueJob(tx, {
           organizationId: pub.organization_id,
@@ -485,14 +665,31 @@ export async function handlePublish(job: Job, auth: AuthContext): Promise<Record
         });
       }
     });
-    await notifyUsers(pub.organization_id, [job.created_by], { kind: "publication.published", title: `Publicado no ${NETWORK_LABELS[pub.network]}: ${pub.title}`, body: externalUrl ?? "", href: pub.content_item_id ? `/conteudos/${pub.content_item_id}` : "/publicacoes" });
-    await emitEvent(pub.organization_id, "publication.published", { publicationId: pub.id, clientId: pub.client_id, network: pub.network, url: externalUrl, contentId: pub.content_item_id });
-    for (let i = 1; i <= images.length; i++) await storage().delete(`publish/${pub.id}/${i}.jpg`).catch(() => undefined);
+    await notifyUsers(pub.organization_id, [job.created_by], {
+      kind: "publication.published",
+      title: `Publicado no ${NETWORK_LABELS[pub.network]}: ${pub.title}`,
+      body: externalUrl ?? "",
+      href: pub.content_item_id ? `/conteudos/${pub.content_item_id}` : "/publicacoes",
+    });
+    await emitEvent(pub.organization_id, "publication.published", {
+      publicationId: pub.id,
+      clientId: pub.client_id,
+      network: pub.network,
+      url: externalUrl,
+      contentId: pub.content_item_id,
+    });
+    for (let i = 1; i <= images.length; i++)
+      await storage()
+        .delete(`publish/${pub.id}/${i}.jpg`)
+        .catch(() => undefined);
     return { publicationId: pub.id, externalId, externalUrl };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    if (err instanceof IntegrationError && err.code === "token_invalid" && pub.social_account_id) await markNeedsReconnect(pub.social_account_id, message);
-    await withTx(systemCtx("publication.error"), (tx) => tx.query("UPDATE publications SET error = $2 WHERE id = $1", [pub.id, message.slice(0, 2000)]));
+    if (err instanceof IntegrationError && err.code === "token_invalid" && pub.social_account_id)
+      await markNeedsReconnect(pub.social_account_id, message);
+    await withTx(systemCtx("publication.error"), (tx) =>
+      tx.query("UPDATE publications SET error = $2 WHERE id = $1", [pub.id, message.slice(0, 2000)]),
+    );
     throw err;
   }
 }
@@ -500,17 +697,39 @@ export async function handlePublish(job: Job, auth: AuthContext): Promise<Record
 /** Falha definitiva (tentativas esgotadas): roda na mesma transação que encerra a tarefa. */
 export async function markPublicationFailed(tx: Queryable, job: Job, message: string): Promise<void> {
   const id = String(job.payload.publicationId ?? "");
-  const r = await maybeOne<{ organization_id: string; client_id: string; network: Network; requested_by: string | null; account_label: string; title: string }>(
+  const r = await maybeOne<{
+    organization_id: string;
+    client_id: string;
+    network: Network;
+    requested_by: string | null;
+    account_label: string;
+    title: string;
+  }>(
     tx,
     "UPDATE publications SET status = 'failed', error = $2 WHERE id = $1 AND status IN ('scheduled', 'publishing') RETURNING organization_id, client_id, network, requested_by, account_label, title",
     [id, message.slice(0, 2000)],
   );
   if (!r) return;
-  await emitEvent(r.organization_id, "publication.failed", { publicationId: id, clientId: r.client_id, network: r.network, error: message }, tx);
-  await notifyPublicationFailed(r.organization_id, { requestedBy: r.requested_by, network: NETWORK_LABELS[r.network], account: r.account_label, title: r.title, error: message });
+  await emitEvent(
+    r.organization_id,
+    "publication.failed",
+    { publicationId: id, clientId: r.client_id, network: r.network, error: message },
+    tx,
+  );
+  await notifyPublicationFailed(r.organization_id, {
+    requestedBy: r.requested_by,
+    network: NETWORK_LABELS[r.network],
+    account: r.account_label,
+    title: r.title,
+    error: message,
+  });
 }
 
-async function fetchMetrics(pub: { network: Network; external_id: string; social_account_id: string }): Promise<PostMetrics> {
+async function fetchMetrics(pub: {
+  network: Network;
+  external_id: string;
+  social_account_id: string;
+}): Promise<PostMetrics> {
   const access = await withTx(systemCtx("publication.metrics"), (tx) => accountAccess(tx, pub.social_account_id));
   const version = env().META_GRAPH_VERSION;
   if (pub.network === "instagram") return instagramMetrics({ mediaId: pub.external_id, token: access.token, version });
@@ -519,10 +738,17 @@ async function fetchMetrics(pub: { network: Network; external_id: string; social
   throw new IntegrationError("Métricas da TikTok ainda não estão disponíveis por aqui.", false);
 }
 
-async function storeMetrics(id: string, network: Network, externalId: string | null, accountId: string | null): Promise<PostMetrics> {
+async function storeMetrics(
+  id: string,
+  network: Network,
+  externalId: string | null,
+  accountId: string | null,
+): Promise<PostMetrics> {
   if (!externalId || !accountId) throw new ConflictError("Publicação sem post ou conta para consultar.");
   const m = await fetchMetrics({ network, external_id: externalId, social_account_id: accountId });
-  await withTx(systemCtx("publication.metrics"), (tx) => tx.query("UPDATE publications SET metrics = $2, metrics_at = now() WHERE id = $1", [id, JSON.stringify(m)]));
+  await withTx(systemCtx("publication.metrics"), (tx) =>
+    tx.query("UPDATE publications SET metrics = $2, metrics_at = now() WHERE id = $1", [id, JSON.stringify(m)]),
+  );
   return m;
 }
 
@@ -543,7 +769,11 @@ export async function refreshMetrics(auth: AuthContext, publicationId: string): 
 export async function handleMetrics(job: Job): Promise<Record<string, unknown>> {
   const id = String(job.payload.publicationId ?? "");
   const p = await withTx(systemCtx("publication.metrics"), (tx) =>
-    maybeOne<{ network: Network; external_id: string | null; social_account_id: string | null; status: string }>(tx, "SELECT network, external_id, social_account_id, status FROM publications WHERE id = $1", [id]),
+    maybeOne<{ network: Network; external_id: string | null; social_account_id: string | null; status: string }>(
+      tx,
+      "SELECT network, external_id, social_account_id, status FROM publications WHERE id = $1",
+      [id],
+    ),
   );
   if (!p || p.status !== "published") return { skipped: true };
   return { ...(await storeMetrics(id, p.network, p.external_id, p.social_account_id)) };
@@ -565,7 +795,13 @@ export interface FeedTile {
 export async function feedPreview(auth: AuthContext, clientId: string, limit = 18): Promise<FeedTile[]> {
   if (!z.string().uuid().safeParse(clientId).success) throw new NotFoundError("Cliente não encontrado.");
   return withTx(userCtx(auth.userId), async (tx) => {
-    const rows = await many<{ content_id: string; version_id: string; title: string; state: FeedTile["state"]; at: Date | null }>(
+    const rows = await many<{
+      content_id: string;
+      version_id: string;
+      title: string;
+      state: FeedTile["state"];
+      at: Date | null;
+    }>(
       tx,
       `WITH ig AS (
          SELECT DISTINCT ON (p.content_item_id) p.content_item_id, p.content_version_id, p.status, coalesce(p.published_at, p.scheduled_at) AS at
@@ -581,7 +817,13 @@ export async function feedPreview(auth: AuthContext, clientId: string, limit = 1
       [clientId, auth.organizationId, limit],
     );
     // Aprovadas sem data entram no topo (são as próximas a postar).
-    const tiles = rows.map((r) => ({ contentId: r.content_id, versionId: r.version_id, title: r.title, state: r.state, date: r.at?.toISOString() ?? null }));
+    const tiles = rows.map((r) => ({
+      contentId: r.content_id,
+      versionId: r.version_id,
+      title: r.title,
+      state: r.state,
+      date: r.at?.toISOString() ?? null,
+    }));
     return [...tiles.filter((t) => t.state === "approved"), ...tiles.filter((t) => t.state !== "approved")];
   });
 }

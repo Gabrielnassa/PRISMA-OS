@@ -5,7 +5,13 @@ import { Field, Input, Textarea } from "@/components/ui";
 import { ActionForm, FormMessage, SubmitButton } from "@/components/form";
 import { orgSettingsAction, passwordAction } from "./actions";
 
-export function OrgSettingsForm({ org, canEdit }: { org: { name: string; globalContext: string; requireDistinctApprover: boolean }; canEdit: boolean }) {
+export function OrgSettingsForm({
+  org,
+  canEdit,
+}: {
+  org: { name: string; globalContext: string; requireDistinctApprover: boolean };
+  canEdit: boolean;
+}) {
   const [state, action] = useActionState(orgSettingsAction, { status: "idle" });
   return (
     <ActionForm action={action} state={state} className="grid gap-4 p-5">
@@ -18,10 +24,21 @@ export function OrgSettingsForm({ org, canEdit }: { org: { name: string; globalC
           htmlFor="o-context"
           hint="Regras que valem para todos os clientes (ex.: linguagem inclusiva, cuidados com temas de saúde)."
         >
-          <Textarea id="o-context" name="globalContext" defaultValue={org.globalContext} maxLength={20000} className="min-h-40" />
+          <Textarea
+            id="o-context"
+            name="globalContext"
+            defaultValue={org.globalContext}
+            maxLength={20000}
+            className="min-h-40"
+          />
         </Field>
         <label className="flex items-start gap-3 text-sm">
-          <input type="checkbox" name="requireDistinctApprover" defaultChecked={org.requireDistinctApprover} className="mt-0.5 accent-iris-400" />
+          <input
+            type="checkbox"
+            name="requireDistinctApprover"
+            defaultChecked={org.requireDistinctApprover}
+            className="mt-0.5 accent-iris-400"
+          />
           <span>
             <span className="font-medium text-ink-100">Exigir aprovador diferente de quem solicitou</span>
             <span className="block text-ink-400">Impede que a mesma pessoa envie e aprove a própria peça.</span>
@@ -41,7 +58,12 @@ export function OrgSettingsForm({ org, canEdit }: { org: { name: string; globalC
 export function PasswordForm({ redirectTo, stacked = false }: { redirectTo?: string; stacked?: boolean }) {
   const [state, action] = useActionState(passwordAction, { status: "idle" });
   return (
-    <ActionForm action={action} state={state} resetOnSuccess className={stacked ? "grid gap-4 p-5" : "grid gap-4 p-5 md:grid-cols-3"}>
+    <ActionForm
+      action={action}
+      state={state}
+      resetOnSuccess
+      className={stacked ? "grid gap-4 p-5" : "grid gap-4 p-5 md:grid-cols-3"}
+    >
       {redirectTo ? <input type="hidden" name="redirectTo" value={redirectTo} /> : null}
       <Field label="Senha atual" htmlFor="pw-current">
         <Input id="pw-current" name="current" type="password" autoComplete="current-password" required />

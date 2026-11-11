@@ -10,7 +10,15 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const { id } = await params;
     if (!z.string().uuid().safeParse(id).success) throw new NotFoundError("Conteúdo não encontrado.");
     const row = await withTx(userCtx(auth.userId), (tx) =>
-      maybeOne<{ status: string; last_error: string | null; job_status: string | null; attempts: number | null; max_attempts: number | null; job_error: string | null; run_after: Date | null }>(
+      maybeOne<{
+        status: string;
+        last_error: string | null;
+        job_status: string | null;
+        attempts: number | null;
+        max_attempts: number | null;
+        job_error: string | null;
+        run_after: Date | null;
+      }>(
         tx,
         `SELECT ci.status, ci.last_error, j.status AS job_status, j.attempts, j.max_attempts, j.last_error AS job_error, j.run_after
          FROM content_items ci
@@ -24,7 +32,15 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       {
         status: row.status,
         lastError: row.last_error,
-        job: row.job_status ? { status: row.job_status, attempts: row.attempts, maxAttempts: row.max_attempts, lastError: row.job_error, runAfter: row.run_after } : null,
+        job: row.job_status
+          ? {
+              status: row.job_status,
+              attempts: row.attempts,
+              maxAttempts: row.max_attempts,
+              lastError: row.job_error,
+              runAfter: row.run_after,
+            }
+          : null,
       },
       { headers: { "cache-control": "no-store" } },
     );

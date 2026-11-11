@@ -10,9 +10,14 @@ export const metadata: Metadata = { title: "Equipe" };
 
 export default async function UsersPage() {
   const auth = await requireAuth();
-  if (!can(auth.role, "users.manage")) return <EmptyState title="Acesso restrito" description="Só proprietários e administradores gerenciam a equipe." />;
+  if (!can(auth.role, "users.manage"))
+    return <EmptyState title="Acesso restrito" description="Só proprietários e administradores gerenciam a equipe." />;
   const [members, clients] = await Promise.all([listMembers(auth), listClients(auth, { includeArchived: true })]);
-  const roles = ROLES.filter((r) => r !== "owner" || auth.role === "owner").map((r) => ({ id: r, label: ROLE_LABELS[r], description: ROLE_DESCRIPTIONS[r] }));
+  const roles = ROLES.filter((r) => r !== "owner" || auth.role === "owner").map((r) => ({
+    id: r,
+    label: ROLE_LABELS[r],
+    description: ROLE_DESCRIPTIONS[r],
+  }));
   return (
     <>
       <PageHeader title="Equipe" description="Acessos, papéis e clientes de cada pessoa" />
@@ -35,12 +40,19 @@ export default async function UsersPage() {
                   {!m.isActive ? <Badge tone="danger">Inativo</Badge> : null}
                 </div>
                 <div className="mt-1 text-[11px] text-ink-400">Último acesso: {formatDateTime(m.lastLoginAt)}</div>
-                {m.userId !== auth.userId && (m.role !== "owner" || auth.role === "owner") ? <ResetPasswordForm userId={m.userId} email={m.email} /> : null}
+                {m.userId !== auth.userId && (m.role !== "owner" || auth.role === "owner") ? (
+                  <ResetPasswordForm userId={m.userId} email={m.email} />
+                ) : null}
               </div>
               {m.role === "owner" && auth.role !== "owner" ? (
                 <p className="text-xs text-ink-400">Somente proprietários alteram proprietários.</p>
               ) : (
-                <MemberForm member={m} roles={roles} clients={clients.map((c) => ({ id: c.id, name: c.name }))} isSelf={m.userId === auth.userId} />
+                <MemberForm
+                  member={m}
+                  roles={roles}
+                  clients={clients.map((c) => ({ id: c.id, name: c.name }))}
+                  isSelf={m.userId === auth.userId}
+                />
               )}
             </li>
           ))}

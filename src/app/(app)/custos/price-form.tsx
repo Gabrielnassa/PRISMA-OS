@@ -27,7 +27,12 @@ export function PriceForm() {
       <Field label="Escrita de cache (US$/milhão)" htmlFor="p-cw">
         <Input id="p-cw" name="cacheWrite" inputMode="decimal" />
       </Field>
-      <Field label="Fonte da tarifa" htmlFor="p-source" hint="Link da tabela oficial ou contrato." className="md:col-span-3">
+      <Field
+        label="Fonte da tarifa"
+        htmlFor="p-source"
+        hint="Link da tabela oficial ou contrato."
+        className="md:col-span-3"
+      >
         <Input id="p-source" name="source" required minLength={3} />
       </Field>
       <div className="md:col-span-3">

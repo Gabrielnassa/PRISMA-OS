@@ -19,14 +19,22 @@ export default async function TemplatesPage() {
         const items = TEMPLATES.filter((t) => t.family === family);
         return (
           <section key={family} className="mb-12">
-            <SectionTitle aside={<span className="tabular text-[12px] text-ink-400">{items.length} layouts</span>}>{FAMILY_LABELS[family]}</SectionTitle>
+            <SectionTitle aside={<span className="tabular text-[12px] text-ink-400">{items.length} layouts</span>}>
+              {FAMILY_LABELS[family]}
+            </SectionTitle>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {items.map((t) => (
                 <Card key={t.id} className="overflow-hidden">
                   <div className="grid grid-cols-3 gap-1.5 border-b border-ink-800 bg-ink-950 p-3">
                     {[0, 1, 2].map((i) => (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img key={i} src={`/api/templates/${t.id}?aspect=4:5&slide=${i}`} alt={`${t.name}, lâmina ${i + 1} (exemplo)`} className="w-full rounded-[3px] ring-1 ring-white/5" loading="lazy" />
+                      <img
+                        key={i}
+                        src={`/api/templates/${t.id}?aspect=4:5&slide=${i}`}
+                        alt={`${t.name}, lâmina ${i + 1} (exemplo)`}
+                        className="w-full rounded-[3px] ring-1 ring-white/5"
+                        loading="lazy"
+                      />
                     ))}
                   </div>
                   <div className="space-y-3 p-4 text-[13.5px]">
@@ -41,7 +49,9 @@ export default async function TemplatesPage() {
                       <dt className="text-ink-400">Proporções</dt>
                       <dd className="tabular text-[12px] text-ink-300">{t.aspects.join("  ")}</dd>
                       <dt className="text-ink-400">Foto</dt>
-                      <dd className={t.image === "required" ? "text-amber-300" : "text-ink-300"}>{t.image === "required" ? "Exige foto" : t.image === "optional" ? "Opcional" : "Sem foto"}</dd>
+                      <dd className={t.image === "required" ? "text-amber-300" : "text-ink-300"}>
+                        {t.image === "required" ? "Exige foto" : t.image === "optional" ? "Opcional" : "Sem foto"}
+                      </dd>
                     </dl>
                     <details className="text-xs text-ink-400">
                       <summary className="cursor-pointer text-ink-400 hover:text-ink-200">Detalhes</summary>
@@ -60,7 +70,9 @@ export default async function TemplatesPage() {
                             {(Object.keys(t.fieldLimits) as SlideKind[]).map((k) => (
                               <div key={k}>
                                 {SLIDE_KIND_LABELS[k]}:{" "}
-                                {(Object.entries(t.fieldLimits[k]) as Array<[FieldKey, number]>).map(([f, n]) => `${FIELD_LABELS[f]} (${n})`).join(", ")}
+                                {(Object.entries(t.fieldLimits[k]) as Array<[FieldKey, number]>)
+                                  .map(([f, n]) => `${FIELD_LABELS[f]} (${n})`)
+                                  .join(", ")}
                               </div>
                             ))}
                           </dd>

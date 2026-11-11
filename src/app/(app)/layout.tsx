@@ -25,7 +25,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <div className="min-h-dvh lg:flex">
         <Sidebar info={info} />
         <div className="flex min-w-0 flex-1 flex-col">
-          <main className="mx-auto w-full max-w-[1320px] flex-1 px-4 pb-16 pt-7 sm:px-6 md:px-10 md:pt-10">{children}</main>
+          <main className="mx-auto w-full max-w-[1320px] flex-1 px-4 pt-7 pb-16 sm:px-6 md:px-10 md:pt-10">
+            {children}
+          </main>
         </div>
       </div>
     </ToastProvider>

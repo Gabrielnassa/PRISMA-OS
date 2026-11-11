@@ -14,5 +14,9 @@ for (const sig of ["SIGINT", "SIGTERM"] as const) {
   });
 }
 
-await runWorkerLoop({ pollMs: env().WORKER_POLL_MS, lockTimeoutMs: env().JOB_LOCK_TIMEOUT_MS, signal: controller.signal });
+await runWorkerLoop({
+  pollMs: env().WORKER_POLL_MS,
+  lockTimeoutMs: env().JOB_LOCK_TIMEOUT_MS,
+  signal: controller.signal,
+});
 await closePool();

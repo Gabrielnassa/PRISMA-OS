@@ -4,7 +4,14 @@ import { can } from "@/server/authz/permissions";
 import { listClients } from "@/server/services/clients";
 import { listMedia } from "@/server/services/media";
 import { listAccounts, NETWORK_LABELS } from "@/server/services/social-accounts";
-import { compatibility, listPublications, needsPublicUrl, publicUrlProblem, PUBLICATION_STATUS_LABELS, type PublicationStatus } from "@/server/services/publications";
+import {
+  compatibility,
+  listPublications,
+  needsPublicUrl,
+  publicUrlProblem,
+  PUBLICATION_STATUS_LABELS,
+  type PublicationStatus,
+} from "@/server/services/publications";
 import { Card, CardHeader, EmptyState, PageHeader, Select, buttonClass } from "@/components/ui";
 import { PublicationList } from "@/components/publication-list";
 import { PublishForm } from "@/components/publish-form";
@@ -13,7 +20,11 @@ export const metadata: Metadata = { title: "Publicações" };
 
 const STATUSES = Object.keys(PUBLICATION_STATUS_LABELS) as PublicationStatus[];
 
-export default async function PublicationsPage({ searchParams }: { searchParams: Promise<{ cliente?: string; status?: string; video?: string; enviar?: string }> }) {
+export default async function PublicationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cliente?: string; status?: string; video?: string; enviar?: string }>;
+}) {
   const auth = await requireAuth();
   const sp = await searchParams;
   const clients = await listClients(auth);
@@ -23,7 +34,12 @@ export default async function PublicationsPage({ searchParams }: { searchParams:
   const items = await listPublications(auth, { clientId, status });
 
   const videoMode = canPublish && sp.enviar === "video";
-  const videos = videoMode && clientId ? (await listMedia(auth, { clientId, kind: "video", limit: 100 })).items.filter((m) => /^video\/(mp4|quicktime)$/.test(m.mimeType)) : [];
+  const videos =
+    videoMode && clientId
+      ? (await listMedia(auth, { clientId, kind: "video", limit: 100 })).items.filter((m) =>
+          /^video\/(mp4|quicktime)$/.test(m.mimeType),
+        )
+      : [];
   const video = videos.find((v) => v.id === sp.video);
   const accounts = video && clientId ? await listAccounts(auth, clientId) : [];
   const urlProblem = publicUrlProblem();
@@ -33,12 +49,29 @@ export default async function PublicationsPage({ searchParams }: { searchParams:
       <PageHeader
         title="Publicações"
         description="Posts agendados e publicados nas redes dos clientes"
-        actions={canPublish && !videoMode ? <a href={`/publicacoes?enviar=video${clientId ? `&cliente=${clientId}` : ""}`} className={buttonClass("secondary")}>Publicar vídeo</a> : null}
+        actions={
+          canPublish && !videoMode ? (
+            <a
+              href={`/publicacoes?enviar=video${clientId ? `&cliente=${clientId}` : ""}`}
+              className={buttonClass("secondary")}
+            >
+              Publicar vídeo
+            </a>
+          ) : null
+        }
       />
 
       {videoMode ? (
         <Card className="mb-6">
-          <CardHeader title="Publicar vídeo da biblioteca" description="Reels, TikTok, YouTube e Facebook" actions={<a href="/publicacoes" className="text-[13px] text-ink-400 hover:text-ink-100">Fechar</a>} />
+          <CardHeader
+            title="Publicar vídeo da biblioteca"
+            description="Reels, TikTok, YouTube e Facebook"
+            actions={
+              <a href="/publicacoes" className="text-[13px] text-ink-400 hover:text-ink-100">
+                Fechar
+              </a>
+            }
+          />
           <div className="space-y-5 p-5">
             <form action="/publicacoes" className="flex flex-wrap items-end gap-2">
               <input type="hidden" name="enviar" value="video" />
@@ -80,7 +113,13 @@ export default async function PublicationsPage({ searchParams }: { searchParams:
                   networkLabel: NETWORK_LABELS[a.network],
                   label: a.username ? `@${a.username.replace(/^@/, "")}` : a.displayName,
                   privacyOptions: Array.isArray(a.details.privacyOptions) ? (a.details.privacyOptions as string[]) : [],
-                  blocked: a.status !== "active" ? "Conecte a conta de novo." : (compatibility(a.network, "video", null) ?? (needsPublicUrl(a.network, "video") && urlProblem ? "Disponível depois de hospedar com domínio e HTTPS." : null)),
+                  blocked:
+                    a.status !== "active"
+                      ? "Conecte a conta de novo."
+                      : (compatibility(a.network, "video", null) ??
+                        (needsPublicUrl(a.network, "video") && urlProblem
+                          ? "Disponível depois de hospedar com domínio e HTTPS."
+                          : null)),
                 }))}
               />
             ) : null}
@@ -111,7 +150,10 @@ export default async function PublicationsPage({ searchParams }: { searchParams:
       </form>
 
       {items.length === 0 ? (
-        <EmptyState title="Nenhuma publicação" description="Peças aprovadas têm o botão Publicar. As contas são conectadas na aba Redes de cada cliente." />
+        <EmptyState
+          title="Nenhuma publicação"
+          description="Peças aprovadas têm o botão Publicar. As contas são conectadas na aba Redes de cada cliente."
+        />
       ) : (
         <Card>
           <PublicationList items={items} canAct={canPublish} />

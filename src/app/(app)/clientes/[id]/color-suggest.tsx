@@ -42,7 +42,12 @@ export function ColorSuggest({
 }) {
   const [handle, setHandle] = useState(initialHandle);
   const [saveLogo, setSaveLogo] = useState(false);
-  const [selected, setSelected] = useState<string[]>(() => images.filter((i) => i.kind === "logo").map((i) => i.id).slice(0, 3));
+  const [selected, setSelected] = useState<string[]>(() =>
+    images
+      .filter((i) => i.kind === "logo")
+      .map((i) => i.id)
+      .slice(0, 3),
+  );
   const [result, setResult] = useState<Result>(null);
   const [error, setError] = useState<string | null>(null);
   const [applied, setApplied] = useState(false);
@@ -58,25 +63,32 @@ export function ColorSuggest({
         const r = await suggestColorsFromInstagramAction(clientId, handle, saveLogo && canUpload);
         if (r.status === "ok" && r.data) {
           const d: InstagramColors = r.data;
-          setResult({ ...d, origin: `@${d.username}${d.name ? ` (${d.name})` : ""} · foto de perfil e ${plural(d.postsRead, "post", "posts")}` });
+          setResult({
+            ...d,
+            origin: `@${d.username}${d.name ? ` (${d.name})` : ""} · foto de perfil e ${plural(d.postsRead, "post", "posts")}`,
+          });
           if (d.savedLogoId) onLogoSaved(d.savedLogoId);
         } else if (r.status === "error") setError(r.message);
       } else {
         const r = await suggestColorsFromMediaAction(clientId, selected);
-        if (r.status === "ok" && r.data) setResult({ ...r.data, origin: `${plural(r.data.imagesUsed, "imagem", "imagens")} da biblioteca` });
+        if (r.status === "ok" && r.data)
+          setResult({ ...r.data, origin: `${plural(r.data.imagesUsed, "imagem", "imagens")} da biblioteca` });
         else if (r.status === "error") setError(r.message);
       }
       setBusy(null);
     });
   }
 
-  const toggle = (id: string) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : s.length >= 12 ? s : [...s, id]));
+  const toggle = (id: string) =>
+    setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : s.length >= 12 ? s : [...s, id]));
 
   return (
     <div className="rounded-[var(--radius-card)] border border-ink-800 bg-ink-950/40 md:col-span-2">
       <div className="border-b border-ink-800 px-4 py-3">
         <div className="text-[14px] font-semibold text-ink-50">Sugerir cores</div>
-        <p className="mt-0.5 text-[12.5px] text-ink-400">Pelo Instagram do cliente ou por imagens dele. A sugestão só preenche os campos abaixo; você revisa e salva.</p>
+        <p className="mt-0.5 text-[12.5px] text-ink-400">
+          Pelo Instagram do cliente ou por imagens dele. A sugestão só preenche os campos abaixo; você revisa e salva.
+        </p>
       </div>
       <div className="grid gap-px bg-ink-800 md:grid-cols-2">
         <div className="bg-ink-900 p-4">
@@ -85,7 +97,7 @@ export function ColorSuggest({
           </label>
           <div className="mt-1.5 flex gap-2">
             <div className="flex min-w-0 flex-1 items-center rounded-md border border-ink-700 bg-ink-950/60 focus-within:border-iris-400/60">
-              <span className="pl-3 tabular text-[13px] text-ink-400">@</span>
+              <span className="tabular pl-3 text-[13px] text-ink-400">@</span>
               <input
                 id="ig-handle"
                 value={handle.replace(/^@/, "")}
@@ -95,7 +107,12 @@ export function ColorSuggest({
                 className="min-w-0 flex-1 bg-transparent px-1.5 py-[7px] text-[14px] text-ink-50 outline-none placeholder:text-ink-400"
               />
             </div>
-            <Button type="button" variant="secondary" disabled={!instagramReady || pending || !handle.trim()} onClick={() => run("instagram")}>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={!instagramReady || pending || !handle.trim()}
+              onClick={() => run("instagram")}
+            >
               {busy === "instagram" ? "Buscando..." : "Buscar cores"}
             </Button>
           </div>
@@ -116,7 +133,8 @@ export function ColorSuggest({
           <div className="text-[13px] font-medium text-ink-200">De imagens do cliente</div>
           {images.length === 0 ? (
             <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-400">
-              Envie o logotipo, fotos ou um print do perfil do Instagram na aba Arquivos (PNG, JPEG ou SVG) e volte aqui.
+              Envie o logotipo, fotos ou um print do perfil do Instagram na aba Arquivos (PNG, JPEG ou SVG) e volte
+              aqui.
             </p>
           ) : (
             <>
@@ -130,17 +148,34 @@ export function ColorSuggest({
                       onClick={() => toggle(img.id)}
                       aria-pressed={on}
                       title={img.filename}
-                      className={cx("relative size-14 overflow-hidden rounded-md border bg-ink-850", on ? "border-iris-400" : "border-ink-700 hover:border-ink-500")}
+                      className={cx(
+                        "relative size-14 overflow-hidden rounded-md border bg-ink-850",
+                        on ? "border-iris-400" : "border-ink-700 hover:border-ink-500",
+                      )}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={`/api/media/${img.id}`} alt={img.filename} className="h-full w-full object-contain" loading="lazy" />
-                      {img.kind === "logo" ? <span className="absolute bottom-0 left-0 right-0 bg-ink-950/80 text-center tabular text-[9px] text-ink-200">logo</span> : null}
+                      <img
+                        src={`/api/media/${img.id}`}
+                        alt={img.filename}
+                        className="h-full w-full object-contain"
+                        loading="lazy"
+                      />
+                      {img.kind === "logo" ? (
+                        <span className="tabular absolute right-0 bottom-0 left-0 bg-ink-950/80 text-center text-[9px] text-ink-200">
+                          logo
+                        </span>
+                      ) : null}
                     </button>
                   );
                 })}
               </div>
               <div className="mt-2.5 flex items-center gap-3">
-                <Button type="button" variant="secondary" disabled={pending || selected.length === 0} onClick={() => run("images")}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={pending || selected.length === 0}
+                  onClick={() => run("images")}
+                >
                   {busy === "images" ? "Lendo cores..." : `Extrair cores (${selected.length})`}
                 </Button>
                 <span className="text-[12px] text-ink-400">Logotipos pesam mais que fotos.</span>
@@ -165,7 +200,10 @@ export function ColorSuggest({
           <div className="mt-3 grid grid-cols-5 gap-2">
             {ROLES.map(([k, label]) => (
               <div key={k} className="min-w-0">
-                <div className="h-10 rounded-md ring-1 ring-inset ring-white/10" style={{ backgroundColor: result.colors[k] }} />
+                <div
+                  className="h-10 rounded-md ring-1 ring-white/10 ring-inset"
+                  style={{ backgroundColor: result.colors[k] }}
+                />
                 <div className="mt-1 truncate text-[12px] text-ink-300">{label}</div>
                 <div className="tabular text-[11px] text-ink-400">{result.colors[k]}</div>
               </div>
@@ -175,7 +213,12 @@ export function ColorSuggest({
             <div className="mt-3 flex flex-wrap items-center gap-1.5">
               <span className="mr-1 text-[12px] text-ink-400">Cores encontradas:</span>
               {result.swatches.map((sw) => (
-                <span key={sw.hex} title={`${sw.hex} · ${Math.round(sw.share * 100)}%`} className="size-5 rounded-[4px] ring-1 ring-inset ring-white/10" style={{ backgroundColor: sw.hex }} />
+                <span
+                  key={sw.hex}
+                  title={`${sw.hex} · ${Math.round(sw.share * 100)}%`}
+                  className="size-5 rounded-[4px] ring-1 ring-white/10 ring-inset"
+                  style={{ backgroundColor: sw.hex }}
+                />
               ))}
             </div>
           ) : null}
@@ -197,7 +240,10 @@ export function ColorSuggest({
               Usar estas cores
             </Button>
             {applied ? (
-              <span className="text-[12.5px] text-emerald-300">Cores aplicadas abaixo. Revise e salve o perfil; marque “Identidade visual definida” quando o cliente confirmar.</span>
+              <span className="text-[12.5px] text-emerald-300">
+                Cores aplicadas abaixo. Revise e salve o perfil; marque “Identidade visual definida” quando o cliente
+                confirmar.
+              </span>
             ) : null}
           </div>
         </div>

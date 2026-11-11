@@ -1,4 +1,10 @@
-import { ContentDocumentSchema, type Aspect, type ContentDocument, type ContentFormat, type SlideKind } from "@/lib/content/document";
+import {
+  ContentDocumentSchema,
+  type Aspect,
+  type ContentDocument,
+  type ContentFormat,
+  type SlideKind,
+} from "@/lib/content/document";
 import { effectiveLimits } from "@/lib/content/limits";
 import type { LoadedImage, TemplateDef } from "./kit";
 import { svgToPng } from "./engine";
@@ -55,7 +61,16 @@ export function sampleDocumentFor(t: TemplateDef, format: ContentFormat, aspect:
     templateId: t.id,
     style: {
       colors: { primary: "#2b2d42", secondary: "#8d99ae", accent: "#7c3aed", background: "#f7f7f5", text: "#16161a" },
-      headingFont: t.family === "editorial" ? "playfair-display" : t.family === "produto" ? "montserrat" : t.family === "tech" ? "space-grotesk" : t.family === "natural" ? "nunito" : "dm-sans",
+      headingFont:
+        t.family === "editorial"
+          ? "playfair-display"
+          : t.family === "produto"
+            ? "montserrat"
+            : t.family === "tech"
+              ? "space-grotesk"
+              : t.family === "natural"
+                ? "nunito"
+                : "dm-sans",
       bodyFont: t.family === "tech" ? "space-grotesk" : t.family === "natural" ? "nunito" : "inter",
       logoAssetId: null,
       showLogo: true,

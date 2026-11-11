@@ -21,13 +21,21 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     let versionId = url.searchParams.get("version");
     if (!versionId) {
       const detail = await getContent(auth, id);
-      if (!detail.approvedVersionId) throw new ValidationError("Este conteúdo ainda não tem versão aprovada. Baixe como rascunho ou envie para aprovação.");
+      if (!detail.approvedVersionId)
+        throw new ValidationError(
+          "Este conteúdo ainda não tem versão aprovada. Baixe como rascunho ou envie para aprovação.",
+        );
       versionId = detail.approvedVersionId;
     }
     const version = await getVersionDocument(auth, id, versionId);
     const slides = await renderStoredDocument(auth, id, version.document);
     const base = `${slugify(version.title, 50)}-v${version.number}${version.isApproved ? "-aprovado" : "-RASCUNHO"}`;
-    await recordExport(auth, id, version.clientId, { versionId, versionNumber: version.number, approved: version.isApproved, format });
+    await recordExport(auth, id, version.clientId, {
+      versionId,
+      versionNumber: version.number,
+      approved: version.isApproved,
+      format,
+    });
 
     if (format === "png") {
       const index = Math.max(0, Math.min(slides.length - 1, Number(url.searchParams.get("slide") ?? 0) || 0));
@@ -49,7 +57,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     zip.file(`${base}-legenda.txt`, caption || "(sem legenda)");
     const alts = doc.slides.map((s, i) => `${i + 1}. ${s.alt || "(sem texto alternativo)"}`).join("\n");
     zip.file(`${base}-texto-alternativo.txt`, alts);
-    if (!version.isApproved) zip.file("LEIA-ME.txt", "Esta exportação é um RASCUNHO: a versão não está aprovada e não deve ser publicada.");
+    if (!version.isApproved)
+      zip.file("LEIA-ME.txt", "Esta exportação é um RASCUNHO: a versão não está aprovada e não deve ser publicada.");
     const buffer = await zip.generateAsync({ type: "uint8array", compression: "DEFLATE" });
     return new Response(buffer as unknown as BodyInit, {
       headers: {
