@@ -149,7 +149,7 @@ export default async function CalendarPage({
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-7 gap-px bg-ink-800">
+            <div data-calendario className="grid grid-cols-7 gap-px bg-ink-800">
               {cells.map((day, i) => (
                 <div key={i} className={cx("min-h-[112px] bg-ink-900 p-1.5", !day && "bg-ink-950/60")}>
                   {day ? (
@@ -172,7 +172,7 @@ export default async function CalendarPage({
             </div>
           </Card>
           {/* Celular: lista por dia. */}
-          <ol className="flex flex-col gap-3 md:hidden">
+          <ol data-calendario className="flex flex-col gap-3 md:hidden">
             {[...byDay.entries()].map(([day, list]) => (
               <li key={day}>
                 <Card>
