@@ -282,7 +282,9 @@ Cria a "Agência Demonstração" (login `demo@prisma.local` / `demonstracao-123`
 npm run build
 npm run capturas            # regenera as referências e copia para docs/img/telas
 npm run capturas -- antes   # idem, para docs/img/antes
-npm run test:visual         # compara com as referências (rode dentro da imagem do Playwright)
+npm run capturas -- --conferir   # só compara com as referências, como o CI
 ```
+
+`npm run capturas` sobe sozinho um PostgreSQL 16.4 da imagem oficial (porta 55432) e o navegador da imagem do Playwright: a ordenação de texto do banco muda a ordem das listas, então um banco local com outra collation não serve de base.
 
 `tests/visual/telas.spec.ts` fotografa 10 telas, em desktop e celular, com os dados de demonstração num build de produção, e compara com `tests/visual/__snapshots__`. Datas e tempos relativos ficam mascarados. As referências são geradas na imagem `mcr.microsoft.com/playwright` da mesma versão do `@playwright/test` (é o que `npm run capturas` faz, e o que o CI usa), para a comparação não acusar diferença só por fonte do sistema. Ao atualizar o `@playwright/test`, atualize a versão da imagem no `ci.yml` e regenere as referências. `docs/img/antes` guarda as telas de antes do redesenho da Fase 1 do briefing (`docs/briefing-melhorias.pdf`).

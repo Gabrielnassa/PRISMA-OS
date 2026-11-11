@@ -59,7 +59,8 @@ describe("custos com a OpenAI", () => {
         [owner.organizationId],
       ),
     );
-    expect(prices.map((p) => p.model)).toEqual(["gpt-6-astra", "gpt-6.1-sol", "gpt-6.1-terra"]);
+    // Ordenado aqui: a ordem do banco depende da collation (C.UTF-8 local, en_US.utf8 na imagem oficial).
+    expect(prices.map((p) => p.model).sort()).toEqual(["gpt-6-astra", "gpt-6.1-sol", "gpt-6.1-terra"]);
 
     setProviderOverride(
       new OpenAiProvider({

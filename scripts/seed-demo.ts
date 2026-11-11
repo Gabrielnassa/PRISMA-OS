@@ -249,8 +249,9 @@ async function main() {
     async (tx) =>
       (
         await tx.query<{ id: string; client_id: string; title: string; current_version_id: string }>(
-          // Ordem estável entre execuções (nome do cliente, não o id aleatório): as capturas dependem dela.
-          "SELECT ci.id, ci.client_id, ci.title, ci.current_version_id FROM content_items ci JOIN clients c ON c.id = ci.client_id WHERE ci.organization_id = $1 AND ci.status = 'in_review' ORDER BY c.name, ci.created_at, ci.title",
+          // Ordem estável entre execuções e entre bancos (nome do cliente em ordem de bytes, não o id
+          // aleatório nem a collation do banco): as capturas dependem dela.
+          'SELECT ci.id, ci.client_id, ci.title, ci.current_version_id FROM content_items ci JOIN clients c ON c.id = ci.client_id WHERE ci.organization_id = $1 AND ci.status = \'in_review\' ORDER BY c.name COLLATE "C", ci.created_at, ci.title COLLATE "C"',
           [owner.organizationId],
         )
       ).rows,

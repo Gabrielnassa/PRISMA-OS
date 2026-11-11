@@ -30,7 +30,12 @@ async function login(page: Page) {
 
 async function snap(page: Page, name: string) {
   await page.waitForLoadState("networkidle");
-  await page.addStyleTag({ content: "nextjs-portal{display:none!important} *{transition:none!important}" });
+  // Dígitos de largura fixa: sem isso, a hora do dia muda a largura de uma data e, no celular, a
+  // quebra de linha (e a altura da página) muda junto. As máscaras cobrem o texto, não o layout.
+  await page.addStyleTag({
+    content:
+      "nextjs-portal{display:none!important} *{transition:none!important;font-variant-numeric:tabular-nums!important}",
+  });
   await expect(page).toHaveScreenshot(`${name}.png`, { fullPage: true, mask: dynamic(page) });
 }
 
