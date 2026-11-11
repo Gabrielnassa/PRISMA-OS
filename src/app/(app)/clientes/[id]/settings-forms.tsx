@@ -5,7 +5,13 @@ import { Field, Input, Select } from "@/components/ui";
 import { ActionForm, FormMessage, SubmitButton } from "@/components/form";
 import { budgetAction, updateClientAction } from "../actions";
 
-export function ClientSettingsForm({ client, canArchive }: { client: { id: string; name: string; segment: string; status: string }; canArchive: boolean }) {
+export function ClientSettingsForm({
+  client,
+  canArchive,
+}: {
+  client: { id: string; name: string; segment: string; status: string };
+  canArchive: boolean;
+}) {
   const [state, action] = useActionState(updateClientAction, { status: "idle" });
   return (
     <ActionForm action={action} state={state} className="grid gap-4 p-5">
@@ -31,16 +37,35 @@ export function ClientSettingsForm({ client, canArchive }: { client: { id: strin
   );
 }
 
-export function BudgetForm({ clientId, budget }: { clientId: string; budget: { limitUsd: number | null; alertPct: number | null; hardStop: boolean | null } }) {
+export function BudgetForm({
+  clientId,
+  budget,
+}: {
+  clientId: string;
+  budget: { limitUsd: number | null; alertPct: number | null; hardStop: boolean | null };
+}) {
   const [state, action] = useActionState(budgetAction, { status: "idle" });
   return (
     <ActionForm action={action} state={state} className="grid gap-4 p-5">
       <input type="hidden" name="clientId" value={clientId} />
       <Field label="Teto mensal de IA (US$)" htmlFor="b-limit" hint="Deixe vazio para não limitar.">
-        <Input id="b-limit" name="monthlyLimitUsd" inputMode="decimal" defaultValue={budget.limitUsd ?? ""} placeholder="Ex.: 25" />
+        <Input
+          id="b-limit"
+          name="monthlyLimitUsd"
+          inputMode="decimal"
+          defaultValue={budget.limitUsd ?? ""}
+          placeholder="Ex.: 25"
+        />
       </Field>
       <Field label="Alertar ao atingir (%)" htmlFor="b-alert">
-        <Input id="b-alert" name="alertThresholdPct" type="number" min={1} max={100} defaultValue={budget.alertPct ?? 80} />
+        <Input
+          id="b-alert"
+          name="alertThresholdPct"
+          type="number"
+          min={1}
+          max={100}
+          defaultValue={budget.alertPct ?? 80}
+        />
       </Field>
       <label className="flex items-center gap-2 text-sm text-ink-200">
         <input type="checkbox" name="hardStop" defaultChecked={budget.hardStop ?? true} className="accent-iris-400" />

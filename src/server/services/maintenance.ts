@@ -13,10 +13,16 @@ export async function runMaintenance(): Promise<Record<string, number>> {
     const run = async (name: string, sql: string) => {
       out[name] = (await tx.query(sql)).rowCount ?? 0;
     };
-    await run("oauthStates", "DELETE FROM oauth_states WHERE expires_at < now() - interval '1 day' OR used_at < now() - interval '1 day'");
+    await run(
+      "oauthStates",
+      "DELETE FROM oauth_states WHERE expires_at < now() - interval '1 day' OR used_at < now() - interval '1 day'",
+    );
     await run("approvalLinks", "DELETE FROM approval_links WHERE expires_at < now() - interval '30 days'");
     await run("reportLinks", "DELETE FROM report_links WHERE expires_at < now() - interval '30 days'");
-    await run("notifications", "DELETE FROM notifications WHERE read_at IS NOT NULL AND created_at < now() - interval '90 days'");
+    await run(
+      "notifications",
+      "DELETE FROM notifications WHERE read_at IS NOT NULL AND created_at < now() - interval '90 days'",
+    );
     await run("sessions", "DELETE FROM sessions WHERE expires_at < now() - interval '7 days'");
     await run("loginAttempts", "DELETE FROM login_attempts WHERE created_at < now() - interval '30 days'");
     const pubs = await tx.query<{ id: string }>(
@@ -25,7 +31,10 @@ export async function runMaintenance(): Promise<Record<string, number>> {
     return pubs.rows.map((r) => r.id);
   });
   for (const id of finishedPublications) {
-    for (let i = 1; i <= 10; i++) await storage().delete(`publish/${id}/${i}.jpg`).catch(() => undefined);
+    for (let i = 1; i <= 10; i++)
+      await storage()
+        .delete(`publish/${id}/${i}.jpg`)
+        .catch(() => undefined);
   }
   out.publishFolders = finishedPublications.length;
   return out;

@@ -136,9 +136,14 @@ export function CommandPalette() {
               type="button"
               onMouseEnter={() => setActive(i)}
               onClick={() => go(h)}
-              className={cx("flex w-full items-center gap-3 px-4 py-2 text-left", i === active ? "bg-white/[0.06]" : "")}
+              className={cx(
+                "flex w-full items-center gap-3 px-4 py-2 text-left",
+                i === active ? "bg-white/[0.06]" : "",
+              )}
             >
-              <span className="w-16 shrink-0 text-[11.5px] text-ink-400">{h.kind === "client" ? "Cliente" : h.kind === "content" ? "Peça" : "Página"}</span>
+              <span className="w-16 shrink-0 text-[11.5px] text-ink-400">
+                {h.kind === "client" ? "Cliente" : h.kind === "content" ? "Peça" : "Página"}
+              </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[14px] text-ink-50">{h.title}</span>
                 {h.kind !== "page" ? <span className="block truncate text-[12px] text-ink-400">{h.detail}</span> : null}
@@ -157,7 +162,10 @@ export function SearchButton({ className }: { className?: string }) {
     <button
       type="button"
       onClick={() => window.dispatchEvent(new Event("prisma:busca"))}
-      className={cx("flex h-9 w-full items-center gap-2.5 rounded-full border border-ink-800 px-3 text-[13px] text-ink-400 hover:border-ink-700 hover:text-ink-200", className)}
+      className={cx(
+        "flex h-9 w-full items-center gap-2.5 rounded-full border border-ink-800 px-3 text-[13px] text-ink-400 hover:border-ink-700 hover:text-ink-200",
+        className,
+      )}
     >
       <Icon.search width={15} height={15} />
       <span className="flex-1 text-left">Buscar</span>

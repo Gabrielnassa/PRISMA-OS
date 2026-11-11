@@ -25,7 +25,11 @@ export const educativoLista: TemplateDef = {
   defaultTheme: { cover: "brand", content: "light", cta: "brand" },
   defaultAlign: "left",
   fieldLimits: LIMITS_STANDARD,
-  compositionRules: ["Número da ideia em destaque na cor de acento", "Título objetivo seguido de explicação curta", "Abertura na cor da marca"],
+  compositionRules: [
+    "Número da ideia em destaque na cor de acento",
+    "Título objetivo seguido de explicação curta",
+    "Abertura na cor da marca",
+  ],
   qualityCriteria: ["Uma ideia por lâmina", "Títulos objetivos", "Sequência narrativa clara"],
   render(ctx) {
     const side = ctx.safe.side;
@@ -59,7 +63,10 @@ export const educativoLista: TemplateDef = {
           key: "main",
           box: { x: side, y: textTop, w: ctx.W - side * 2, h: bottom - textTop },
           justify: isContent ? "start" : "end",
-          items: standardItems(ctx, { title: { cover: 100, content: 68, cta: 84 }, includeHighlight: ctx.kind === "cta" }),
+          items: standardItems(ctx, {
+            title: { cover: 100, content: 68, cta: 84 },
+            includeHighlight: ctx.kind === "cta",
+          }),
           background: { kind: "solid", color: ctx.palette.bg },
           lead: isContent ? undefined : { height: 36, element: <AccentRule color={ctx.palette.accent} /> },
         })}
@@ -88,8 +95,16 @@ export const educativoNumero: TemplateDef = {
     content: { kicker: 40, highlight: 12, title: 80, body: 300, footer: 110 },
     cta: { kicker: 40, title: 80, body: 200, footer: 90 },
   },
-  compositionRules: ["Número em corpo muito grande na cor de destaque", "Contexto do número logo abaixo", "Fonte do dado obrigatória no rodapé"],
-  qualityCriteria: ["Número verificado e com fonte", "Unidade explícita (%, R$, dias...)", "Sem arredondamento enganoso"],
+  compositionRules: [
+    "Número em corpo muito grande na cor de destaque",
+    "Contexto do número logo abaixo",
+    "Fonte do dado obrigatória no rodapé",
+  ],
+  qualityCriteria: [
+    "Número verificado e com fonte",
+    "Unidade explícita (%, R$, dias...)",
+    "Sem arredondamento enganoso",
+  ],
   render(ctx) {
     const side = ctx.safe.side;
     const s = typeScale(ctx);
@@ -104,10 +119,46 @@ export const educativoNumero: TemplateDef = {
           box: { x: side, y: top, w: ctx.W - side * 2, h: bottom - top },
           justify: "center",
           items: [
-            { field: "kicker", font: "body", weight: 600, maxSize: 30, minSize: 22, lineHeight: 1.25, uppercase: true, letterSpacingEm: 0.12, color: ctx.palette.accentText, gapAfter: 20 },
-            { field: "highlight", font: "heading", weight: 800, maxSize: Math.round(260 * s), minSize: 90, lineHeight: 1, color: ctx.palette.accent, gapAfter: 36 },
-            { field: "title", font: "heading", weight: 800, maxSize: Math.round((ctx.kind === "cta" ? 84 : 60) * s), minSize: 38, lineHeight: 1.12, gapAfter: 28 },
-            { field: "body", font: "body", weight: 400, maxSize: Math.round(36 * s), minSize: 26, lineHeight: 1.4, gapAfter: 0 },
+            {
+              field: "kicker",
+              font: "body",
+              weight: 600,
+              maxSize: 30,
+              minSize: 22,
+              lineHeight: 1.25,
+              uppercase: true,
+              letterSpacingEm: 0.12,
+              color: ctx.palette.accentText,
+              gapAfter: 20,
+            },
+            {
+              field: "highlight",
+              font: "heading",
+              weight: 800,
+              maxSize: Math.round(260 * s),
+              minSize: 90,
+              lineHeight: 1,
+              color: ctx.palette.accent,
+              gapAfter: 36,
+            },
+            {
+              field: "title",
+              font: "heading",
+              weight: 800,
+              maxSize: Math.round((ctx.kind === "cta" ? 84 : 60) * s),
+              minSize: 38,
+              lineHeight: 1.12,
+              gapAfter: 28,
+            },
+            {
+              field: "body",
+              font: "body",
+              weight: 400,
+              maxSize: Math.round(36 * s),
+              minSize: 26,
+              lineHeight: 1.4,
+              gapAfter: 0,
+            },
           ],
           background: { kind: "solid", color: ctx.palette.bg },
         })}
@@ -132,7 +183,11 @@ export const educativoPassos: TemplateDef = {
   defaultTheme: { cover: "dark", content: "light", cta: "brand" },
   defaultAlign: "left",
   fieldLimits: LIMITS_STANDARD,
-  compositionRules: ["Barra segmentada com a etapa atual destacada", "Rótulo da etapa no sobretítulo", "Texto alinhado ao topo"],
+  compositionRules: [
+    "Barra segmentada com a etapa atual destacada",
+    "Rótulo da etapa no sobretítulo",
+    "Texto alinhado ao topo",
+  ],
   qualityCriteria: ["Etapas em ordem lógica", "Verbos no imperativo", "Uma ação por etapa"],
   render(ctx) {
     const side = ctx.safe.side;
@@ -158,7 +213,10 @@ export const educativoPassos: TemplateDef = {
           key: "main",
           box: { x: side, y: textTop, w: ctx.W - side * 2, h: bottom - textTop },
           justify: ctx.kind === "content" ? "start" : "center",
-          items: standardItems(ctx, { title: { cover: 96, content: 70, cta: 84 }, includeHighlight: ctx.kind === "cta" }),
+          items: standardItems(ctx, {
+            title: { cover: 96, content: 70, cta: 84 },
+            includeHighlight: ctx.kind === "cta",
+          }),
           background: { kind: "solid", color: ctx.palette.bg },
         })}
         {ctx.textStack({

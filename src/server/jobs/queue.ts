@@ -41,10 +41,22 @@ export async function enqueueJob(tx: Queryable, input: EnqueueInput): Promise<{ 
      VALUES ($1, $2, $3, $4, $5, $6, $7, coalesce($8::timestamptz, now()))
      ON CONFLICT (organization_id, idempotency_key) DO NOTHING
      RETURNING *`,
-    [input.organizationId, input.clientId, input.type, JSON.stringify(input.payload), input.idempotencyKey, input.createdBy, input.maxAttempts ?? 3, input.runAfter?.toISOString() ?? null],
+    [
+      input.organizationId,
+      input.clientId,
+      input.type,
+      JSON.stringify(input.payload),
+      input.idempotencyKey,
+      input.createdBy,
+      input.maxAttempts ?? 3,
+      input.runAfter?.toISOString() ?? null,
+    ],
   );
   if (inserted) return { job: inserted, created: true };
-  const existing = await one<Job>(tx, "SELECT * FROM jobs WHERE organization_id = $1 AND idempotency_key = $2", [input.organizationId, input.idempotencyKey]);
+  const existing = await one<Job>(tx, "SELECT * FROM jobs WHERE organization_id = $1 AND idempotency_key = $2", [
+    input.organizationId,
+    input.idempotencyKey,
+  ]);
   return { job: existing, created: false };
 }
 
@@ -96,7 +108,11 @@ const OWNED = "id = $1 AND status = 'running' AND locked_by = $2 AND attempts = 
  */
 export async function heartbeatJob(job: ClaimedJob): Promise<boolean> {
   return withTx(systemCtx("jobs.heartbeat"), async (tx) => {
-    const res = await tx.query(`UPDATE jobs SET locked_at = now() WHERE ${OWNED}`, [job.id, job.locked_by, job.attempts]);
+    const res = await tx.query(`UPDATE jobs SET locked_at = now() WHERE ${OWNED}`, [
+      job.id,
+      job.locked_by,
+      job.attempts,
+    ]);
     return (res.rowCount ?? 0) > 0;
   });
 }
@@ -172,7 +188,11 @@ export async function recoverStaleJobs(
   onFinal?: (type: string) => FinalFailureHook | undefined,
 ): Promise<{ requeued: number; failed: Job[]; errors: Array<{ jobId: string; error: string }> }> {
   const candidates = await withTx(systemCtx("jobs.recover"), (tx) =>
-    many<{ id: string }>(tx, `SELECT id FROM jobs WHERE status = 'running' AND locked_at < now() - make_interval(secs => $1)`, [lockTimeoutMs / 1000]),
+    many<{ id: string }>(
+      tx,
+      `SELECT id FROM jobs WHERE status = 'running' AND locked_at < now() - make_interval(secs => $1)`,
+      [lockTimeoutMs / 1000],
+    ),
   );
   const failed: Job[] = [];
   const errors: Array<{ jobId: string; error: string }> = [];
@@ -192,12 +212,18 @@ export async function recoverStaleJobs(
           [job.id, job.attempts],
         );
         if (job.attempts < job.max_attempts) {
-          await tx.query(`UPDATE jobs SET status = 'queued', locked_at = NULL, locked_by = NULL, last_error = 'Recuperada após interrupção' WHERE id = $1`, [job.id]);
+          await tx.query(
+            `UPDATE jobs SET status = 'queued', locked_at = NULL, locked_by = NULL, last_error = 'Recuperada após interrupção' WHERE id = $1`,
+            [job.id],
+          );
           requeued++;
           return;
         }
         const message = "Interrompida repetidamente; tentativas esgotadas";
-        await tx.query(`UPDATE jobs SET status = 'failed', locked_at = NULL, locked_by = NULL, finished_at = now(), last_error = $2 WHERE id = $1`, [job.id, message]);
+        await tx.query(
+          `UPDATE jobs SET status = 'failed', locked_at = NULL, locked_by = NULL, finished_at = now(), last_error = $2 WHERE id = $1`,
+          [job.id, message],
+        );
         await onFinal?.(job.type)?.(tx, job, message);
         failed.push({ ...job, status: "failed", last_error: message });
       });

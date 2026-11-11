@@ -9,7 +9,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ prov
   const { provider } = await params;
   const url = new URL(request.url);
   const clientId = url.searchParams.get("cliente") ?? "";
-  const back = (msg: string) => NextResponse.redirect(new URL(`/clientes/${encodeURIComponent(clientId)}?aba=redes&erro=${encodeURIComponent(msg)}`, url), 303);
+  const back = (msg: string) =>
+    NextResponse.redirect(
+      new URL(`/clientes/${encodeURIComponent(clientId)}?aba=redes&erro=${encodeURIComponent(msg)}`, url),
+      303,
+    );
   const auth = await getAuth();
   if (!auth || auth.mustChangePassword) return NextResponse.redirect(new URL("/login", url), 303);
   if (!(APP_PROVIDERS as readonly string[]).includes(provider)) return back("Plataforma desconhecida.");

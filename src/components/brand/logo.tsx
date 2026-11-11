@@ -14,7 +14,9 @@ export function PrismaWordmark({ className }: { className?: string }) {
     <span className={`flex items-center gap-2.5 ${className ?? ""}`}>
       <PrismaMark />
       <span className="font-display text-[18px] font-semibold tracking-[-0.04em] text-ink-50">Prisma</span>
-      <span className="rounded-full border border-ink-600 px-1.5 text-[10px] font-medium leading-4 tracking-wide text-ink-300">OS</span>
+      <span className="rounded-full border border-ink-600 px-1.5 text-[10px] leading-4 font-medium tracking-wide text-ink-300">
+        OS
+      </span>
     </span>
   );
 }

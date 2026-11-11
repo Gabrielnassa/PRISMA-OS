@@ -29,13 +29,26 @@ type MetaConfig = { ok: true; token: string; igUserId: string; version: string }
 
 function metaConfig(): MetaConfig {
   const e = env();
-  const missing = [!e.META_ACCESS_TOKEN && "META_ACCESS_TOKEN", !e.META_IG_USER_ID && "META_IG_USER_ID"].filter(Boolean);
-  if (missing.length) return { ok: false, problem: `Defina ${missing.join(" e ")} no ambiente do servidor para consultar perfis pelo @.` };
+  const missing = [!e.META_ACCESS_TOKEN && "META_ACCESS_TOKEN", !e.META_IG_USER_ID && "META_IG_USER_ID"].filter(
+    Boolean,
+  );
+  if (missing.length)
+    return {
+      ok: false,
+      problem: `Defina ${missing.join(" e ")} no ambiente do servidor para consultar perfis pelo @.`,
+    };
   if (!/^\d{5,30}$/.test(e.META_IG_USER_ID!)) {
-    return { ok: false, problem: "META_IG_USER_ID deve ser o ID numérico da conta do Instagram da agência (não o @). Veja como obter em docs/OPERATIONS.md." };
+    return {
+      ok: false,
+      problem:
+        "META_IG_USER_ID deve ser o ID numérico da conta do Instagram da agência (não o @). Veja como obter em docs/OPERATIONS.md.",
+    };
   }
   if (e.META_ACCESS_TOKEN!.length < 20 || /\s/.test(e.META_ACCESS_TOKEN!)) {
-    return { ok: false, problem: "META_ACCESS_TOKEN parece incompleto ou com espaços. Cole o token inteiro, sem aspas." };
+    return {
+      ok: false,
+      problem: "META_ACCESS_TOKEN parece incompleto ou com espaços. Cole o token inteiro, sem aspas.",
+    };
   }
   return { ok: true, token: e.META_ACCESS_TOKEN!, igUserId: e.META_IG_USER_ID!, version: e.META_GRAPH_VERSION };
 }
@@ -43,7 +56,10 @@ function metaConfig(): MetaConfig {
 export function instagramStatus(): { configured: boolean; detail: string } {
   const c = metaConfig();
   if (!c.ok) return { configured: false, detail: c.problem };
-  return { configured: true, detail: `Consulta de perfis comerciais pela Graph API ${c.version} (conta da agência ${c.igUserId}).` };
+  return {
+    configured: true,
+    detail: `Consulta de perfis comerciais pela Graph API ${c.version} (conta da agência ${c.igUserId}).`,
+  };
 }
 
 /** Aceita "@marca", "marca", "instagram.com/marca" ou o link completo do perfil. */
@@ -53,7 +69,9 @@ export function normalizeHandle(input: string): string {
   if (m) h = m[1]!;
   h = h.replace(/^@+/, "").replace(/\/+$/, "");
   if (!/^[A-Za-z0-9._]{1,30}$/.test(h)) {
-    throw new ValidationError("Informe um @ válido do Instagram (letras, números, ponto e sublinhado).", { handle: "@ inválido." });
+    throw new ValidationError("Informe um @ válido do Instagram (letras, números, ponto e sublinhado).", {
+      handle: "@ inválido.",
+    });
   }
   return h.toLowerCase();
 }
@@ -74,22 +92,43 @@ function graphError(status: number, body: GraphError): IntegrationError {
   const code = body.error?.code;
   const sub = body.error?.error_subcode;
   if (code === 190 || code === 102) {
-    return new IntegrationError("O token de acesso da Meta expirou ou é inválido. Gere um novo e atualize META_ACCESS_TOKEN.", false, { providerCode: "meta_token" });
+    return new IntegrationError(
+      "O token de acesso da Meta expirou ou é inválido. Gere um novo e atualize META_ACCESS_TOKEN.",
+      false,
+      { providerCode: "meta_token" },
+    );
   }
   if (code === 4 || code === 17 || code === 32 || code === 613) {
-    return new IntegrationError("Limite de consultas da Meta atingido. Tente de novo em alguns minutos.", true, { providerCode: "meta_rate_limit" });
+    return new IntegrationError("Limite de consultas da Meta atingido. Tente de novo em alguns minutos.", true, {
+      providerCode: "meta_rate_limit",
+    });
   }
   if (code === 10 || code === 200) {
-    return new IntegrationError("O aplicativo da Meta não tem a permissão necessária para consultar perfis (instagram_basic e pages_read_engagement).", false, { providerCode: "meta_permission" });
+    return new IntegrationError(
+      "O aplicativo da Meta não tem a permissão necessária para consultar perfis (instagram_basic e pages_read_engagement).",
+      false,
+      { providerCode: "meta_permission" },
+    );
   }
   if (code === 100 || code === 110 || sub === 2207013) {
-    return new IntegrationError("Não encontrei uma conta comercial ou de criador com esse @. Contas pessoais e privadas não aparecem pela API da Meta.", false, { providerCode: "meta_not_found" });
+    return new IntegrationError(
+      "Não encontrei uma conta comercial ou de criador com esse @. Contas pessoais e privadas não aparecem pela API da Meta.",
+      false,
+      { providerCode: "meta_not_found" },
+    );
   }
-  return new IntegrationError(`A Meta recusou a consulta (HTTP ${status}${code ? `, código ${code}` : ""}).`, status >= 500, { providerCode: "meta_error" });
+  return new IntegrationError(
+    `A Meta recusou a consulta (HTTP ${status}${code ? `, código ${code}` : ""}).`,
+    status >= 500,
+    { providerCode: "meta_error" },
+  );
 }
 
 /** Busca dados públicos de um perfil comercial: foto de perfil e imagens dos posts recentes. */
-export async function fetchInstagramProfile(handle: string, opts: { fetchImpl?: typeof fetch; limit?: number } = {}): Promise<InstagramProfile> {
+export async function fetchInstagramProfile(
+  handle: string,
+  opts: { fetchImpl?: typeof fetch; limit?: number } = {},
+): Promise<InstagramProfile> {
   const c = metaConfig();
   if (!c.ok) {
     throw new IntegrationNotConfiguredError(
@@ -105,7 +144,10 @@ export async function fetchInstagramProfile(handle: string, opts: { fetchImpl?: 
   try {
     res = await doFetch(url, { headers: { Authorization: `Bearer ${c.token}` }, signal: AbortSignal.timeout(15_000) });
   } catch (err) {
-    throw new IntegrationError("Não foi possível falar com a API da Meta (rede ou tempo esgotado).", true, { cause: err, providerCode: "meta_network" });
+    throw new IntegrationError("Não foi possível falar com a API da Meta (rede ou tempo esgotado).", true, {
+      cause: err,
+      providerCode: "meta_network",
+    });
   }
   const body = (await res.json().catch(() => ({}))) as GraphError & {
     business_discovery?: {
@@ -130,7 +172,10 @@ export async function fetchInstagramProfile(handle: string, opts: { fetchImpl?: 
 }
 
 /** Baixa uma imagem do CDN da Meta com limite de tamanho e tempo. */
-export async function downloadMetaImage(url: string, opts: { fetchImpl?: typeof fetch; maxBytes?: number } = {}): Promise<{ data: Buffer; mimeType: string } | null> {
+export async function downloadMetaImage(
+  url: string,
+  opts: { fetchImpl?: typeof fetch; maxBytes?: number } = {},
+): Promise<{ data: Buffer; mimeType: string } | null> {
   if (!isMetaCdnUrl(url)) return null;
   const doFetch = opts.fetchImpl ?? fetch;
   const max = opts.maxBytes ?? 5 * 1024 * 1024;

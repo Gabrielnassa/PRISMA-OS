@@ -24,17 +24,18 @@ export function DeleteClientCard({ clientId, summary }: { clientId: string; summ
           <ul className="mt-1 list-disc space-y-0.5 pl-5">
             {summary.contents ? (
               <li>
-                {plural(summary.contents, "conteúdo", "conteúdos")} ({plural(summary.versions, "versão", "versões")}), com aprovações e comentários
+                {plural(summary.contents, "conteúdo", "conteúdos")} ({plural(summary.versions, "versão", "versões")}),
+                com aprovações e comentários
               </li>
             ) : null}
             {summary.media ? <li>{plural(summary.media, "arquivo", "arquivos")} da biblioteca</li> : null}
             {summary.memories ? <li>{plural(summary.memories, "registro", "registros")} de memória</li> : null}
-            {summary.skills ? <li>{plural(summary.skills, "skill exclusiva", "skills exclusivas")} deste cliente</li> : null}
+            {summary.skills ? (
+              <li>{plural(summary.skills, "skill exclusiva", "skills exclusivas")} deste cliente</li>
+            ) : null}
             <li>perfil da marca e limite de custos</li>
           </ul>
-          <p className="mt-2 text-ink-400">
-            Para só tirar o cliente das listas, prefira arquivar em Dados do cliente.
-          </p>
+          <p className="mt-2 text-ink-400">Para só tirar o cliente das listas, prefira arquivar em Dados do cliente.</p>
         </div>
         {summary.inProgress ? (
           <Alert tone="warning" title="Geração em andamento">
@@ -52,7 +53,14 @@ export function DeleteClientCard({ clientId, summary }: { clientId: string; summ
             htmlFor="delete-confirmation"
             error={state.status === "error" ? state.fieldErrors?.confirmation : undefined}
           >
-            <Input id="delete-confirmation" name="confirmation" autoComplete="off" spellCheck={false} value={typed} onChange={(e) => setTyped(e.target.value)} />
+            <Input
+              id="delete-confirmation"
+              name="confirmation"
+              autoComplete="off"
+              spellCheck={false}
+              value={typed}
+              onChange={(e) => setTyped(e.target.value)}
+            />
           </Field>
           {state.status === "error" && !state.fieldErrors?.confirmation ? <FormMessage state={state} /> : null}
           <div>

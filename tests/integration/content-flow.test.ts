@@ -20,14 +20,31 @@ import { addMember, newOrg, samplePng } from "./helpers";
 async function configuredClient() {
   const { owner } = await newOrg();
   const { id: clientId } = await createClient(owner, { name: "Clínica Bem Viver", segment: "Saúde" });
-  const logo = await uploadMedia(owner, clientId, { filename: "logo.png", data: samplePng(600, 200, "#0f766e") }, { kind: "logo" });
-  const photo = await uploadMedia(owner, clientId, { filename: "equipe.png", data: samplePng(1400, 1400) }, { kind: "image", altText: "Equipe" });
+  const logo = await uploadMedia(
+    owner,
+    clientId,
+    { filename: "logo.png", data: samplePng(600, 200, "#0f766e") },
+    { kind: "logo" },
+  );
+  const photo = await uploadMedia(
+    owner,
+    clientId,
+    { filename: "equipe.png", data: samplePng(1400, 1400) },
+    { kind: "image", altText: "Equipe" },
+  );
   const { brand } = await getClient(owner, clientId);
   brand.business.companyName = "Clínica Bem Viver";
   brand.audience.targetAudience = "Famílias do bairro";
   brand.voice.tone = "Acolhedor e claro";
   brand.voice.forbiddenTerms = ["milagre"];
-  brand.visual = { ...brand.visual, configured: true, colors: { primary: "#0f766e", secondary: "#99f6e4", accent: "#f59e0b", background: "#f8fafc", text: "#0f172a" }, headingFont: "nunito", bodyFont: "inter", logoAssetId: logo.id };
+  brand.visual = {
+    ...brand.visual,
+    configured: true,
+    colors: { primary: "#0f766e", secondary: "#99f6e4", accent: "#f59e0b", background: "#f8fafc", text: "#0f172a" },
+    headingFont: "nunito",
+    bodyFont: "inter",
+    logoAssetId: logo.id,
+  };
   brand.channels.instagram = "@bemviver";
   await updateBrandProfile(owner, clientId, brand);
   return { owner, clientId, photoId: photo.id, logoId: logo.id };
@@ -43,7 +60,10 @@ describe("primeira entrega: briefing → texto → arte → revisão → aprova�
       channel: "instagram",
       format: "carousel",
       objective: "education",
-      briefing: { text: "Dicas práticas para a família se cuidar no inverno. Hidratação também importa no frio. Vacinação em dia protege todos.", cta: "Agende pelo WhatsApp" },
+      briefing: {
+        text: "Dicas práticas para a família se cuidar no inverno. Hidratação também importa no frio. Vacinação em dia protege todos.",
+        cta: "Agende pelo WhatsApp",
+      },
       slideCount: 4,
       templatePreference: "auto",
       imageAssetIds: [photoId],
@@ -54,8 +74,15 @@ describe("primeira entrega: briefing → texto → arte → revisão → aprova�
 
     // Reenvio do formulário não duplica (idempotência).
     const again = await createContent(owner, {
-      clientId, title: "Cuidados com a saúde no inverno", channel: "instagram", format: "carousel", objective: "education",
-      briefing: { text: "Dicas práticas para a família se cuidar no inverno." }, slideCount: 4, mode: "ai", requestId,
+      clientId,
+      title: "Cuidados com a saúde no inverno",
+      channel: "instagram",
+      format: "carousel",
+      objective: "education",
+      briefing: { text: "Dicas práticas para a família se cuidar no inverno." },
+      slideCount: 4,
+      mode: "ai",
+      requestId,
     });
     expect(again).toMatchObject({ contentId: created.contentId, reused: true });
 
@@ -82,27 +109,48 @@ describe("primeira entrega: briefing → texto → arte → revisão → aprova�
     const edited = structuredClone(doc);
     edited.slides[0]!.fields.title = "Inverno com saúde: 3 cuidados simples";
     edited.slides[0]!.fields.kicker = "Guia rápido";
-    const v2 = await saveVersion(owner, created.contentId, { document: edited, baseVersionId: detail.current!.id, changeNote: "Título ajustado" });
+    const v2 = await saveVersion(owner, created.contentId, {
+      document: edited,
+      baseVersionId: detail.current!.id,
+      changeNote: "Título ajustado",
+    });
     expect(v2).toMatchObject({ number: 2, unchanged: false });
     expect(v2.changes).toContain("Lâmina 1: título");
 
     // Salvar sobre versão desatualizada é recusado.
-    await expect(saveVersion(owner, created.contentId, { document: edited, baseVersionId: detail.current!.id })).rejects.toBeInstanceOf(ConflictError);
+    await expect(
+      saveVersion(owner, created.contentId, { document: edited, baseVersionId: detail.current!.id }),
+    ).rejects.toBeInstanceOf(ConflictError);
 
     detail = await getContent(owner, created.contentId);
     if (detail.quality && detail.quality.criticalCount > 0) {
-      await expect(submitForApproval(owner, created.contentId, { versionId: v2.versionId })).rejects.toBeInstanceOf(ValidationError);
-      throw new Error(`Relatório com críticos inesperados: ${JSON.stringify(detail.quality.items.filter((i) => i.severity === "critical"))}`);
+      await expect(submitForApproval(owner, created.contentId, { versionId: v2.versionId })).rejects.toBeInstanceOf(
+        ValidationError,
+      );
+      throw new Error(
+        `Relatório com críticos inesperados: ${JSON.stringify(detail.quality.items.filter((i) => i.severity === "critical"))}`,
+      );
     }
-    const { approvalId } = await submitForApproval(owner, created.contentId, { versionId: v2.versionId, note: "Pode revisar" });
+    const { approvalId } = await submitForApproval(owner, created.contentId, {
+      versionId: v2.versionId,
+      note: "Pode revisar",
+    });
     expect((await getContent(owner, created.contentId)).status).toBe("awaiting_approval");
     expect((await listPendingApprovals(owner)).map((a) => a.approvalId)).toContain(approvalId);
 
     // Aprovador revisa, comenta e aprova a versão exata.
     const reviewer = await addMember(owner, "reviewer");
-    await withTx(systemCtx("test"), (tx) => tx.query("INSERT INTO client_access (organization_id, client_id, user_id) VALUES ($1, $2, $3)", [owner.organizationId, clientId, reviewer.userId]));
+    await withTx(systemCtx("test"), (tx) =>
+      tx.query("INSERT INTO client_access (organization_id, client_id, user_id) VALUES ($1, $2, $3)", [
+        owner.organizationId,
+        clientId,
+        reviewer.userId,
+      ]),
+    );
     await addComment(reviewer, created.contentId, { body: "Texto claro, aprovado." });
-    await expect(saveVersion(reviewer, created.contentId, { document: edited, baseVersionId: v2.versionId })).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(
+      saveVersion(reviewer, created.contentId, { document: edited, baseVersionId: v2.versionId }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
     await decideApproval(reviewer, approvalId, { decision: "approved", note: "ok" });
     detail = await getContent(owner, created.contentId);
     expect(detail.status).toBe("approved");
@@ -119,8 +167,13 @@ describe("primeira entrega: briefing → texto → arte → revisão → aprova�
 
     // Reprovação exige justificativa e vira sugestão revisável na memória do cliente.
     const second = await submitForApproval(owner, created.contentId, { versionId: v3.versionId });
-    await expect(decideApproval(reviewer, second.approvalId, { decision: "rejected" })).rejects.toBeInstanceOf(ValidationError);
-    await decideApproval(reviewer, second.approvalId, { decision: "rejected", note: "Evitar a palavra frio no título" });
+    await expect(decideApproval(reviewer, second.approvalId, { decision: "rejected" })).rejects.toBeInstanceOf(
+      ValidationError,
+    );
+    await decideApproval(reviewer, second.approvalId, {
+      decision: "rejected",
+      note: "Evitar a palavra frio no título",
+    });
     expect((await getContent(owner, created.contentId)).status).toBe("rejected");
     // A versão reprovada nunca vira a oficial: exportá-la sai como rascunho; a aprovada continua sendo a v2.
     expect((await getVersionDocument(owner, created.contentId, v3.versionId)).isApproved).toBe(false);
@@ -129,20 +182,41 @@ describe("primeira entrega: briefing → texto → arte → revisão → aprova�
     expect(memories.some((m) => m.kind === "suggestion" && m.source === "approval_feedback")).toBe(true);
 
     // Versões são imutáveis no banco.
-    await expect(withTx(systemCtx("test"), (tx) => tx.query("UPDATE content_versions SET change_note = 'x' WHERE id = $1", [v2.versionId]))).rejects.toThrow(/imutáveis/);
+    await expect(
+      withTx(systemCtx("test"), (tx) =>
+        tx.query("UPDATE content_versions SET change_note = 'x' WHERE id = $1", [v2.versionId]),
+      ),
+    ).rejects.toThrow(/imutáveis/);
 
     // Histórico de auditoria registra as decisões.
     const actions = await withTx(systemCtx("test"), (tx) =>
-      many<{ action: string }>(tx, "SELECT action FROM audit_logs WHERE organization_id = $1 ORDER BY id", [owner.organizationId]),
+      many<{ action: string }>(tx, "SELECT action FROM audit_logs WHERE organization_id = $1 ORDER BY id", [
+        owner.organizationId,
+      ]),
     );
-    expect(actions.map((a) => a.action)).toEqual(expect.arrayContaining(["content.created", "content.generated", "content.version_created", "approval.requested", "approval.approved", "approval.rejected"]));
+    expect(actions.map((a) => a.action)).toEqual(
+      expect.arrayContaining([
+        "content.created",
+        "content.generated",
+        "content.version_created",
+        "approval.requested",
+        "approval.approved",
+        "approval.rejected",
+      ]),
+    );
   });
 
   it("aprovação pendente é invalidada quando a peça muda", async () => {
     const { owner, clientId } = await configuredClient();
     const created = await createContent(owner, {
-      clientId, title: "Post manual", channel: "instagram", format: "post", objective: "awareness",
-      briefing: { text: "Apresentação da clínica para o bairro." }, mode: "manual", requestId: crypto.randomUUID(),
+      clientId,
+      title: "Post manual",
+      channel: "instagram",
+      format: "post",
+      objective: "awareness",
+      briefing: { text: "Apresentação da clínica para o bairro." },
+      mode: "manual",
+      requestId: crypto.randomUUID(),
     });
     let detail = await getContent(owner, created.contentId);
     expect(detail.current?.source).toBe("manual");
@@ -163,14 +237,22 @@ describe("primeira entrega: briefing → texto → arte → revisão → aprova�
   it("controle de qualidade bloqueia envio com termo proibido", async () => {
     const { owner, clientId } = await configuredClient();
     const created = await createContent(owner, {
-      clientId, title: "Post", channel: "instagram", format: "post", objective: "awareness",
-      briefing: { text: "Apresentação da clínica." }, mode: "manual", requestId: crypto.randomUUID(),
+      clientId,
+      title: "Post",
+      channel: "instagram",
+      format: "post",
+      objective: "awareness",
+      briefing: { text: "Apresentação da clínica." },
+      mode: "manual",
+      requestId: crypto.randomUUID(),
     });
     const detail = await getContent(owner, created.contentId);
     const doc = structuredClone(detail.current!.document);
     doc.slides[0]!.fields.title = "Um tratamento milagre";
     const v2 = await saveVersion(owner, created.contentId, { document: doc, baseVersionId: detail.current!.id });
     expect(v2.quality?.items.some((i) => i.id === "forbidden_term" && i.severity === "critical")).toBe(true);
-    await expect(submitForApproval(owner, created.contentId, { versionId: v2.versionId })).rejects.toBeInstanceOf(ValidationError);
+    await expect(submitForApproval(owner, created.contentId, { versionId: v2.versionId })).rejects.toBeInstanceOf(
+      ValidationError,
+    );
   });
 });

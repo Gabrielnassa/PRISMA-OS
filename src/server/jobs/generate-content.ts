@@ -30,8 +30,15 @@ export async function handleGenerateContent(job: Job, auth: AuthContext): Promis
 
   const loaded = await withTx(userCtx(auth.userId), async (tx) => {
     const item = await maybeOne<{
-      id: string; client_id: string; status: string; title: string; channel: Channel; format: ContentFormat; objective: Objective;
-      briefing: Briefing; current_version_id: string | null;
+      id: string;
+      client_id: string;
+      status: string;
+      title: string;
+      channel: Channel;
+      format: ContentFormat;
+      objective: Objective;
+      briefing: Briefing;
+      current_version_id: string | null;
     }>(
       tx,
       `SELECT id, client_id, status, title, channel, format, objective, briefing, current_version_id
@@ -109,7 +116,8 @@ export async function handleGenerateContent(job: Job, auth: AuthContext): Promis
       "SELECT id, version_number FROM content_versions WHERE content_item_id = $1 AND ai_run_id = $2",
       [item.id, copy.runId],
     );
-    if (already) return { contentItemId: item.id, versionId: already.id, version: already.version_number, reused: true };
+    if (already)
+      return { contentItemId: item.id, versionId: already.id, version: already.version_number, reused: true };
     if (locked.status !== "generating") return { skipped: true, reason: `status ${locked.status}` };
 
     const version = await insertVersion(tx, auth, locked, doc, {
@@ -117,7 +125,10 @@ export async function handleGenerateContent(job: Job, auth: AuthContext): Promis
       aiRunId: copy.runId,
       changeNote: copy.isDemo ? "Rascunho de demonstração" : `Gerado por IA (${copy.model})`,
     });
-    await tx.query("UPDATE content_items SET current_version_id = $2, status = 'in_review', last_error = NULL WHERE id = $1", [item.id, version.id]);
+    await tx.query(
+      "UPDATE content_items SET current_version_id = $2, status = 'in_review', last_error = NULL WHERE id = $1",
+      [item.id, version.id],
+    );
     const report = await evaluateVersion(tx, auth, item.client_id, version.id, doc, item.briefing);
     await audit(tx, userActor(auth), {
       organizationId: auth.organizationId,
@@ -125,8 +136,21 @@ export async function handleGenerateContent(job: Job, auth: AuthContext): Promis
       action: "content.generated",
       entityType: "content_item",
       entityId: item.id,
-      metadata: { version: version.number, template: art.template.id, aiRunId: copy.runId, isDemo: copy.isDemo, critical: report.criticalCount, warnings: report.warningCount },
+      metadata: {
+        version: version.number,
+        template: art.template.id,
+        aiRunId: copy.runId,
+        isDemo: copy.isDemo,
+        critical: report.criticalCount,
+        warnings: report.warningCount,
+      },
     });
-    return { contentItemId: item.id, versionId: version.id, version: version.number, template: art.template.id, critical: report.criticalCount };
+    return {
+      contentItemId: item.id,
+      versionId: version.id,
+      version: version.number,
+      template: art.template.id,
+      critical: report.criticalCount,
+    };
   });
 }

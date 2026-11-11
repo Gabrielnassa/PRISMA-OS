@@ -38,11 +38,13 @@ export const DEFAULT_PRICES: Array<{
   // tarifas; os valores vêm de agregadores de outubro de 2026 e devem ser
   // conferidos em https://openai.com/api/pricing (ajuste em Custos e consumo).
   // Cache sem tarifa cadastrada: cobrado como entrada (estimativa conservadora).
-  ...([
-    ["gpt-6.1-sol", "2.00", "10.00", null],
-    ["gpt-6.1-terra", "1.00", "5.00", null],
-    ["gpt-6-astra", "10.00", "50.00", "1.00"],
-  ] as const).map(([model, input, output, cacheRead]) => ({
+  ...(
+    [
+      ["gpt-6.1-sol", "2.00", "10.00", null],
+      ["gpt-6.1-terra", "1.00", "5.00", null],
+      ["gpt-6-astra", "10.00", "50.00", "1.00"],
+    ] as const
+  ).map(([model, input, output, cacheRead]) => ({
     provider: "openai",
     model,
     inputUsdPerMtok: input,

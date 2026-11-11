@@ -101,9 +101,7 @@ export const SlideSchema = z.object({
   kind: z.enum(SLIDE_KINDS),
   fields: SlideFieldsSchema,
   imageAssetId: z.string().uuid().nullable().default(null),
-  imageFocus: z
-    .object({ x: z.number().min(0).max(100), y: z.number().min(0).max(100) })
-    .default({ x: 50, y: 50 }),
+  imageFocus: z.object({ x: z.number().min(0).max(100), y: z.number().min(0).max(100) }).default({ x: 50, y: 50 }),
   imageZoom: z.number().min(1).max(2.5).default(1),
   align: z.enum(["auto", "left", "center"]).default("auto"),
   theme: z.enum(SLIDE_THEMES).default("auto"),
@@ -139,7 +137,10 @@ export const ContentDocumentSchema = z
     style: DocumentStyleSchema,
     slides: z.array(SlideSchema).min(1).max(10),
     caption: z.string().max(2200, "A legenda do Instagram aceita até 2.200 caracteres.").default(""),
-    hashtags: z.array(z.string().regex(HASHTAG_RE, "Hashtag inválida")).max(30, "Use no máximo 30 hashtags.").default([]),
+    hashtags: z
+      .array(z.string().regex(HASHTAG_RE, "Hashtag inválida"))
+      .max(30, "Use no máximo 30 hashtags.")
+      .default([]),
     cta: z.string().max(200).default(""),
     notes: z.string().max(3000).default(""),
   })
@@ -149,7 +150,10 @@ export const ContentDocumentSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["slides"],
-        message: limits.max === 1 ? `O formato ${FORMAT_LABELS[doc.format]} tem 1 lâmina.` : `O formato ${FORMAT_LABELS[doc.format]} aceita de ${limits.min} a ${limits.max} lâminas.`,
+        message:
+          limits.max === 1
+            ? `O formato ${FORMAT_LABELS[doc.format]} tem 1 lâmina.`
+            : `O formato ${FORMAT_LABELS[doc.format]} aceita de ${limits.min} a ${limits.max} lâminas.`,
       });
     }
     if (!FORMAT_ASPECTS[doc.format].includes(doc.aspect)) {
@@ -157,7 +161,8 @@ export const ContentDocumentSchema = z
     }
     const ids = new Set<string>();
     for (const s of doc.slides) {
-      if (ids.has(s.id)) ctx.addIssue({ code: "custom", path: ["slides"], message: "Identificadores de lâmina duplicados." });
+      if (ids.has(s.id))
+        ctx.addIssue({ code: "custom", path: ["slides"], message: "Identificadores de lâmina duplicados." });
       ids.add(s.id);
     }
   });

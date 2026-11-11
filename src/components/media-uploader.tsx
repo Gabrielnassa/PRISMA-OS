@@ -64,7 +64,9 @@ export function MediaUploader({ clientId, defaultKind = "image" }: { clientId: s
           }}
           className={cx(
             "flex min-h-[76px] cursor-pointer flex-col items-center justify-center gap-1 rounded-[var(--radius-card)] border border-dashed px-4 py-3 text-center text-[13px] transition-colors has-[:focus-visible]:border-iris-400",
-            over ? "border-iris-400 bg-iris-400/[0.07] text-ink-50" : "border-ink-600 text-ink-300 hover:border-ink-400",
+            over
+              ? "border-iris-400 bg-iris-400/[0.07] text-ink-50"
+              : "border-ink-600 text-ink-300 hover:border-ink-400",
           )}
         >
           <input
@@ -78,7 +80,9 @@ export function MediaUploader({ clientId, defaultKind = "image" }: { clientId: s
             className="sr-only"
           />
           {picked.length ? (
-            <span className="text-ink-50">{picked.length === 1 ? picked[0] : `${picked.length} arquivos selecionados`}</span>
+            <span className="text-ink-50">
+              {picked.length === 1 ? picked[0] : `${picked.length} arquivos selecionados`}
+            </span>
           ) : (
             <>
               <span className="font-medium text-ink-100">Arraste fotos e vídeos aqui</span>
@@ -103,7 +107,11 @@ export function MediaUploader({ clientId, defaultKind = "image" }: { clientId: s
         <Icon.upload /> {busy ? "Enviando..." : "Enviar"}
       </Button>
       <div className="md:col-span-4">
-        <Field label="Origem / licença" htmlFor="licenseNote" hint="Ex.: foto própria do cliente, banco licenciado (nº da licença).">
+        <Field
+          label="Origem / licença"
+          htmlFor="licenseNote"
+          hint="Ex.: foto própria do cliente, banco licenciado (nº da licença)."
+        >
           <Input id="licenseNote" name="licenseNote" maxLength={500} />
         </Field>
       </div>

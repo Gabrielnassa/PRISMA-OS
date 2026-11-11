@@ -9,7 +9,12 @@ import { safeNextPath } from "@/lib/safe-redirect";
 export async function loginAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const meta = await requestMeta();
   const result = await runAction(async () => {
-    const { token, expiresAt } = await login({ email: str(form, "email"), password: str(form, "password"), ip: meta.ip, userAgent: meta.userAgent });
+    const { token, expiresAt } = await login({
+      email: str(form, "email"),
+      password: str(form, "password"),
+      ip: meta.ip,
+      userAgent: meta.userAgent,
+    });
     await setSessionCookie(token, expiresAt);
   });
   if (result.status === "ok") redirect(safeNextPath(str(form, "next")));

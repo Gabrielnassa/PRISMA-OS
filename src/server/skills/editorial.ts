@@ -48,7 +48,8 @@ export const editorialSkill: AiSkill<EditorialInput, EditorialOutput, z.input<ty
   version: "1.0.0",
   name: "Linha editorial do mês",
   specSection: "9.2 (planejador editorial) e fase 3 (calendário)",
-  description: "Propõe as pautas do mês para o pacote do cliente (formato e data de cada uma), para a equipe revisar e aprovar.",
+  description:
+    "Propõe as pautas do mês para o pacote do cliente (formato e data de cada uma), para a equipe revisar e aprovar.",
   kind: "ai",
   allowedTools: [],
   qualityCriteria: [
@@ -88,7 +89,10 @@ ${input.recentTitles.length ? input.recentTitles.map((t) => `- ${escapeData(t)}`
     return { items: output.items.slice(0, input.slots.length) };
   },
   demo(input) {
-    const seeds = splitMessages(input.theme || "Apresente a marca. Mostre os bastidores. Responda uma dúvida frequente. Conte a história de um cliente.");
+    const seeds = splitMessages(
+      input.theme ||
+        "Apresente a marca. Mostre os bastidores. Responda uma dúvida frequente. Conte a história de um cliente.",
+    );
     const cycle: Objective[] = ["relationship", "education", "authority", "engagement"];
     return {
       items: input.slots.map((slot, i) => {

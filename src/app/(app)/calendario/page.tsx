@@ -16,7 +16,8 @@ const WEEKDAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
 /** Cor do ponto: pauta planejada, em produção (pela situação da peça), feita. */
 function tone(e: CalendarEntry): string {
-  if (e.itemStatus === "done" || e.contentStatus === "approved" || e.contentStatus === "published") return "bg-emerald-400";
+  if (e.itemStatus === "done" || e.contentStatus === "approved" || e.contentStatus === "published")
+    return "bg-emerald-400";
   if (e.contentStatus === "awaiting_approval") return "bg-amber-400";
   if (e.contentStatus === "failed" || e.contentStatus === "rejected") return "bg-red-400";
   if (e.contentItemId) return "bg-iris-400";
@@ -30,9 +31,15 @@ function statusText(e: CalendarEntry): string {
 }
 
 function Entry({ e, showClient }: { e: CalendarEntry; showClient: boolean }) {
-  const href = e.contentItemId ? `/conteudos/${e.contentItemId}` : `/clientes/${e.clientId}?aba=editorial&mes=${e.date.slice(0, 7)}`;
+  const href = e.contentItemId
+    ? `/conteudos/${e.contentItemId}`
+    : `/clientes/${e.clientId}?aba=editorial&mes=${e.date.slice(0, 7)}`;
   return (
-    <Link href={href} title={`${e.clientName} · ${EDITORIAL_FORMAT_LABELS[e.format]} · ${statusText(e)}`} className="group flex items-start gap-1.5 rounded-md px-1.5 py-1 hover:bg-white/[0.05]">
+    <Link
+      href={href}
+      title={`${e.clientName} · ${EDITORIAL_FORMAT_LABELS[e.format]} · ${statusText(e)}`}
+      className="group flex items-start gap-1.5 rounded-md px-1.5 py-1 hover:bg-white/[0.05]"
+    >
       <span aria-hidden className={cx("mt-[6px] size-1.5 shrink-0 rounded-full", tone(e))} />
       <span className="min-w-0 text-[12px] leading-snug">
         {showClient ? <span className="block truncate text-ink-400">{e.clientName}</span> : null}
@@ -45,7 +52,11 @@ function Entry({ e, showClient }: { e: CalendarEntry; showClient: boolean }) {
   );
 }
 
-export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ mes?: string; cliente?: string }> }) {
+export default async function CalendarPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mes?: string; cliente?: string }>;
+}) {
   const auth = await requireAuth();
   const sp = await searchParams;
   const month = sp.mes && /^\d{4}-(0[1-9]|1[0-2])$/.test(sp.mes) ? sp.mes : currentMonth();
@@ -58,7 +69,10 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   const [y, m] = month.split("-").map(Number) as [number, number];
   const days = new Date(Date.UTC(y, m, 0)).getUTCDate();
   const lead = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7; // segunda = 0
-  const cells: Array<string | null> = [...Array.from({ length: lead }, () => null), ...Array.from({ length: days }, (_, i) => `${month}-${String(i + 1).padStart(2, "0")}`)];
+  const cells: Array<string | null> = [
+    ...Array.from({ length: lead }, () => null),
+    ...Array.from({ length: days }, (_, i) => `${month}-${String(i + 1).padStart(2, "0")}`),
+  ];
   while (cells.length % 7) cells.push(null);
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
   const href = (mm: string) => `/calendario?mes=${mm}${clientId ? `&cliente=${clientId}` : ""}`;
@@ -93,10 +107,22 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
           Filtrar
         </button>
         <span className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-ink-400">
-          <span className="flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-ink-400" />Planejada</span>
-          <span className="flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-iris-400" />Em produção</span>
-          <span className="flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-amber-400" />Aguardando aprovação</span>
-          <span className="flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-emerald-400" />Aprovada ou feita</span>
+          <span className="flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-ink-400" />
+            Planejada
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-iris-400" />
+            Em produção
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-amber-400" />
+            Aguardando aprovação
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-emerald-400" />
+            Aprovada ou feita
+          </span>
         </span>
       </form>
 
@@ -104,7 +130,13 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
         <EmptyState
           title={`Nada planejado em ${monthLabel(month).toLowerCase()}`}
           description="As pautas aparecem aqui quando a linha editorial do cliente é montada."
-          action={clients[0] ? <LinkButton href={`/clientes/${clientId ?? clients[0].id}?aba=editorial&mes=${month}`}>Abrir linha editorial</LinkButton> : undefined}
+          action={
+            clients[0] ? (
+              <LinkButton href={`/clientes/${clientId ?? clients[0].id}?aba=editorial&mes=${month}`}>
+                Abrir linha editorial
+              </LinkButton>
+            ) : undefined
+          }
         />
       ) : (
         <>
@@ -122,7 +154,14 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                 <div key={i} className={cx("min-h-[112px] bg-ink-900 p-1.5", !day && "bg-ink-950/60")}>
                   {day ? (
                     <>
-                      <div className={cx("mb-1 px-1.5 text-[12px] tabular", day === today ? "font-semibold text-iris-300" : "text-ink-400")}>{Number(day.slice(8))}</div>
+                      <div
+                        className={cx(
+                          "tabular mb-1 px-1.5 text-[12px]",
+                          day === today ? "font-semibold text-iris-300" : "text-ink-400",
+                        )}
+                      >
+                        {Number(day.slice(8))}
+                      </div>
                       {(byDay.get(day) ?? []).map((e, k) => (
                         <Entry key={k} e={e} showClient={!clientId} />
                       ))}
@@ -137,8 +176,18 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
             {[...byDay.entries()].map(([day, list]) => (
               <li key={day}>
                 <Card>
-                  <div className={cx("border-b border-ink-800 px-4 py-2 text-[12.5px] font-medium", day === today ? "text-iris-300" : "text-ink-300")}>
-                    {new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${day}T12:00:00Z`))}
+                  <div
+                    className={cx(
+                      "border-b border-ink-800 px-4 py-2 text-[12.5px] font-medium",
+                      day === today ? "text-iris-300" : "text-ink-300",
+                    )}
+                  >
+                    {new Intl.DateTimeFormat("pt-BR", {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "short",
+                      timeZone: "UTC",
+                    }).format(new Date(`${day}T12:00:00Z`))}
                   </div>
                   <div className="p-2">
                     {list.map((e, k) => (

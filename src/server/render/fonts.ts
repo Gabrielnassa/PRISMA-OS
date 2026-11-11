@@ -64,7 +64,12 @@ export function satoriFonts(ids: FontId[]): SatoriFont[] {
   for (const id of new Set(ids)) {
     for (const w of FONT_CATALOG[id].weights) {
       for (const subset of SUBSETS) {
-        out.push({ name: familyName(id), data: readFont(id, w as Weight, subset), weight: w as Weight, style: "normal" });
+        out.push({
+          name: familyName(id),
+          data: readFont(id, w as Weight, subset),
+          weight: w as Weight,
+          style: "normal",
+        });
       }
     }
   }
@@ -110,7 +115,11 @@ export function measureWidth(text: string, o: MeasureOptions): number {
 }
 
 /** Quebra gulosa por palavras, respeitando quebras de linha manuais. */
-export function wrapLines(text: string, maxWidth: number, o: MeasureOptions): { lines: string[]; widest: number; brokenWord: boolean } {
+export function wrapLines(
+  text: string,
+  maxWidth: number,
+  o: MeasureOptions,
+): { lines: string[]; widest: number; brokenWord: boolean } {
   const lines: string[] = [];
   let widest = 0;
   let brokenWord = false;
@@ -173,6 +182,12 @@ export function fitText(text: string, o: FitOptions): FitResult {
     if (!brokenWord && height <= o.maxHeight) return { size, lines: lines.length, height, fits: true };
   }
   size = Math.round(o.minSize);
-  const { lines } = wrapLines(trimmed, width, { font: o.font, weight: o.weight, size, letterSpacingEm: o.letterSpacingEm, uppercase: o.uppercase });
+  const { lines } = wrapLines(trimmed, width, {
+    font: o.font,
+    weight: o.weight,
+    size,
+    letterSpacingEm: o.letterSpacingEm,
+    uppercase: o.uppercase,
+  });
   return { size, lines: lines.length, height: lines.length * size * o.lineHeight, fits: false };
 }

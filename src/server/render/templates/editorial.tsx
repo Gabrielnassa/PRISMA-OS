@@ -31,12 +31,21 @@ export const editorialAssimetrico: TemplateDef = {
     "Foto opcional em bloco recuado na parte superior.",
     "Filete na cor de destaque acima do sobretítulo.",
   ],
-  qualityCriteria: ["Título com no máximo 3–4 linhas", "Contraste AA entre texto e fundo", "Margens seguras preservadas"],
+  qualityCriteria: [
+    "Título com no máximo 3–4 linhas",
+    "Contraste AA entre texto e fundo",
+    "Margens seguras preservadas",
+  ],
   render(ctx) {
     const side = ctx.safe.side;
     const top = ctx.safe.top;
     const hasImage = ctx.image !== null;
-    const imageBox = { x: side, y: top + 80, w: ctx.W - side * 2, h: Math.round(ctx.H * (ctx.doc.aspect === "1:1" ? 0.28 : 0.36)) };
+    const imageBox = {
+      x: side,
+      y: top + 80,
+      w: ctx.W - side * 2,
+      h: Math.round(ctx.H * (ctx.doc.aspect === "1:1" ? 0.28 : 0.36)),
+    };
     const textTop = hasImage ? imageBox.y + imageBox.h + 64 : Math.round(ctx.H * 0.28);
     const bottom = ctx.H - ctx.safe.bottom - 70;
     const colW = Math.round((ctx.W - side * 2) * 0.86);
@@ -49,7 +58,10 @@ export const editorialAssimetrico: TemplateDef = {
           key: "main",
           box: { x: side, y: textTop, w: colW, h: bottom - textTop },
           justify: "end",
-          items: standardItems(ctx, { title: { cover: 104, content: 76, cta: 88 }, includeHighlight: ctx.kind === "cta" }),
+          items: standardItems(ctx, {
+            title: { cover: 104, content: 76, cta: 88 },
+            includeHighlight: ctx.kind === "cta",
+          }),
           background: { kind: "solid", color: ctx.palette.bg },
           lead: { height: 36, element: <AccentRule color={ctx.palette.accent} /> },
         })}
@@ -80,7 +92,11 @@ export const editorialFoto: TemplateDef = {
     cta: { kicker: 40, title: 70, body: 160, footer: 90 },
   },
   capacity: {
-    "1:1": { cover: { plain: 0.85, photo: 0.85 }, content: { plain: 0.55, photo: 0.55 }, cta: { plain: 0.85, photo: 0.85 } },
+    "1:1": {
+      cover: { plain: 0.85, photo: 0.85 },
+      content: { plain: 0.55, photo: 0.55 },
+      cta: { plain: 0.85, photo: 0.85 },
+    },
     "4:5": { content: { plain: 0.95, photo: 0.95 } },
   },
   compositionRules: [
@@ -129,7 +145,14 @@ export const editorialFoto: TemplateDef = {
           items: footerItem(ctx),
           background: { kind: "solid", color: ctx.palette.bg },
         })}
-        <Brandmark ctx={ctx} x={ctx.W - side - 220} y={ctx.H - ctx.safe.bottom - 56} maxW={220} maxH={60} align="right" />
+        <Brandmark
+          ctx={ctx}
+          x={ctx.W - side - 220}
+          y={ctx.H - ctx.safe.bottom - 56}
+          maxW={220}
+          maxH={60}
+          align="right"
+        />
       </Root>
     );
   },
@@ -182,15 +205,42 @@ export const editorialCitacao: TemplateDef = {
           box: { x: side + 44, y: textTop, w: ctx.W - side * 2 - 60, h: bottom - textTop },
           justify: "start",
           items: [
-            { field: "title", font: "heading", weight: 600, maxSize: Math.round(76 * s), minSize: 40, lineHeight: 1.18, gapAfter: 36 },
-            { field: "body", font: "body", weight: 400, maxSize: Math.round(36 * s), minSize: 26, lineHeight: 1.4, gapAfter: 0 },
+            {
+              field: "title",
+              font: "heading",
+              weight: 600,
+              maxSize: Math.round(76 * s),
+              minSize: 40,
+              lineHeight: 1.18,
+              gapAfter: 36,
+            },
+            {
+              field: "body",
+              font: "body",
+              weight: 400,
+              maxSize: Math.round(36 * s),
+              minSize: 26,
+              lineHeight: 1.4,
+              gapAfter: 0,
+            },
           ],
           background: { kind: "solid", color: ctx.palette.bg },
         })}
         {ctx.textStack({
           key: "footer",
           box: { x: side + 44, y: bottom + 30, w: ctx.W - side * 2 - 60, h: 70 },
-          items: [{ field: "footer", font: "body", weight: 600, maxSize: 32, minSize: 22, lineHeight: 1.3, color: ctx.palette.fg, text: ctx.field("footer") ? `— ${ctx.field("footer")}` : "" }],
+          items: [
+            {
+              field: "footer",
+              font: "body",
+              weight: 600,
+              maxSize: 32,
+              minSize: 22,
+              lineHeight: 1.3,
+              color: ctx.palette.fg,
+              text: ctx.field("footer") ? `— ${ctx.field("footer")}` : "",
+            },
+          ],
           background: { kind: "solid", color: ctx.palette.bg },
         })}
       </Root>

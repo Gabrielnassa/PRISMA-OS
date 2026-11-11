@@ -32,7 +32,15 @@ function derive(purpose: "seal" | "sign"): Buffer {
       "Falta a chave de criptografia do servidor (APP_SECRET_KEY, com pelo menos 32 caracteres). Sem ela não é possível guardar chaves e conexões com segurança. Veja Integrações.",
     );
   }
-  return Buffer.from(crypto.hkdfSync("sha256", Buffer.from(master, "utf8"), Buffer.from("prisma-os"), Buffer.from(`prisma-os:${purpose}`), 32));
+  return Buffer.from(
+    crypto.hkdfSync(
+      "sha256",
+      Buffer.from(master, "utf8"),
+      Buffer.from("prisma-os"),
+      Buffer.from(`prisma-os:${purpose}`),
+      32,
+    ),
+  );
 }
 
 export function seal(plain: string, context: string): string {

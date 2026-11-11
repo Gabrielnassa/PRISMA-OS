@@ -8,7 +8,17 @@ export const ReviewInputSchema = z.object({
   objective: z.enum(OBJECTIVES),
   // O mesmo briefing estruturado que a IA de textos recebeu (oferta, público, mensagens e CTA).
   briefing: BriefingSchema,
-  slides: z.array(z.object({ kind: z.string(), kicker: z.string(), title: z.string(), body: z.string(), highlight: z.string(), footer: z.string(), alt: z.string() })),
+  slides: z.array(
+    z.object({
+      kind: z.string(),
+      kicker: z.string(),
+      title: z.string(),
+      body: z.string(),
+      highlight: z.string(),
+      footer: z.string(),
+      alt: z.string(),
+    }),
+  ),
   caption: z.string(),
   hashtags: z.array(z.string()),
   cta: z.string(),
@@ -34,10 +44,15 @@ export const reviewerSkill: AiSkill<ReviewInput, ReviewOutput, z.input<typeof Re
   version: "1.1.0",
   name: "Revisor de qualidade (IA)",
   specSection: "9.9",
-  description: "Revisa ortografia, aderência ao briefing, coerência, tom de voz e afirmações sem comprovação. Complementa as regras automáticas.",
+  description:
+    "Revisa ortografia, aderência ao briefing, coerência, tom de voz e afirmações sem comprovação. Complementa as regras automáticas.",
   kind: "ai",
   allowedTools: [],
-  qualityCriteria: ["Aponta problemas concretos com sugestão", "Não reescreve a peça inteira", "Não é tratado como garantia de qualidade"],
+  qualityCriteria: [
+    "Aponta problemas concretos com sugestão",
+    "Não reescreve a peça inteira",
+    "Não é tratado como garantia de qualidade",
+  ],
   errorHandling: "Falhas não bloqueiam o fluxo: a revisão por regras continua válida e a falha fica registrada.",
   inputSchema: ReviewInputSchema,
   outputSchema: ReviewOutputSchema,
@@ -54,7 +69,10 @@ ${SHARED_RULES}
 - Se não houver problemas, devolva "issues" vazio e diga isso no resumo.`,
   buildTask(input) {
     const slides = input.slides
-      .map((s, i) => `Lâmina ${i + 1} (${s.kind}):\n${FIELD_KEYS.map((k) => `  ${k}: ${s[k] ? escapeData(s[k]) : "(vazio)"}`).join("\n")}\n  alt: ${s.alt ? escapeData(s.alt) : "(vazio)"}`)
+      .map(
+        (s, i) =>
+          `Lâmina ${i + 1} (${s.kind}):\n${FIELD_KEYS.map((k) => `  ${k}: ${s[k] ? escapeData(s[k]) : "(vazio)"}`).join("\n")}\n  alt: ${s.alt ? escapeData(s.alt) : "(vazio)"}`,
+      )
       .join("\n");
     return `Objetivo: ${OBJECTIVE_LABELS[input.objective]}
 ${briefingBlock(input.briefing)}

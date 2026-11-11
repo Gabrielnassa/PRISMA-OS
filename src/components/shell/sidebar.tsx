@@ -70,26 +70,30 @@ function Nav({ pathname, onNavigate, isAdmin }: { pathname: string; onNavigate?:
         <div key={section.title}>
           <div className="mb-1.5 px-3 text-[11.5px] font-medium text-ink-400">{section.title}</div>
           <ul className="flex flex-col gap-px">
-            {section.items.filter((item) => isAdmin || !item.admin).map((item) => {
-              const IconCmp = Icon[item.icon];
-              const active = isActive(pathname, item.href);
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    onClick={onNavigate}
-                    aria-current={active ? "page" : undefined}
-                    className={cx(
-                      "relative flex h-9 items-center gap-2.5 rounded-full px-3 text-[14px] transition-colors",
-                      active ? "bg-white/[0.07] font-medium text-ink-50" : "text-ink-300 hover:bg-white/[0.04] hover:text-ink-100",
-                    )}
-                  >
-                    <IconCmp width={16} height={16} className={active ? "text-iris-400" : "text-ink-400"} />
-                    {item.label}
-                  </Link>
-                </li>
-              );
-            })}
+            {section.items
+              .filter((item) => isAdmin || !item.admin)
+              .map((item) => {
+                const IconCmp = Icon[item.icon];
+                const active = isActive(pathname, item.href);
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      onClick={onNavigate}
+                      aria-current={active ? "page" : undefined}
+                      className={cx(
+                        "relative flex h-9 items-center gap-2.5 rounded-full px-3 text-[14px] transition-colors",
+                        active
+                          ? "bg-white/[0.07] font-medium text-ink-50"
+                          : "text-ink-300 hover:bg-white/[0.04] hover:text-ink-100",
+                      )}
+                    >
+                      <IconCmp width={16} height={16} className={active ? "text-iris-400" : "text-ink-400"} />
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
           </ul>
         </div>
       ))}
@@ -101,18 +105,32 @@ const AI_DOT = { ready: "bg-emerald-400", demo: "bg-amber-400", off: "bg-red-400
 
 function Footer({ info }: { info: ShellInfo }) {
   return (
-    <div className="mt-auto border-t border-ink-800 px-3 pb-3 pt-3">
-      <Link href="/avisos" className="mb-1 flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] text-ink-300 hover:bg-white/[0.04] hover:text-ink-50">
+    <div className="mt-auto border-t border-ink-800 px-3 pt-3 pb-3">
+      <Link
+        href="/avisos"
+        className="mb-1 flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] text-ink-300 hover:bg-white/[0.04] hover:text-ink-50"
+      >
         <Icon.bell width={15} height={15} className="text-ink-400" />
         <span className="flex-1">Avisos</span>
-        {info.unread ? <span className="rounded-full bg-iris-500 px-1.5 text-[11px] font-semibold leading-[18px] text-white tabular">{info.unread > 99 ? "99+" : info.unread}</span> : null}
+        {info.unread ? (
+          <span className="tabular rounded-full bg-iris-500 px-1.5 text-[11px] leading-[18px] font-semibold text-white">
+            {info.unread > 99 ? "99+" : info.unread}
+          </span>
+        ) : null}
       </Link>
-      <Link href="/integracoes" title={info.ai.detail} className="mb-2 flex items-center gap-2 rounded-full px-3 py-1.5 text-[12px] text-ink-400 hover:bg-white/[0.04] hover:text-ink-200">
+      <Link
+        href="/integracoes"
+        title={info.ai.detail}
+        className="mb-2 flex items-center gap-2 rounded-full px-3 py-1.5 text-[12px] text-ink-400 hover:bg-white/[0.04] hover:text-ink-200"
+      >
         <span aria-hidden className={cx("size-1.5 shrink-0 rounded-full", AI_DOT[info.ai.state])} />
         <span className="truncate">{info.ai.label}</span>
       </Link>
       <div className="flex items-center gap-2.5 px-2.5">
-        <span aria-hidden className="flex size-7 shrink-0 items-center justify-center rounded-full bg-ink-800 text-[11px] font-semibold text-ink-200 ring-1 ring-ink-700">
+        <span
+          aria-hidden
+          className="flex size-7 shrink-0 items-center justify-center rounded-full bg-ink-800 text-[11px] font-semibold text-ink-200 ring-1 ring-ink-700"
+        >
           {initials(info.userName)}
         </span>
         <div className="min-w-0 flex-1 leading-tight">
@@ -120,7 +138,12 @@ function Footer({ info }: { info: ShellInfo }) {
           <div className="truncate text-[11.5px] text-ink-400">{info.roleLabel}</div>
         </div>
         <form action={logoutAction}>
-          <button type="submit" className="inline-flex size-8 items-center justify-center rounded-full text-ink-400 hover:bg-ink-850 hover:text-ink-50" title="Sair" aria-label="Sair">
+          <button
+            type="submit"
+            className="inline-flex size-8 items-center justify-center rounded-full text-ink-400 hover:bg-ink-850 hover:text-ink-50"
+            title="Sair"
+            aria-label="Sair"
+          >
             <Icon.logout width={16} height={16} />
           </button>
         </form>
@@ -131,7 +154,7 @@ function Footer({ info }: { info: ShellInfo }) {
 
 function Workspace({ name }: { name: string }) {
   return (
-    <div className="px-5 pb-4 pt-4">
+    <div className="px-5 pt-4 pb-4">
       <div className="text-[11.5px] text-ink-400">Agência</div>
       <div className="truncate text-[13.5px] font-medium text-ink-100" title={name}>
         {name}
@@ -185,11 +208,19 @@ export function Sidebar({ info }: { info: ShellInfo }) {
         <Link href="/" aria-label="PRISMA OS, início">
           <PrismaWordmark />
         </Link>
-        <Link href="/avisos" className="relative ml-auto inline-flex size-9 items-center justify-center rounded-full text-ink-300 hover:bg-ink-850" aria-label={info.unread ? `Avisos, ${info.unread} não lidos` : "Avisos"}>
+        <Link
+          href="/avisos"
+          className="relative ml-auto inline-flex size-9 items-center justify-center rounded-full text-ink-300 hover:bg-ink-850"
+          aria-label={info.unread ? `Avisos, ${info.unread} não lidos` : "Avisos"}
+        >
           <Icon.bell width={17} height={17} />
-          {info.unread ? <span className="absolute right-1 top-1 size-2 rounded-full bg-iris-400" /> : null}
+          {info.unread ? <span className="absolute top-1 right-1 size-2 rounded-full bg-iris-400" /> : null}
         </Link>
-        <Link href="/integracoes" className="inline-flex items-center gap-2 text-[12px] text-ink-400" title={info.ai.detail}>
+        <Link
+          href="/integracoes"
+          className="inline-flex items-center gap-2 text-[12px] text-ink-400"
+          title={info.ai.detail}
+        >
           <span aria-hidden className={cx("size-1.5 rounded-full", AI_DOT[info.ai.state])} />
           <span className="hidden sm:inline">{info.ai.label}</span>
         </Link>
@@ -201,7 +232,12 @@ export function Sidebar({ info }: { info: ShellInfo }) {
           <div className="relative flex h-full w-72 max-w-[85vw] flex-col border-r border-ink-800 bg-ink-950">
             <div className="flex h-14 shrink-0 items-center justify-between border-b border-ink-800 px-5">
               <PrismaWordmark />
-              <button type="button" onClick={() => setOpen(false)} className="-mr-2 inline-flex size-9 items-center justify-center rounded-full hover:bg-ink-850" aria-label="Fechar menu">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="-mr-2 inline-flex size-9 items-center justify-center rounded-full hover:bg-ink-850"
+                aria-label="Fechar menu"
+              >
                 <Icon.close />
               </button>
             </div>

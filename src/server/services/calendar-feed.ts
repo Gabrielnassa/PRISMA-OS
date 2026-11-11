@@ -17,11 +17,21 @@ import { EDITORIAL_FORMAT_LABELS } from "@/lib/content/editorial";
  * Gerar um endereço novo invalida o anterior.
  */
 
-export async function calendarFeedStatus(auth: AuthContext): Promise<{ active: boolean; createdAt: string | null; lastUsedAt: string | null }> {
+export async function calendarFeedStatus(
+  auth: AuthContext,
+): Promise<{ active: boolean; createdAt: string | null; lastUsedAt: string | null }> {
   const r = await withTx(userCtx(auth.userId), (tx) =>
-    maybeOne<{ created_at: Date; last_used_at: Date | null }>(tx, "SELECT created_at, last_used_at FROM calendar_feeds WHERE organization_id = $1 AND user_id = $2", [auth.organizationId, auth.userId]),
+    maybeOne<{ created_at: Date; last_used_at: Date | null }>(
+      tx,
+      "SELECT created_at, last_used_at FROM calendar_feeds WHERE organization_id = $1 AND user_id = $2",
+      [auth.organizationId, auth.userId],
+    ),
   );
-  return { active: Boolean(r), createdAt: r?.created_at.toISOString() ?? null, lastUsedAt: r?.last_used_at?.toISOString() ?? null };
+  return {
+    active: Boolean(r),
+    createdAt: r?.created_at.toISOString() ?? null,
+    lastUsedAt: r?.last_used_at?.toISOString() ?? null,
+  };
 }
 
 /** Cria (ou troca) o endereço da agenda. O endereço aparece só agora. */
@@ -35,13 +45,23 @@ export async function createCalendarFeed(auth: AuthContext): Promise<string> {
        ON CONFLICT (organization_id, user_id) DO UPDATE SET token_hash = EXCLUDED.token_hash, created_at = now(), last_used_at = NULL`,
       [auth.organizationId, auth.userId, sha256(token)],
     );
-    await audit(tx, userActor(auth), { organizationId: auth.organizationId, action: "calendar.feed_created", entityType: "calendar_feed", entityId: auth.userId });
+    await audit(tx, userActor(auth), {
+      organizationId: auth.organizationId,
+      action: "calendar.feed_created",
+      entityType: "calendar_feed",
+      entityId: auth.userId,
+    });
   });
   return `${base}/api/agenda/${token}.ics`;
 }
 
 export async function revokeCalendarFeed(auth: AuthContext): Promise<void> {
-  await withTx(userCtx(auth.userId), (tx) => tx.query("DELETE FROM calendar_feeds WHERE organization_id = $1 AND user_id = $2", [auth.organizationId, auth.userId]));
+  await withTx(userCtx(auth.userId), (tx) =>
+    tx.query("DELETE FROM calendar_feeds WHERE organization_id = $1 AND user_id = $2", [
+      auth.organizationId,
+      auth.userId,
+    ]),
+  );
 }
 
 /** Texto em ICS: escapa vírgula, ponto e vírgula, barra e quebra de linha; dobra linhas longas. */
@@ -62,7 +82,11 @@ function fold(line: string): string {
   return out.join("\r\n");
 }
 
-const stamp = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+const stamp = (d: Date) =>
+  d
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}/, "");
 
 export interface IcsEvent {
   uid: string;
@@ -76,7 +100,15 @@ export interface IcsEvent {
 }
 
 export function buildIcs(name: string, events: IcsEvent[], now = new Date()): string {
-  const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//PRISMA OS//Agenda//PT-BR", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", `X-WR-CALNAME:${esc(name)}`, "X-WR-TIMEZONE:America/Sao_Paulo"];
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//PRISMA OS//Agenda//PT-BR",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    `X-WR-CALNAME:${esc(name)}`,
+    "X-WR-TIMEZONE:America/Sao_Paulo",
+  ];
   for (const e of events) {
     lines.push("BEGIN:VEVENT", `UID:${e.uid}`, `DTSTAMP:${stamp(now)}`);
     if (e.date) {
@@ -100,7 +132,11 @@ export function buildIcs(name: string, events: IcsEvent[], now = new Date()): st
 export async function calendarFeedIcs(token: string): Promise<string | null> {
   if (!/^[A-Za-z0-9_-]{20,64}$/.test(token)) return null;
   const feed = await withTx(systemCtx("calendar.feed"), async (tx) => {
-    const r = await maybeOne<{ organization_id: string; user_id: string }>(tx, "UPDATE calendar_feeds SET last_used_at = now() WHERE token_hash = $1 RETURNING organization_id, user_id", [sha256(token)]);
+    const r = await maybeOne<{ organization_id: string; user_id: string }>(
+      tx,
+      "UPDATE calendar_feeds SET last_used_at = now() WHERE token_hash = $1 RETURNING organization_id, user_id",
+      [sha256(token)],
+    );
     return r;
   });
   if (!feed) return null;

@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { CONTENT_FORMATS, FORMAT_LABELS, OBJECTIVE_LABELS, OBJECTIVES, type ContentFormat, type Objective } from "@/lib/content/document";
+import {
+  CONTENT_FORMATS,
+  FORMAT_LABELS,
+  OBJECTIVE_LABELS,
+  OBJECTIVES,
+  type ContentFormat,
+  type Objective,
+} from "@/lib/content/document";
 import { SHARED_RULES, clipWords, escapeData, splitMessages } from "./common";
 import type { AiSkill } from "./types";
 
@@ -34,7 +41,11 @@ export const ideasSkill: AiSkill<IdeasInput, IdeasOutput, z.input<typeof IdeasIn
   description: "Sugere pautas alinhadas à marca e ao objetivo, evitando repetir títulos recentes do cliente.",
   kind: "ai",
   allowedTools: [],
-  qualityCriteria: ["Ideias específicas para o segmento", "Sem repetir pautas recentes", "Ganchos sem clickbait nem promessas"],
+  qualityCriteria: [
+    "Ideias específicas para o segmento",
+    "Sem repetir pautas recentes",
+    "Ganchos sem clickbait nem promessas",
+  ],
   errorHandling: "Saída validada por esquema; falhas são registradas na execução e exibidas ao usuário.",
   inputSchema: IdeasInputSchema,
   outputSchema: IdeasOutputSchema,
@@ -57,7 +68,9 @@ ${input.recentTitles.length ? input.recentTitles.map((t) => `- ${escapeData(t)}`
 </titulos_recentes>`;
   },
   demo(input) {
-    const seeds = splitMessages(input.theme || "Apresente a marca. Mostre os bastidores. Responda uma dúvida frequente.");
+    const seeds = splitMessages(
+      input.theme || "Apresente a marca. Mostre os bastidores. Responda uma dúvida frequente.",
+    );
     const ideas = Array.from({ length: input.quantity }, (_, i) => {
       const seed = seeds[i % seeds.length] ?? "Pauta";
       return {

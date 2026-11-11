@@ -35,7 +35,17 @@ try {
        ON CONFLICT (organization_id, user_id) DO UPDATE SET role = EXCLUDED.role, deactivated_at = NULL`,
       [org.id, user.id, role],
     );
-    await audit(tx, { type: "system" }, { organizationId: org.id, action: "user.linked_by_operator", entityType: "user", entityId: user.id, metadata: { email, role } });
+    await audit(
+      tx,
+      { type: "system" },
+      {
+        organizationId: org.id,
+        action: "user.linked_by_operator",
+        entityType: "user",
+        entityId: user.id,
+        metadata: { email, role },
+      },
+    );
   });
   console.log(`Conta ${email} vinculada à organização ${orgSlug} como ${role}.`);
 } catch (err) {

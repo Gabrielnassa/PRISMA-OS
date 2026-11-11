@@ -82,9 +82,15 @@ export async function login(input: LoginInput): Promise<LoginResult> {
         : null;
     const success = Boolean(user && user.is_active && ok && membership && !user.temp_expired);
     // A tentativa é registrada mesmo quando falha: não lançamos dentro da transação para o commit acontecer.
-    await tx.query("INSERT INTO login_attempts (email_hash, ip, success) VALUES ($1, $2, $3)", [emailHash, input.ip ?? null, success]);
+    await tx.query("INSERT INTO login_attempts (email_hash, ip, success) VALUES ($1, $2, $3)", [
+      emailHash,
+      input.ip ?? null,
+      success,
+    ]);
     if (!success || !user || !membership) {
-      return user?.temp_expired && ok ? { ok: false, message: "Senha temporária expirada. Peça ao administrador um novo acesso." } : { ok: false };
+      return user?.temp_expired && ok
+        ? { ok: false, message: "Senha temporária expirada. Peça ao administrador um novo acesso." }
+        : { ok: false };
     }
 
     const token = crypto.randomBytes(32).toString("base64url");
@@ -93,17 +99,31 @@ export async function login(input: LoginInput): Promise<LoginResult> {
       tx,
       `INSERT INTO sessions (user_id, organization_id, token_hash, ip, user_agent, expires_at)
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-      [user.id, membership.organization_id, hashToken(token), input.ip ?? null, (input.userAgent ?? "").slice(0, 400), expiresAt],
+      [
+        user.id,
+        membership.organization_id,
+        hashToken(token),
+        input.ip ?? null,
+        (input.userAgent ?? "").slice(0, 400),
+        expiresAt,
+      ],
     );
     await tx.query("UPDATE users SET last_login_at = now() WHERE id = $1", [user.id]);
-    await tx.query("UPDATE memberships SET last_access_at = now() WHERE user_id = $1 AND organization_id = $2", [user.id, membership.organization_id]);
-    await audit(tx, { type: "system", userId: user.id }, {
-      organizationId: membership.organization_id,
-      action: "auth.login",
-      entityType: "session",
-      entityId: session.id,
-      ip: input.ip ?? null,
-    });
+    await tx.query("UPDATE memberships SET last_access_at = now() WHERE user_id = $1 AND organization_id = $2", [
+      user.id,
+      membership.organization_id,
+    ]);
+    await audit(
+      tx,
+      { type: "system", userId: user.id },
+      {
+        organizationId: membership.organization_id,
+        action: "auth.login",
+        entityType: "session",
+        entityId: session.id,
+        ip: input.ip ?? null,
+      },
+    );
     return { ok: true, result: { token, expiresAt, userId: user.id } };
   }).then((res) => {
     if (!res.ok) throw new UnauthenticatedError(res.message ?? "E-mail ou senha inválidos.");
@@ -155,11 +175,16 @@ export async function resolveSession(token: string | undefined | null): Promise<
 
 export async function revokeSession(token: string): Promise<void> {
   await withTx(systemCtx("auth.logout"), async (tx) => {
-    await tx.query("UPDATE sessions SET revoked_at = now() WHERE token_hash = $1 AND revoked_at IS NULL", [hashToken(token)]);
+    await tx.query("UPDATE sessions SET revoked_at = now() WHERE token_hash = $1 AND revoked_at IS NULL", [
+      hashToken(token),
+    ]);
   });
 }
 
-export async function revokeAllSessions(userId: string, opts: { exceptSessionId?: string; organizationId?: string } = {}): Promise<void> {
+export async function revokeAllSessions(
+  userId: string,
+  opts: { exceptSessionId?: string; organizationId?: string } = {},
+): Promise<void> {
   await withTx(systemCtx("auth.revoke_all"), async (tx) => {
     await tx.query(
       `UPDATE sessions SET revoked_at = now()
@@ -188,9 +213,21 @@ export async function operatorResetPassword(emailInput: string, password: string
     );
     if (!user) return null;
     await tx.query("DELETE FROM login_attempts WHERE email_hash = $1 AND NOT success", [hashEmail(email)]);
-    const orgs = await tx.query<{ organization_id: string }>("SELECT organization_id FROM memberships WHERE user_id = $1", [user.id]);
+    const orgs = await tx.query<{ organization_id: string }>(
+      "SELECT organization_id FROM memberships WHERE user_id = $1",
+      [user.id],
+    );
     for (const { organization_id } of orgs.rows) {
-      await audit(tx, { type: "system" }, { organizationId: organization_id, action: "user.password_reset_by_operator", entityType: "user", entityId: user.id });
+      await audit(
+        tx,
+        { type: "system" },
+        {
+          organizationId: organization_id,
+          action: "user.password_reset_by_operator",
+          entityType: "user",
+          entityId: user.id,
+        },
+      );
     }
     return user.id;
   });
@@ -198,4 +235,3 @@ export async function operatorResetPassword(emailInput: string, password: string
   await revokeAllSessions(userId);
   return true;
 }
-

@@ -54,7 +54,10 @@ const CLIENT_SELECT = `
          (SELECT count(*)::int FROM approvals a WHERE a.client_id = c.id AND a.status = 'pending') AS pending_approvals
   FROM clients c`;
 
-export async function listClients(auth: AuthContext, opts: { includeArchived?: boolean } = {}): Promise<ClientSummary[]> {
+export async function listClients(
+  auth: AuthContext,
+  opts: { includeArchived?: boolean } = {},
+): Promise<ClientSummary[]> {
   return withTx(userCtx(auth.userId), async (tx) => {
     const rows = await many<ClientRow>(
       tx,
@@ -71,7 +74,11 @@ export async function listClients(auth: AuthContext, opts: { includeArchived?: b
  * Carrega o cliente garantindo que ele pertence à organização ativa e que o
  * usuário tem acesso (RLS). Inexistente e sem acesso são indistinguíveis.
  */
-export async function requireClient(tx: Queryable, auth: AuthContext, clientId: string): Promise<{ id: string; name: string; status: string }> {
+export async function requireClient(
+  tx: Queryable,
+  auth: AuthContext,
+  clientId: string,
+): Promise<{ id: string; name: string; status: string }> {
   if (!z.string().uuid().safeParse(clientId).success) throw new NotFoundError("Cliente não encontrado.");
   const row = await maybeOne<{ id: string; name: string; status: string }>(
     tx,
@@ -104,7 +111,11 @@ export async function loadBrandProfile(
     references_info: unknown;
     revision: number;
     updated_at: Date;
-  }>(tx, "SELECT business, audience, voice, visual, channels, references_info, revision, updated_at FROM brand_profiles WHERE client_id = $1", [clientId]);
+  }>(
+    tx,
+    "SELECT business, audience, voice, visual, channels, references_info, revision, updated_at FROM brand_profiles WHERE client_id = $1",
+    [clientId],
+  );
   if (!row) return { brand: emptyBrandProfile(), brandRevision: 0, brandUpdatedAt: null };
   const parsed = BrandProfileSchema.safeParse({
     business: row.business,
@@ -126,7 +137,10 @@ export const CreateClientSchema = z.object({
   segment: z.string().trim().max(200).default(""),
 });
 
-export async function createClient(auth: AuthContext, input: z.input<typeof CreateClientSchema>): Promise<{ id: string }> {
+export async function createClient(
+  auth: AuthContext,
+  input: z.input<typeof CreateClientSchema>,
+): Promise<{ id: string }> {
   assertCan(auth.role, "client.create");
   const data = CreateClientSchema.parse(input);
   return withTx(userCtx(auth.userId), async (tx) => {
@@ -177,14 +191,23 @@ export const UpdateClientSchema = z.object({
   status: z.enum(["active", "paused", "archived"]),
 });
 
-export async function updateClient(auth: AuthContext, clientId: string, input: z.input<typeof UpdateClientSchema>): Promise<void> {
+export async function updateClient(
+  auth: AuthContext,
+  clientId: string,
+  input: z.input<typeof UpdateClientSchema>,
+): Promise<void> {
   assertCan(auth.role, "client.update");
   const data = UpdateClientSchema.parse(input);
   await withTx(userCtx(auth.userId), async (tx) => {
     const current = await requireClient(tx, auth, clientId);
     if (data.status !== current.status && data.status === "archived") assertCan(auth.role, "client.archive");
     if (current.status === "archived" && data.status !== "archived") assertCan(auth.role, "client.archive");
-    await tx.query("UPDATE clients SET name = $2, segment = $3, status = $4 WHERE id = $1", [clientId, data.name, data.segment, data.status]);
+    await tx.query("UPDATE clients SET name = $2, segment = $3, status = $4 WHERE id = $1", [
+      clientId,
+      data.name,
+      data.segment,
+      data.status,
+    ]);
     await audit(tx, userActor(auth), {
       organizationId: auth.organizationId,
       clientId,
@@ -288,7 +311,15 @@ export interface ClientMemory {
 export async function listMemories(auth: AuthContext, clientId: string): Promise<ClientMemory[]> {
   return withTx(userCtx(auth.userId), async (tx) => {
     await requireClient(tx, auth, clientId);
-    const rows = await many<{ id: string; kind: MemoryKind; content: string; source: string; status: "active" | "archived"; created_at: Date; name: string | null }>(
+    const rows = await many<{
+      id: string;
+      kind: MemoryKind;
+      content: string;
+      source: string;
+      status: "active" | "archived";
+      created_at: Date;
+      name: string | null;
+    }>(
       tx,
       `SELECT m.id, m.kind, m.content, m.source, m.status, m.created_at, u.name
        FROM client_memories m LEFT JOIN users u ON u.id = m.created_by
@@ -312,7 +343,11 @@ export const AddMemorySchema = z.object({
   content: z.string().trim().min(3, "Descreva a informação (mínimo 3 caracteres).").max(2000),
 });
 
-export async function addMemory(auth: AuthContext, clientId: string, input: z.input<typeof AddMemorySchema>): Promise<void> {
+export async function addMemory(
+  auth: AuthContext,
+  clientId: string,
+  input: z.input<typeof AddMemorySchema>,
+): Promise<void> {
   assertCan(auth.role, "memory.manage");
   const data = AddMemorySchema.parse(input);
   await withTx(userCtx(auth.userId), async (tx) => {
@@ -333,11 +368,20 @@ export async function addMemory(auth: AuthContext, clientId: string, input: z.in
   });
 }
 
-export async function setMemoryStatus(auth: AuthContext, clientId: string, memoryId: string, status: "active" | "archived"): Promise<void> {
+export async function setMemoryStatus(
+  auth: AuthContext,
+  clientId: string,
+  memoryId: string,
+  status: "active" | "archived",
+): Promise<void> {
   assertCan(auth.role, "memory.manage");
   await withTx(userCtx(auth.userId), async (tx) => {
     await requireClient(tx, auth, clientId);
-    const res = await tx.query("UPDATE client_memories SET status = $3 WHERE id = $1 AND client_id = $2", [memoryId, clientId, status]);
+    const res = await tx.query("UPDATE client_memories SET status = $3 WHERE id = $1 AND client_id = $2", [
+      memoryId,
+      clientId,
+      status,
+    ]);
     if (res.rowCount === 0) throw new NotFoundError("Memória não encontrada.");
     await audit(tx, userActor(auth), {
       organizationId: auth.organizationId,

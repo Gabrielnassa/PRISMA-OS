@@ -61,7 +61,10 @@ export async function deleteContents(auth: AuthContext, ids: string[]): Promise<
       [org, delIds],
     );
     // Pauta da linha editorial volta a ficar planejada (a peça pode ser criada de novo).
-    await tx.query("UPDATE editorial_items SET status = 'planned', content_item_id = NULL WHERE content_item_id = ANY($1::uuid[])", [delIds]);
+    await tx.query(
+      "UPDATE editorial_items SET status = 'planned', content_item_id = NULL WHERE content_item_id = ANY($1::uuid[])",
+      [delIds],
+    );
     await allowPurge(tx);
     await tx.query("DELETE FROM content_items WHERE id = ANY($1::uuid[]) AND organization_id = $2", [delIds, org]);
     for (const r of deletable) {
@@ -78,7 +81,10 @@ export async function deleteContents(auth: AuthContext, ids: string[]): Promise<
   });
 }
 
-export async function deleteContent(auth: AuthContext, contentId: string): Promise<{ id: string; clientId: string; title: string }> {
+export async function deleteContent(
+  auth: AuthContext,
+  contentId: string,
+): Promise<{ id: string; clientId: string; title: string }> {
   if (!z.string().uuid().safeParse(contentId).success) throw new NotFoundError("Conteúdo não encontrado.");
   const r = await deleteContents(auth, [contentId]);
   if (r.skipped.length) throw new ConflictError("Aguarde o fim da geração para excluir.");
@@ -100,7 +106,15 @@ export interface ClientDeletionSummary {
 }
 
 async function summarize(tx: Queryable, client: { id: string; name: string }): Promise<ClientDeletionSummary> {
-  const r = await one<{ contents: number; versions: number; media: number; memories: number; skills: number; ai_runs: number; busy: boolean }>(
+  const r = await one<{
+    contents: number;
+    versions: number;
+    media: number;
+    memories: number;
+    skills: number;
+    ai_runs: number;
+    busy: boolean;
+  }>(
     tx,
     `SELECT (SELECT count(*)::int FROM content_items WHERE client_id = $1) AS contents,
             (SELECT count(*)::int FROM content_versions WHERE client_id = $1) AS versions,
@@ -149,14 +163,20 @@ export async function deleteClient(
     const locked = await tx.query("SELECT 1 FROM clients WHERE id = $1 FOR UPDATE", [clientId]);
     if (locked.rowCount === 0) throw new NotFoundError("Cliente não encontrado.");
     if (!confirmsName(confirmation, client.name)) {
-      throw new ValidationError(`Para confirmar, digite o nome do cliente: ${client.name}`, { confirmation: "O nome não confere." });
+      throw new ValidationError(`Para confirmar, digite o nome do cliente: ${client.name}`, {
+        confirmation: "O nome não confere.",
+      });
     }
     const summary = await summarize(tx, client);
     if (summary.inProgress) {
-      throw new ConflictError("Há gerações na fila ou em andamento para este cliente. Aguarde terminarem e tente de novo.");
+      throw new ConflictError(
+        "Há gerações na fila ou em andamento para este cliente. Aguarde terminarem e tente de novo.",
+      );
     }
     // Inclui arquivos já removidos da biblioteca (guardados para reproduzir versões antigas).
-    const keys = (await many<{ storage_key: string }>(tx, "SELECT storage_key FROM media_assets WHERE client_id = $1", [clientId])).map((r) => r.storage_key);
+    const keys = (
+      await many<{ storage_key: string }>(tx, "SELECT storage_key FROM media_assets WHERE client_id = $1", [clientId])
+    ).map((r) => r.storage_key);
     await tx.query(
       `UPDATE ai_runs SET client_id = NULL, content_item_id = NULL, output = NULL, input_summary = jsonb_build_object('deletedClient', $2::text)
        WHERE client_id = $1 AND organization_id = $3`,
@@ -189,7 +209,15 @@ export async function deleteClient(
       await storage().delete(key);
     } catch (err) {
       filesFailed++;
-      console.error(JSON.stringify({ level: "error", msg: "client.delete_file_failed", clientId, key, error: (err as Error).message }));
+      console.error(
+        JSON.stringify({
+          level: "error",
+          msg: "client.delete_file_failed",
+          clientId,
+          key,
+          error: (err as Error).message,
+        }),
+      );
     }
   }
   return { name: summary.name, summary, filesFailed };

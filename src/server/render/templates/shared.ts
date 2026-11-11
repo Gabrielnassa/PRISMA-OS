@@ -80,14 +80,34 @@ export function standardItems(
     },
   );
   if (o.includeFooter) {
-    items.push({ field: "footer", font: "body", weight: 600, maxSize: Math.round(28 * s), minSize: 20, lineHeight: 1.3, color: ctx.palette.muted, gapAfter: 0 });
+    items.push({
+      field: "footer",
+      font: "body",
+      weight: 600,
+      maxSize: Math.round(28 * s),
+      minSize: 20,
+      lineHeight: 1.3,
+      color: ctx.palette.muted,
+      gapAfter: 0,
+    });
   }
   return items;
 }
 
 /** Linha de rodapé (fonte, assinatura ou contato). */
 export function footerItem(ctx: SlideCtx, color?: string): StackItem[] {
-  return [{ field: "footer", font: "body", weight: 600, maxSize: 28, minSize: 20, lineHeight: 1.25, color: color ?? ctx.palette.muted, gapAfter: 0 }];
+  return [
+    {
+      field: "footer",
+      font: "body",
+      weight: 600,
+      maxSize: 28,
+      minSize: 20,
+      lineHeight: 1.25,
+      color: color ?? ctx.palette.muted,
+      gapAfter: 0,
+    },
+  ];
 }
 
 export const LIMITS_STANDARD = {

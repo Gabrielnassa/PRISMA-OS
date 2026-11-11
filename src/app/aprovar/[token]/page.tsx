@@ -18,7 +18,10 @@ function Piece({ token, item, scoped }: { token: string; item: PublicApprovalIte
   const src = (i: number) => `/api/publico/aprovacao/${token}/${i}${scoped ? `?pedido=${item.approvalId}` : ""}`;
   return (
     <article className="grid gap-6 border-t border-ink-800 py-8 first:border-t-0 first:pt-0 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-      <section aria-label={`Imagens de ${item.title}`} className={item.slideCount > 1 ? "grid gap-3 sm:grid-cols-2" : "grid gap-3"}>
+      <section
+        aria-label={`Imagens de ${item.title}`}
+        className={item.slideCount > 1 ? "grid gap-3 sm:grid-cols-2" : "grid gap-3"}
+      >
         {Array.from({ length: item.slideCount }, (_, i) => (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -37,22 +40,30 @@ function Piece({ token, item, scoped }: { token: string; item: PublicApprovalIte
           <div className="text-[12.5px] text-ink-400">
             {item.format} · versão {item.versionNumber}
           </div>
-          {scoped ? <h2 className="mt-1 font-display text-[24px] font-medium leading-tight tracking-[-0.03em] text-ink-50">{item.title}</h2> : null}
+          {scoped ? (
+            <h2 className="mt-1 font-display text-[24px] leading-tight font-medium tracking-[-0.03em] text-ink-50">
+              {item.title}
+            </h2>
+          ) : null}
         </div>
         {item.caption || item.hashtags.length ? (
           <div className="rounded-[var(--radius-card)] border border-ink-700/80 bg-ink-900 p-5 text-[14px]">
             <div className="text-[12.5px] font-medium text-ink-400">Legenda</div>
-            <p className="mt-1.5 whitespace-pre-wrap leading-relaxed text-ink-100">{item.caption}</p>
+            <p className="mt-1.5 leading-relaxed whitespace-pre-wrap text-ink-100">{item.caption}</p>
             {item.hashtags.length ? <p className="mt-2 text-iris-300">{item.hashtags.join(" ")}</p> : null}
           </div>
         ) : null}
-        {item.requestNote ? <p className="text-[13.5px] text-ink-300">Recado da agência: “{item.requestNote}”</p> : null}
+        {item.requestNote ? (
+          <p className="text-[13.5px] text-ink-300">Recado da agência: “{item.requestNote}”</p>
+        ) : null}
         <div className="rounded-[var(--radius-card)] border border-ink-700/80 bg-ink-900 p-5">
           {item.status === "pending" ? (
             <DecisionForm token={token} approvalId={item.approvalId} />
           ) : (
             <div>
-              <div className={`text-[15px] font-semibold ${DECIDED[item.status].tone}`}>{DECIDED[item.status].title}</div>
+              <div className={`text-[15px] font-semibold ${DECIDED[item.status].tone}`}>
+                {DECIDED[item.status].title}
+              </div>
               {item.decidedByName && item.decidedAt ? (
                 <p className="mt-1 text-[13px] text-ink-400">
                   {item.decidedByName} · {formatDateTime(item.decidedAt)}
@@ -79,15 +90,17 @@ export default async function PublicApprovalPage({ params }: { params: Promise<{
         {!a ? (
           <div className="mt-16 max-w-md">
             <h1 className="font-display text-[30px] font-medium tracking-[-0.04em] text-ink-50">Link indisponível</h1>
-            <p className="mt-2 text-[14.5px] leading-relaxed text-ink-400">O link expirou ou não existe mais. Peça um novo à agência.</p>
+            <p className="mt-2 text-[14.5px] leading-relaxed text-ink-400">
+              O link expirou ou não existe mais. Peça um novo à agência.
+            </p>
           </div>
         ) : (
           <>
-            <header className="mb-10 mt-10">
+            <header className="mt-10 mb-10">
               <div className="text-[13px] text-ink-400">
                 {a.organizationName} · para {a.clientName}
               </div>
-              <h1 className="mt-1 font-display text-[30px] font-medium leading-tight tracking-[-0.04em] text-ink-50 md:text-[36px]">
+              <h1 className="mt-1 font-display text-[30px] leading-tight font-medium tracking-[-0.04em] text-ink-50 md:text-[36px]">
                 {a.scope === "client" ? "Peças para aprovar" : (a.items[0]?.title ?? "Aprovação")}
               </h1>
               <p className="mt-2 text-[14px] text-ink-400">
@@ -101,9 +114,13 @@ export default async function PublicApprovalPage({ params }: { params: Promise<{
               </p>
             </header>
             {a.items.length === 0 ? (
-              <p className="text-[14.5px] text-ink-400">Nada aguardando aprovação agora. Quando a agência enviar novas peças, elas aparecem neste mesmo link.</p>
+              <p className="text-[14.5px] text-ink-400">
+                Nada aguardando aprovação agora. Quando a agência enviar novas peças, elas aparecem neste mesmo link.
+              </p>
             ) : (
-              a.items.map((item) => <Piece key={item.approvalId} token={token} item={item} scoped={a.scope === "client"} />)
+              a.items.map((item) => (
+                <Piece key={item.approvalId} token={token} item={item} scoped={a.scope === "client"} />
+              ))
             )}
           </>
         )}

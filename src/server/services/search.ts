@@ -30,8 +30,20 @@ export async function quickSearch(auth: AuthContext, raw: string): Promise<Searc
       [auth.organizationId, like],
     );
     return [
-      ...clients.map((c) => ({ kind: "client" as const, id: c.id, title: c.name, detail: c.segment || "Cliente", href: `/clientes/${c.id}` })),
-      ...contents.map((c) => ({ kind: "content" as const, id: c.id, title: c.title, detail: `${c.client_name} · ${STATUS_LABELS[c.status]}`, href: `/conteudos/${c.id}` })),
+      ...clients.map((c) => ({
+        kind: "client" as const,
+        id: c.id,
+        title: c.name,
+        detail: c.segment || "Cliente",
+        href: `/clientes/${c.id}`,
+      })),
+      ...contents.map((c) => ({
+        kind: "content" as const,
+        id: c.id,
+        title: c.title,
+        detail: `${c.client_name} · ${STATUS_LABELS[c.status]}`,
+        href: `/conteudos/${c.id}`,
+      })),
     ];
   });
 }

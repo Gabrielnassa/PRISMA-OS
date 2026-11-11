@@ -23,17 +23,26 @@ export async function healthChecks(): Promise<{ ok: boolean; checks: HealthCheck
          FROM pg_roles r WHERE r.rolname = current_user`,
       ),
     );
-    checks.push({ name: "Banco de dados", ok: true, detail: `PostgreSQL ${db.version} respondeu em ${Date.now() - started} ms.` });
+    checks.push({
+      name: "Banco de dados",
+      ok: true,
+      detail: `PostgreSQL ${db.version} respondeu em ${Date.now() - started} ms.`,
+    });
     const rlsOk = !db.bypass && !db.owns;
     checks.push({
       name: "Isolamento (RLS)",
       ok: rlsOk,
-      detail: rlsOk ? "A conexão da aplicação está sujeita às políticas de RLS." : "A conexão da aplicação é dona das tabelas ou ignora RLS. Use um usuário de login separado.",
+      detail: rlsOk
+        ? "A conexão da aplicação está sujeita às políticas de RLS."
+        : "A conexão da aplicação é dona das tabelas ou ignora RLS. Use um usuário de login separado.",
     });
     checks.push({
       name: "Worker de tarefas",
       ok: db.stale === 0,
-      detail: db.stale === 0 ? "Nenhuma tarefa atrasada na fila." : `${db.stale === 1 ? "1 tarefa aguarda" : `${db.stale} tarefas aguardam`} há mais de 2 minutos. Confira se o processamento em segundo plano está ligado.`,
+      detail:
+        db.stale === 0
+          ? "Nenhuma tarefa atrasada na fila."
+          : `${db.stale === 1 ? "1 tarefa aguarda" : `${db.stale} tarefas aguardam`} há mais de 2 minutos. Confira se o processamento em segundo plano está ligado.`,
     });
   } catch (err) {
     checks.push({ name: "Banco de dados", ok: false, detail: `Falha de conexão: ${(err as Error).message}` });

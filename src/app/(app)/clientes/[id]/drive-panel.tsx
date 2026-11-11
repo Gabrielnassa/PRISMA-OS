@@ -30,8 +30,18 @@ export function DrivePanel({
       {canEdit ? (
         <ActionForm action={save} state={saveState} className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
           <input type="hidden" name="clientId" value={clientId} />
-          <Field label="Link da pasta" htmlFor="drive-folder" error={saveState.status === "error" ? saveState.fieldErrors?.folder : undefined}>
-            <Input id="drive-folder" name="folder" defaultValue={folderLink} placeholder="https://drive.google.com/drive/folders/..." autoComplete="off" />
+          <Field
+            label="Link da pasta"
+            htmlFor="drive-folder"
+            error={saveState.status === "error" ? saveState.fieldErrors?.folder : undefined}
+          >
+            <Input
+              id="drive-folder"
+              name="folder"
+              defaultValue={folderLink}
+              placeholder="https://drive.google.com/drive/folders/..."
+              autoComplete="off"
+            />
           </Field>
           <SubmitButton variant="secondary" pendingText="Conferindo...">
             Salvar pasta
@@ -48,11 +58,14 @@ export function DrivePanel({
 
       {configured ? (
         <p className="text-[12.5px] leading-relaxed text-ink-400">
-          Compartilhe a pasta com <span className="select-all font-medium text-ink-200">{serviceEmail}</span> (como Leitor). Cada clique importa até 25 arquivos novos (fotos PNG, JPEG, GIF, SVG, vídeos MP4 e MOV, PDF); o que já foi importado não entra de novo.
+          Compartilhe a pasta com <span className="font-medium text-ink-200 select-all">{serviceEmail}</span> (como
+          Leitor). Cada clique importa até 25 arquivos novos (fotos PNG, JPEG, GIF, SVG, vídeos MP4 e MOV, PDF); o que
+          já foi importado não entra de novo.
         </p>
       ) : (
         <p className="text-[12.5px] leading-relaxed text-ink-400">
-          O Google Drive ainda não está conectado. O link fica salvo e a importação libera assim que a conexão for feita em Integrações.
+          O Google Drive ainda não está conectado. O link fica salvo e a importação libera assim que a conexão for feita
+          em Integrações.
         </p>
       )}
 

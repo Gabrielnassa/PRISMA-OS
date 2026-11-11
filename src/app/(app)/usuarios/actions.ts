@@ -8,7 +8,10 @@ import type { Role } from "@/server/authz/permissions";
 
 type PasswordResult = { temporaryPassword: string; email: string };
 
-export async function inviteAction(_prev: ActionState<PasswordResult>, form: FormData): Promise<ActionState<PasswordResult>> {
+export async function inviteAction(
+  _prev: ActionState<PasswordResult>,
+  form: FormData,
+): Promise<ActionState<PasswordResult>> {
   const auth = await requireAuth();
   return runAction(async () => {
     const email = str(form, "email");
@@ -21,12 +24,18 @@ export async function inviteAction(_prev: ActionState<PasswordResult>, form: For
   });
 }
 
-export async function resetPasswordAction(_prev: ActionState<PasswordResult>, form: FormData): Promise<ActionState<PasswordResult>> {
+export async function resetPasswordAction(
+  _prev: ActionState<PasswordResult>,
+  form: FormData,
+): Promise<ActionState<PasswordResult>> {
   const auth = await requireAuth();
   return runAction(async () => {
     const r = await resetTemporaryPassword(auth, str(form, "userId"));
     refresh();
-    return { message: "Nova senha temporária gerada. As sessões da pessoa foram encerradas.", data: { temporaryPassword: r.temporaryPassword, email: str(form, "email") } };
+    return {
+      message: "Nova senha temporária gerada. As sessões da pessoa foram encerradas.",
+      data: { temporaryPassword: r.temporaryPassword, email: str(form, "email") },
+    };
   });
 }
 

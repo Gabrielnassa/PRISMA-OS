@@ -9,10 +9,21 @@ import { STATUS_LABELS, type ContentStatus } from "@/lib/content/status";
 import { Badge, Button, Field, Input, Select, Textarea, cx } from "@/components/ui";
 import { ActionForm, FormMessage, SubmitButton } from "@/components/form";
 import { useToastAction } from "@/components/toast";
-import { approveEditorialAction, editorialItemStatusAction, packageAction, proposeEditorialAction, updateEditorialItemAction } from "../actions";
+import {
+  approveEditorialAction,
+  editorialItemStatusAction,
+  packageAction,
+  proposeEditorialAction,
+  updateEditorialItemAction,
+} from "../actions";
 
-
-export function PackageForm({ clientId, pkg }: { clientId: string; pkg: { posts: number; carousels: number; stories: number; videos: number; notes: string } }) {
+export function PackageForm({
+  clientId,
+  pkg,
+}: {
+  clientId: string;
+  pkg: { posts: number; carousels: number; stories: number; videos: number; notes: string };
+}) {
   const [state, action] = useToastAction(packageAction);
   const fields: Array<[keyof typeof pkg, string]> = [
     ["carousels", "Carrosséis"],
@@ -25,8 +36,21 @@ export function PackageForm({ clientId, pkg }: { clientId: string; pkg: { posts:
       <input type="hidden" name="clientId" value={clientId} />
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {fields.map(([k, label]) => (
-          <Field key={k} label={label} htmlFor={`pkg-${k}`} error={state.status === "error" ? state.fieldErrors?.[k] : undefined}>
-            <Input id={`pkg-${k}`} name={k} type="number" min={0} max={200} defaultValue={pkg[k] as number} inputMode="numeric" />
+          <Field
+            key={k}
+            label={label}
+            htmlFor={`pkg-${k}`}
+            error={state.status === "error" ? state.fieldErrors?.[k] : undefined}
+          >
+            <Input
+              id={`pkg-${k}`}
+              name={k}
+              type="number"
+              min={0}
+              max={200}
+              defaultValue={pkg[k] as number}
+              inputMode="numeric"
+            />
           </Field>
         ))}
       </div>
@@ -41,7 +65,17 @@ export function PackageForm({ clientId, pkg }: { clientId: string; pkg: { posts:
   );
 }
 
-export function ProposeForm({ clientId, month, hasPlan, aiReady }: { clientId: string; month: string; hasPlan: boolean; aiReady: boolean }) {
+export function ProposeForm({
+  clientId,
+  month,
+  hasPlan,
+  aiReady,
+}: {
+  clientId: string;
+  month: string;
+  hasPlan: boolean;
+  aiReady: boolean;
+}) {
   const [state, action] = useToastAction(proposeEditorialAction);
   return (
     <ActionForm
@@ -53,8 +87,18 @@ export function ProposeForm({ clientId, month, hasPlan, aiReady }: { clientId: s
     >
       <input type="hidden" name="clientId" value={clientId} />
       <input type="hidden" name="month" value={month} />
-      <Field label="Tema ou pedidos do mês (opcional)" htmlFor="ed-theme" hint="Datas, campanhas, produtos em destaque, o que evitar.">
-        <Textarea id="ed-theme" name="theme" rows={3} maxLength={3000} placeholder="Ex.: Bolão da Mega da Virada a partir do dia 10. Mostrar a equipe da loja." />
+      <Field
+        label="Tema ou pedidos do mês (opcional)"
+        htmlFor="ed-theme"
+        hint="Datas, campanhas, produtos em destaque, o que evitar."
+      >
+        <Textarea
+          id="ed-theme"
+          name="theme"
+          rows={3}
+          maxLength={3000}
+          placeholder="Ex.: Bolão da Mega da Virada a partir do dia 10. Mostrar a equipe da loja."
+        />
       </Field>
       {state.status === "error" ? <FormMessage state={state} /> : null}
       <div className="flex flex-wrap gap-2">
@@ -65,12 +109,19 @@ export function ProposeForm({ clientId, month, hasPlan, aiReady }: { clientId: s
           Montar manualmente
         </SubmitButton>
       </div>
-      {!aiReady ? <p className="text-[12.5px] text-ink-400">IA não configurada: monte sem IA e escreva as pautas, ou configure a chave em Integrações.</p> : null}
+      {!aiReady ? (
+        <p className="text-[12.5px] text-ink-400">
+          IA não configurada: monte sem IA e escreva as pautas, ou configure a chave em Integrações.
+        </p>
+      ) : null}
     </ActionForm>
   );
 }
 
-const STATUS_TEXT: Record<EditorialItem["status"], { label: string; tone: "neutral" | "accent" | "success" | "warning" }> = {
+const STATUS_TEXT: Record<
+  EditorialItem["status"],
+  { label: string; tone: "neutral" | "accent" | "success" | "warning" }
+> = {
   planned: { label: "Planejada", tone: "neutral" },
   in_production: { label: "Virou peça", tone: "accent" },
   done: { label: "Feito", tone: "success" },
@@ -80,11 +131,21 @@ const STATUS_TEXT: Record<EditorialItem["status"], { label: string; tone: "neutr
 function shortDate(d: string | null) {
   if (!d) return "Sem data";
   const [, m, day] = d.split("-");
-  const weekday = new Intl.DateTimeFormat("pt-BR", { weekday: "short", timeZone: "UTC" }).format(new Date(`${d}T12:00:00Z`)).replace(".", "");
+  const weekday = new Intl.DateTimeFormat("pt-BR", { weekday: "short", timeZone: "UTC" })
+    .format(new Date(`${d}T12:00:00Z`))
+    .replace(".", "");
   return `${weekday} ${day}/${m}`;
 }
 
-function StatusButton({ itemId, status, label }: { itemId: string; status: "planned" | "done" | "skipped"; label: string }) {
+function StatusButton({
+  itemId,
+  status,
+  label,
+}: {
+  itemId: string;
+  status: "planned" | "done" | "skipped";
+  label: string;
+}) {
   const [state, action] = useToastAction(editorialItemStatusAction);
   return (
     <ActionForm action={action} state={state}>
@@ -108,10 +169,24 @@ function ItemEditor({ item, month, onDone }: { item: EditorialItem; month: strin
     <ActionForm action={action} state={state} className="grid gap-3 md:grid-cols-[1fr_150px_150px_170px]">
       <input type="hidden" name="itemId" value={item.id} />
       <Field label="Título" htmlFor={`t-${item.id}`} error={err("title")}>
-        <Input id={`t-${item.id}`} name="title" defaultValue={item.title === "Pauta a definir" ? "" : item.title} required minLength={2} maxLength={200} />
+        <Input
+          id={`t-${item.id}`}
+          name="title"
+          defaultValue={item.title === "Pauta a definir" ? "" : item.title}
+          required
+          minLength={2}
+          maxLength={200}
+        />
       </Field>
       <Field label="Data" htmlFor={`d-${item.id}`} error={err("plannedDate")}>
-        <Input id={`d-${item.id}`} name="plannedDate" type="date" min={`${month}-01`} max={`${month}-31`} defaultValue={item.plannedDate ?? ""} />
+        <Input
+          id={`d-${item.id}`}
+          name="plannedDate"
+          type="date"
+          min={`${month}-01`}
+          max={`${month}-31`}
+          defaultValue={item.plannedDate ?? ""}
+        />
       </Field>
       <Field label="Formato" htmlFor={`f-${item.id}`}>
         <Select id={`f-${item.id}`} name="format" defaultValue={item.format}>
@@ -132,7 +207,14 @@ function ItemEditor({ item, month, onDone }: { item: EditorialItem; month: strin
         </Select>
       </Field>
       <Field label="Briefing" htmlFor={`b-${item.id}`} className="md:col-span-3" error={err("brief")}>
-        <Textarea id={`b-${item.id}`} name="brief" rows={3} maxLength={4000} defaultValue={item.brief} placeholder="O que dizer, para quem, mensagem principal e informações confirmadas." />
+        <Textarea
+          id={`b-${item.id}`}
+          name="brief"
+          rows={3}
+          maxLength={4000}
+          defaultValue={item.brief}
+          placeholder="O que dizer, para quem, mensagem principal e informações confirmadas."
+        />
       </Field>
       <Field label="Chamada (CTA)" htmlFor={`c-${item.id}`}>
         <Input id={`c-${item.id}`} name="cta" maxLength={300} defaultValue={item.cta} />
@@ -162,9 +244,18 @@ export function EditorialItems({ items, month, canEdit }: { items: EditorialItem
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge tone={it.format === "video" ? "ember" : "neutral"}>{EDITORIAL_FORMAT_LABELS[it.format]}</Badge>
-                  <span className={cx("font-medium", it.title === "Pauta a definir" ? "text-ink-400 italic" : "text-ink-50")}>{it.title}</span>
+                  <span
+                    className={cx(
+                      "font-medium",
+                      it.title === "Pauta a definir" ? "text-ink-400 italic" : "text-ink-50",
+                    )}
+                  >
+                    {it.title}
+                  </span>
                 </div>
-                {it.brief ? <p className="mt-1.5 max-w-3xl text-[13px] leading-relaxed text-ink-300">{it.brief}</p> : null}
+                {it.brief ? (
+                  <p className="mt-1.5 max-w-3xl text-[13px] leading-relaxed text-ink-300">{it.brief}</p>
+                ) : null}
                 <div className="mt-1.5 text-[12px] text-ink-400">
                   {OBJECTIVE_LABELS[it.objective]}
                   {it.cta ? ` · CTA: ${it.cta}` : ""}
@@ -174,7 +265,10 @@ export function EditorialItems({ items, month, canEdit }: { items: EditorialItem
                 <Badge tone={STATUS_TEXT[it.status].tone}>{STATUS_TEXT[it.status].label}</Badge>
                 {it.contentItemId ? (
                   <Link href={`/conteudos/${it.contentItemId}`} className="text-[12.5px] text-iris-300 hover:underline">
-                    {it.contentStatus ? STATUS_LABELS[it.contentStatus as ContentStatus] ?? "Abrir peça" : "Abrir peça"} →
+                    {it.contentStatus
+                      ? (STATUS_LABELS[it.contentStatus as ContentStatus] ?? "Abrir peça")
+                      : "Abrir peça"}{" "}
+                    →
                   </Link>
                 ) : null}
                 {canEdit && (it.status === "planned" || it.status === "skipped") ? (
@@ -182,8 +276,12 @@ export function EditorialItems({ items, month, canEdit }: { items: EditorialItem
                     Editar
                   </Button>
                 ) : null}
-                {canEdit && it.format === "video" && it.status === "planned" ? <StatusButton itemId={it.id} status="done" label="Marcar feito" /> : null}
-                {canEdit && it.status === "done" && it.format === "video" ? <StatusButton itemId={it.id} status="planned" label="Desfazer" /> : null}
+                {canEdit && it.format === "video" && it.status === "planned" ? (
+                  <StatusButton itemId={it.id} status="done" label="Marcar feito" />
+                ) : null}
+                {canEdit && it.status === "done" && it.format === "video" ? (
+                  <StatusButton itemId={it.id} status="planned" label="Desfazer" />
+                ) : null}
               </div>
             </div>
           )}
@@ -193,7 +291,17 @@ export function EditorialItems({ items, month, canEdit }: { items: EditorialItem
   );
 }
 
-export function ApproveForm({ planId, approved, pending, blank }: { planId: string; approved: boolean; pending: number; blank: number }) {
+export function ApproveForm({
+  planId,
+  approved,
+  pending,
+  blank,
+}: {
+  planId: string;
+  approved: boolean;
+  pending: number;
+  blank: number;
+}) {
   const [state, action] = useToastAction(approveEditorialAction);
   return (
     <ActionForm
@@ -209,13 +317,19 @@ export function ApproveForm({ planId, approved, pending, blank }: { planId: stri
     >
       <input type="hidden" name="planId" value={planId} />
       {approved && pending === 0 ? (
-        <span className="text-[13px] text-ink-400">Todas as pautas do mês já viraram peça (vídeos são marcados à mão).</span>
+        <span className="text-[13px] text-ink-400">
+          Todas as pautas do mês já viraram peça (vídeos são marcados à mão).
+        </span>
       ) : (
         <SubmitButton disabled={blank > 0 || pending === 0} pendingText="Criando peças...">
           {approved ? `Criar peças pendentes (${pending})` : "Aprovar e criar peças"}
         </SubmitButton>
       )}
-      {blank > 0 ? <span className="text-[12.5px] text-amber-300">Complete {blank === 1 ? "1 pauta" : `${blank} pautas`} para aprovar.</span> : null}
+      {blank > 0 ? (
+        <span className="text-[12.5px] text-amber-300">
+          Complete {blank === 1 ? "1 pauta" : `${blank} pautas`} para aprovar.
+        </span>
+      ) : null}
       {state.status === "error" ? <FormMessage state={state} /> : null}
     </ActionForm>
   );

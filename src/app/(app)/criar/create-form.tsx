@@ -19,7 +19,14 @@ import { ActionForm, FormMessage, SubmitButton } from "@/components/form";
 import { uuid } from "@/lib/uuid";
 import { createContentAction, suggestIdeasAction } from "./actions";
 
-type TemplateOption = { id: string; name: string; familyLabel: string; formats: string[]; aspects: string[]; image: string };
+type TemplateOption = {
+  id: string;
+  name: string;
+  familyLabel: string;
+  formats: string[];
+  aspects: string[];
+  image: string;
+};
 type ImageOption = { id: string; filename: string; altText: string };
 
 export function CreateForm({
@@ -58,7 +65,11 @@ export function CreateForm({
       <Card>
         <CardHeader title="Escolha o cliente" />
         <div className="p-5">
-          <Select aria-label="Cliente" defaultValue="" onChange={(e) => e.target.value && router.push(`/criar?cliente=${e.target.value}`)}>
+          <Select
+            aria-label="Cliente"
+            defaultValue=""
+            onChange={(e) => e.target.value && router.push(`/criar?cliente=${e.target.value}`)}
+          >
             <option value="" disabled>
               Selecione...
             </option>
@@ -81,7 +92,12 @@ export function CreateForm({
           <CardHeader title="1. Cliente, canal e formato" />
           <div className="grid gap-4 p-5 md:grid-cols-2">
             <Field label="Cliente" htmlFor="clientId">
-              <Select id="clientId" name="clientId" value={clientId} onChange={(e) => router.push(`/criar?cliente=${e.target.value}`)}>
+              <Select
+                id="clientId"
+                name="clientId"
+                value={clientId}
+                onChange={(e) => router.push(`/criar?cliente=${e.target.value}`)}
+              >
                 {clients.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -99,7 +115,12 @@ export function CreateForm({
               </Select>
             </Field>
             <Field label="Formato" htmlFor="format">
-              <Select id="format" name="format" value={format} onChange={(e) => setFormat(e.target.value as ContentFormat)}>
+              <Select
+                id="format"
+                name="format"
+                value={format}
+                onChange={(e) => setFormat(e.target.value as ContentFormat)}
+              >
                 {CONTENT_FORMATS.map((f) => (
                   <option key={f} value={f}>
                     {FORMAT_LABELS[f]}
@@ -117,7 +138,12 @@ export function CreateForm({
               </Select>
             </Field>
             <Field label="Objetivo" htmlFor="objective">
-              <Select id="objective" name="objective" value={objective} onChange={(e) => setObjective(e.target.value as Objective)}>
+              <Select
+                id="objective"
+                name="objective"
+                value={objective}
+                onChange={(e) => setObjective(e.target.value as Objective)}
+              >
                 {OBJECTIVES.map((o) => (
                   <option key={o} value={o}>
                     {OBJECTIVE_LABELS[o]}
@@ -126,7 +152,12 @@ export function CreateForm({
               </Select>
             </Field>
             {format === "carousel" ? (
-              <Field label="Número de lâminas" htmlFor="slideCount" hint="Inclui a capa e a chamada final." error={fe("slideCount")}>
+              <Field
+                label="Número de lâminas"
+                htmlFor="slideCount"
+                hint="Inclui a capa e a chamada final."
+                error={fe("slideCount")}
+              >
                 <Input id="slideCount" name="slideCount" type="number" min={2} max={10} defaultValue={5} />
               </Field>
             ) : (
@@ -139,10 +170,33 @@ export function CreateForm({
           <CardHeader title="2. Briefing" />
           <div className="grid gap-4 p-5">
             <Field label="Título interno da pauta" htmlFor="title" error={fe("title")}>
-              <Input id="title" name="title" value={title} onChange={(e) => setTitle(e.target.value)} required minLength={2} maxLength={200} placeholder="Ex.: 3 cuidados com a saúde no inverno" />
+              <Input
+                id="title"
+                name="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                minLength={2}
+                maxLength={200}
+                placeholder="Ex.: 3 cuidados com a saúde no inverno"
+              />
             </Field>
-            <Field label="Briefing" htmlFor="briefing" error={fe("briefing.text")} hint="Contexto, mensagem principal, informações confirmadas, o que evitar.">
-              <Textarea id="briefing" name="briefing" value={briefing} onChange={(e) => setBriefing(e.target.value)} required minLength={10} maxLength={6000} className="min-h-36" />
+            <Field
+              label="Briefing"
+              htmlFor="briefing"
+              error={fe("briefing.text")}
+              hint="Contexto, mensagem principal, informações confirmadas, o que evitar."
+            >
+              <Textarea
+                id="briefing"
+                name="briefing"
+                value={briefing}
+                onChange={(e) => setBriefing(e.target.value)}
+                required
+                minLength={10}
+                maxLength={6000}
+                className="min-h-36"
+              />
             </Field>
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Mensagens-chave (uma por linha)" htmlFor="keyMessages">
@@ -178,7 +232,9 @@ export function CreateForm({
             <fieldset>
               <legend className="mb-2 text-sm font-medium text-ink-200">Fotos do cliente (até 10)</legend>
               {images.length === 0 ? (
-                <p className="text-sm text-ink-400">Este cliente ainda não tem fotos. Sem foto, a peça usa um layout só com texto.</p>
+                <p className="text-sm text-ink-400">
+                  Este cliente ainda não tem fotos. Sem foto, a peça usa um layout só com texto.
+                </p>
               ) : (
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-6">
                   {images.map((img) => {
@@ -196,14 +252,27 @@ export function CreateForm({
                           name="imageAssetIds"
                           value={img.id}
                           checked={on}
-                          onChange={() => setSelected((s) => (on ? s.filter((x) => x !== img.id) : s.length >= 10 ? s : [...s, img.id]))}
+                          onChange={() =>
+                            setSelected((s) =>
+                              on ? s.filter((x) => x !== img.id) : s.length >= 10 ? s : [...s, img.id],
+                            )
+                          }
                           aria-label={img.altText || img.filename}
                           // Invisível, mas cobrindo a foto inteira: o clique e o foco caem sempre nela.
                           className="absolute inset-0 z-10 cursor-pointer appearance-none opacity-0"
                         />
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={`/api/media/${img.id}`} alt={img.altText || img.filename} className="aspect-square w-full bg-ink-850 object-cover" loading="lazy" />
-                        {on ? <span className="absolute right-1 top-1 rounded-[4px] bg-ink-50 px-1.5 tabular text-[10px] font-medium text-ink-950">{selected.indexOf(img.id) + 1}</span> : null}
+                        <img
+                          src={`/api/media/${img.id}`}
+                          alt={img.altText || img.filename}
+                          className="aspect-square w-full bg-ink-850 object-cover"
+                          loading="lazy"
+                        />
+                        {on ? (
+                          <span className="tabular absolute top-1 right-1 rounded-[4px] bg-ink-50 px-1.5 text-[10px] font-medium text-ink-950">
+                            {selected.indexOf(img.id) + 1}
+                          </span>
+                        ) : null}
                       </label>
                     );
                   })}
@@ -222,7 +291,9 @@ export function CreateForm({
             Montar manualmente
           </SubmitButton>
         </div>
-        {!providerReady ? <Alert tone="warning">IA não conectada. Monte a peça manualmente e escreva os textos no editor.</Alert> : null}
+        {!providerReady ? (
+          <Alert tone="warning">IA não conectada. Monte a peça manualmente e escreva os textos no editor.</Alert>
+        ) : null}
       </ActionForm>
 
       <aside className="flex flex-col gap-6">

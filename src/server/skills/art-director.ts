@@ -1,6 +1,14 @@
 import { z } from "zod";
 import { BrandVisualSchema, type BrandVisual, type TemplateFamily } from "@/lib/brand";
-import { CONTENT_FORMATS, FORMAT_ASPECTS, OBJECTIVES, type Aspect, type ContentFormat, type DocumentStyle, type Objective } from "@/lib/content/document";
+import {
+  CONTENT_FORMATS,
+  FORMAT_ASPECTS,
+  OBJECTIVES,
+  type Aspect,
+  type ContentFormat,
+  type DocumentStyle,
+  type Objective,
+} from "@/lib/content/document";
 import { TEMPLATES, getTemplate } from "../render/templates";
 import type { TemplateDef } from "../render/kit";
 import type { RulesSkill } from "./types";
@@ -48,16 +56,24 @@ export const artDirectorSkill: RulesSkill<ArtDirectionInput, ArtDirection> = {
   version: "1.0.0",
   name: "Diretor de arte (regras)",
   specSection: "9.4",
-  description: "Seleciona template, proporção e estilo a partir do objetivo, do formato, das famílias preferidas e da disponibilidade de fotos reais.",
+  description:
+    "Seleciona template, proporção e estilo a partir do objetivo, do formato, das famílias preferidas e da disponibilidade de fotos reais.",
   kind: "rules",
   allowedTools: [],
-  qualityCriteria: ["Template compatível com formato e proporção", "Template com foto só quando há foto real", "Evita repetir o mesmo template em sequência"],
+  qualityCriteria: [
+    "Template compatível com formato e proporção",
+    "Template com foto só quando há foto real",
+    "Evita repetir o mesmo template em sequência",
+  ],
   errorHandling: "Sem template compatível, usa o padrão editorial e registra a justificativa.",
   inputSchema: ArtDirectionInputSchema,
   run(raw) {
     const input = ArtDirectionInputSchema.parse(raw);
     const rationale: string[] = [];
-    const aspect: Aspect = input.aspect && FORMAT_ASPECTS[input.format].includes(input.aspect) ? input.aspect : FORMAT_ASPECTS[input.format][0]!;
+    const aspect: Aspect =
+      input.aspect && FORMAT_ASPECTS[input.format].includes(input.aspect)
+        ? input.aspect
+        : FORMAT_ASPECTS[input.format][0]!;
     let template: TemplateDef | undefined;
 
     if (input.templatePreference !== "auto") {
@@ -84,10 +100,14 @@ export const artDirectorSkill: RulesSkill<ArtDirectionInput, ArtDirection> = {
       outer: for (const requireImage of passes) {
         for (const family of families) {
           const candidates = TEMPLATES.filter((t) => t.family === family && supports(t, input.format, aspect));
-          const usable = candidates.filter((t) => (requireImage ? t.image !== "none" : input.hasImages || t.image !== "required"));
+          const usable = candidates.filter((t) =>
+            requireImage ? t.image !== "none" : input.hasImages || t.image !== "required",
+          );
           const ranked = [...usable].sort((a, b) => {
             const score = (t: TemplateDef) =>
-              (input.hasImages && t.image !== "none" ? 2 : 0) + (!input.hasImages && t.image === "none" ? 1 : 0) - (input.recentTemplateIds[0] === t.id ? 3 : 0);
+              (input.hasImages && t.image !== "none" ? 2 : 0) +
+              (!input.hasImages && t.image === "none" ? 1 : 0) -
+              (input.recentTemplateIds[0] === t.id ? 3 : 0);
             return score(b) - score(a);
           });
           if (ranked[0]) {
@@ -101,7 +121,11 @@ export const artDirectorSkill: RulesSkill<ArtDirectionInput, ArtDirection> = {
                     ? `Família indicada para o objetivo: ${family}.`
                     : `Família ${family} escolhida para aproveitar as fotos selecionadas.`,
             );
-            rationale.push(input.hasImages ? "Há fotos reais selecionadas: priorizado layout com foto." : "Sem fotos selecionadas: priorizado layout tipográfico.");
+            rationale.push(
+              input.hasImages
+                ? "Há fotos reais selecionadas: priorizado layout com foto."
+                : "Sem fotos selecionadas: priorizado layout tipográfico.",
+            );
             break outer;
           }
         }

@@ -76,29 +76,70 @@ export function SkillForm({
     <div className="space-y-6">
       {!skillId ? (
         <Card>
-          <CardHeader title="Começar mais rápido" description="Importe um SKILL.md ou parta de um modelo. Nada é salvo antes da sua revisão." />
+          <CardHeader
+            title="Começar mais rápido"
+            description="Importe um SKILL.md ou parta de um modelo. Nada é salvo antes da sua revisão."
+          />
           <div className="grid gap-5 p-5 lg:grid-cols-2">
             <div className="space-y-3">
-              <Field label="Importar arquivo SKILL.md" htmlFor="skill-file" hint="Só o nome, a descrição e as instruções são usados. Scripts e arquivos extras da skill não rodam aqui.">
-                <Input id="skill-file" type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" onChange={(e) => onFile(e.target.files?.[0])} />
+              <Field
+                label="Importar arquivo SKILL.md"
+                htmlFor="skill-file"
+                hint="Só o nome, a descrição e as instruções são usados. Scripts e arquivos extras da skill não rodam aqui."
+              >
+                <Input
+                  id="skill-file"
+                  type="file"
+                  accept=".md,.markdown,.txt,text/markdown,text/plain"
+                  onChange={(e) => onFile(e.target.files?.[0])}
+                />
               </Field>
               <details className="rounded-lg border border-ink-700 p-3">
                 <summary className="cursor-pointer text-sm text-ink-200">Ou cole o conteúdo do SKILL.md</summary>
-                <Textarea aria-label="Conteúdo do SKILL.md" value={pasted} onChange={(e) => setPasted(e.target.value)} className="mt-3 min-h-40 font-mono text-xs" placeholder={"---\nname: minha-skill\ndescription: O que ela faz e quando usar\n---\n\n# Instruções\n..."} />
-                <Button type="button" variant="secondary" size="sm" className="mt-2" disabled={!pasted.trim()} onClick={() => applyImport(pasted, "Conteúdo colado")}>
+                <Textarea
+                  aria-label="Conteúdo do SKILL.md"
+                  value={pasted}
+                  onChange={(e) => setPasted(e.target.value)}
+                  className="mt-3 min-h-40 font-mono text-xs"
+                  placeholder={
+                    "---\nname: minha-skill\ndescription: O que ela faz e quando usar\n---\n\n# Instruções\n..."
+                  }
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="mt-2"
+                  disabled={!pasted.trim()}
+                  onClick={() => applyImport(pasted, "Conteúdo colado")}
+                >
                   Importar texto colado
                 </Button>
               </details>
             </div>
-            <Field label="Partir de um modelo" htmlFor="skill-example" hint="Preenche os campos com um exemplo editável.">
+            <Field
+              label="Partir de um modelo"
+              htmlFor="skill-example"
+              hint="Preenche os campos com um exemplo editável."
+            >
               <Select
                 id="skill-example"
                 defaultValue=""
                 onChange={(e) => {
                   const ex = SKILL_EXAMPLES.find((x) => x.id === e.target.value);
                   if (!ex) return;
-                  setValues((p) => ({ ...p, name: ex.name, description: ex.description, instructions: ex.instructions, effort: ex.effort, source: "manual" }));
-                  setImportInfo({ tone: "success", lines: [`Modelo "${ex.name}" aplicado. Ajuste ao jeito da sua agência e salve.`] });
+                  setValues((p) => ({
+                    ...p,
+                    name: ex.name,
+                    description: ex.description,
+                    instructions: ex.instructions,
+                    effort: ex.effort,
+                    source: "manual",
+                  }));
+                  setImportInfo({
+                    tone: "success",
+                    lines: [`Modelo "${ex.name}" aplicado. Ajuste ao jeito da sua agência e salve.`],
+                  });
                 }}
               >
                 <option value="">Escolha um modelo...</option>
@@ -133,10 +174,29 @@ export function SkillForm({
           <input type="hidden" name="source" value={values.source} />
           <div className="grid gap-5 md:grid-cols-2">
             <Field label="Nome" htmlFor="name" error={fe("name")}>
-              <Input id="name" name="name" value={values.name} onChange={(e) => set("name", e.target.value)} required minLength={2} maxLength={SKILL_LIMITS.name} placeholder="Ex.: Roteiro de Reels" />
+              <Input
+                id="name"
+                name="name"
+                value={values.name}
+                onChange={(e) => set("name", e.target.value)}
+                required
+                minLength={2}
+                maxLength={SKILL_LIMITS.name}
+                placeholder="Ex.: Roteiro de Reels"
+              />
             </Field>
-            <Field label="Vale para" htmlFor="clientId" error={fe("clientId")} hint="Uma skill exclusiva só aparece para quem acessa esse cliente.">
-              <Select id="clientId" name="clientId" value={values.clientId ?? ""} onChange={(e) => set("clientId", e.target.value || null)}>
+            <Field
+              label="Vale para"
+              htmlFor="clientId"
+              error={fe("clientId")}
+              hint="Uma skill exclusiva só aparece para quem acessa esse cliente."
+            >
+              <Select
+                id="clientId"
+                name="clientId"
+                value={values.clientId ?? ""}
+                onChange={(e) => set("clientId", e.target.value || null)}
+              >
                 <option value="">Todos os clientes</option>
                 {clients.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -146,8 +206,19 @@ export function SkillForm({
               </Select>
             </Field>
           </div>
-          <Field label="Descrição" htmlFor="description" error={fe("description")} hint="O que a skill entrega e quando usar. Aparece na lista de skills.">
-            <Input id="description" name="description" value={values.description} onChange={(e) => set("description", e.target.value)} maxLength={SKILL_LIMITS.description} />
+          <Field
+            label="Descrição"
+            htmlFor="description"
+            error={fe("description")}
+            hint="O que a skill entrega e quando usar. Aparece na lista de skills."
+          >
+            <Input
+              id="description"
+              name="description"
+              value={values.description}
+              onChange={(e) => set("description", e.target.value)}
+              maxLength={SKILL_LIMITS.description}
+            />
           </Field>
           <Field
             label="Instruções"
@@ -163,11 +234,21 @@ export function SkillForm({
               required
               minLength={10}
               maxLength={SKILL_LIMITS.instructions}
-              className="min-h-80 tabular text-[13px]"
+              className="tabular min-h-80 text-[13px]"
             />
           </Field>
-          <Field label="Nível de esforço da IA" htmlFor="effort" error={fe("effort")} hint="Mais esforço costuma dar resultados melhores em tarefas complexas, mas demora e custa mais.">
-            <Select id="effort" name="effort" value={values.effort} onChange={(e) => set("effort", e.target.value as Effort)}>
+          <Field
+            label="Nível de esforço da IA"
+            htmlFor="effort"
+            error={fe("effort")}
+            hint="Mais esforço costuma dar resultados melhores em tarefas complexas, mas demora e custa mais."
+          >
+            <Select
+              id="effort"
+              name="effort"
+              value={values.effort}
+              onChange={(e) => set("effort", e.target.value as Effort)}
+            >
               {EFFORTS.map(([v, label]) => (
                 <option key={v} value={v}>
                   {label}
@@ -177,7 +258,11 @@ export function SkillForm({
           </Field>
           <div className="flex flex-wrap items-center gap-3">
             <SubmitButton pendingText="Salvando...">{skillId ? "Salvar alterações" : "Criar skill"}</SubmitButton>
-            {skillId ? <span className="text-xs text-ink-400">Alterar nome, descrição, instruções ou esforço cria uma nova versão; as anteriores ficam guardadas.</span> : null}
+            {skillId ? (
+              <span className="text-xs text-ink-400">
+                Alterar nome, descrição, instruções ou esforço cria uma nova versão; as anteriores ficam guardadas.
+              </span>
+            ) : null}
           </div>
           <FormMessage state={state} />
         </ActionForm>

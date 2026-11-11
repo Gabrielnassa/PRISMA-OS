@@ -120,7 +120,8 @@ export function resolvePalette(style: DocumentStyle, theme: ThemeName): Palette 
   const c = style.colors;
   let bg: string;
   if (theme === "light") bg = isLight(c.background) ? c.background : "#ffffff";
-  else if (theme === "dark") bg = !isLight(c.primary) ? mix(c.primary, "#000000", 0.35) : !isLight(c.text) ? c.text : "#141416";
+  else if (theme === "dark")
+    bg = !isLight(c.primary) ? mix(c.primary, "#000000", 0.35) : !isLight(c.text) ? c.text : "#141416";
   else bg = c.primary;
   const fg = pickText(bg, theme === "light" ? [c.text, c.primary] : [c.background, "#ffffff"]);
   const accent = pickAccent(bg, [c.accent, c.secondary, theme === "light" ? c.primary : c.background], fg);
@@ -131,7 +132,9 @@ export function resolvePalette(style: DocumentStyle, theme: ThemeName): Palette 
     fg,
     muted: contrastRatio(softened, bg) >= 4.5 ? softened : fg,
     accent,
-    accentText: [c.accent, c.secondary, theme === "light" ? c.primary : c.background].find((x) => contrastRatio(x, bg) >= 4.5) ?? fg,
+    accentText:
+      [c.accent, c.secondary, theme === "light" ? c.primary : c.background].find((x) => contrastRatio(x, bg) >= 4.5) ??
+      fg,
     accentFg: readableOn(accent, "#ffffff", "#111111"),
     surface: mix(bg, fg, 0.06),
     line: mix(bg, fg, 0.16),
@@ -303,7 +306,11 @@ export class SlideCtx {
     });
     // Remove a margem do último item para o alinhamento inferior ficar exato.
     const last = children[children.length - 1];
-    if (last) children[children.length - 1] = { ...last, props: { ...last.props, style: { ...last.props.style, marginBottom: 0 } } };
+    if (last)
+      children[children.length - 1] = {
+        ...last,
+        props: { ...last.props, style: { ...last.props.style, marginBottom: 0 } },
+      };
 
     return (
       <div
@@ -354,7 +361,19 @@ export function Root({ ctx, bg, children }: { ctx: SlideCtx; bg?: string; childr
   );
 }
 
-export function Rect({ box, color, radius = 0, opacity, style }: { box: Box; color: string; radius?: number; opacity?: number; style?: CSSProperties }) {
+export function Rect({
+  box,
+  color,
+  radius = 0,
+  opacity,
+  style,
+}: {
+  box: Box;
+  color: string;
+  radius?: number;
+  opacity?: number;
+  style?: CSSProperties;
+}) {
   return (
     <div
       style={{
@@ -374,7 +393,17 @@ export function Rect({ box, color, radius = 0, opacity, style }: { box: Box; col
 }
 
 /** Foto com recorte controlável (ponto focal e zoom). Sem imagem, mostra um bloco neutro. */
-export function Photo({ ctx, box, radius = 0, fallback }: { ctx: SlideCtx; box: Box; radius?: number; fallback?: string }) {
+export function Photo({
+  ctx,
+  box,
+  radius = 0,
+  fallback,
+}: {
+  ctx: SlideCtx;
+  box: Box;
+  radius?: number;
+  fallback?: string;
+}) {
   const img = ctx.image;
   if (!img) {
     if (ctx.template.image !== "none") ctx.issues.push("missing_image");
@@ -384,9 +413,25 @@ export function Photo({ ctx, box, radius = 0, fallback }: { ctx: SlideCtx; box: 
   ctx.photos.push({ boxW: box.w, boxH: box.h, zoom, imgW: img.width, imgH: img.height });
   const fx = ctx.slide.imageFocus.x / 100;
   const fy = ctx.slide.imageFocus.y / 100;
-  const frame = { position: "absolute" as const, left: box.x, top: box.y, width: box.w, height: box.h, overflow: "hidden" as const, borderRadius: radius, display: "flex" };
+  const frame = {
+    position: "absolute" as const,
+    left: box.x,
+    top: box.y,
+    width: box.w,
+    height: box.h,
+    overflow: "hidden" as const,
+    borderRadius: radius,
+    display: "flex",
+  };
   const orientation = img.orientation ?? 1;
-  const rotation = orientation === 3 || orientation === 4 ? 180 : orientation === 5 || orientation === 6 ? 90 : orientation === 7 || orientation === 8 ? -90 : 0;
+  const rotation =
+    orientation === 3 || orientation === 4
+      ? 180
+      : orientation === 5 || orientation === 6
+        ? 90
+        : orientation === 7 || orientation === 8
+          ? -90
+          : 0;
 
   if (rotation === 0) {
     const w = box.w * zoom;
@@ -448,7 +493,19 @@ export function Photo({ ctx, box, radius = 0, fallback }: { ctx: SlideCtx; box: 
  * a partir daquela borda por `solidFraction` da altura e some no restante.
  * O controle de qualidade calcula o contraste no pior caso sobre a parte sólida.
  */
-export function Overlay({ box, color, alpha, solidFrom, solidFraction = 1 }: { box: Box; color: string; alpha: number; solidFrom?: "top" | "bottom"; solidFraction?: number }) {
+export function Overlay({
+  box,
+  color,
+  alpha,
+  solidFrom,
+  solidFraction = 1,
+}: {
+  box: Box;
+  color: string;
+  alpha: number;
+  solidFrom?: "top" | "bottom";
+  solidFraction?: number;
+}) {
   const rgba = (a: number) => {
     const r = parseInt(color.slice(1, 3), 16);
     const g = parseInt(color.slice(3, 5), 16);
@@ -457,13 +514,35 @@ export function Overlay({ box, color, alpha, solidFrom, solidFraction = 1 }: { b
   };
   const fadeEnd = Math.round((1 - Math.min(1, Math.max(0, solidFraction))) * 100);
   const fill = solidFrom
-    ? { backgroundImage: `linear-gradient(${solidFrom === "bottom" ? "180deg" : "0deg"}, ${rgba(0)} 0%, ${rgba(alpha)} ${fadeEnd}%, ${rgba(alpha)} 100%)` }
+    ? {
+        backgroundImage: `linear-gradient(${solidFrom === "bottom" ? "180deg" : "0deg"}, ${rgba(0)} 0%, ${rgba(alpha)} ${fadeEnd}%, ${rgba(alpha)} 100%)`,
+      }
     : { backgroundColor: rgba(alpha) };
-  return <div style={{ position: "absolute", left: box.x, top: box.y, width: box.w, height: box.h, display: "flex", ...fill }} />;
+  return (
+    <div
+      style={{ position: "absolute", left: box.x, top: box.y, width: box.w, height: box.h, display: "flex", ...fill }}
+    />
+  );
 }
 
 /** Logotipo (se configurado e habilitado) ou o @ da marca. */
-export function Brandmark({ ctx, x, y, maxW, maxH, color, align = "left" }: { ctx: SlideCtx; x: number; y: number; maxW: number; maxH: number; color?: string; align?: "left" | "right" }) {
+export function Brandmark({
+  ctx,
+  x,
+  y,
+  maxW,
+  maxH,
+  color,
+  align = "left",
+}: {
+  ctx: SlideCtx;
+  x: number;
+  y: number;
+  maxW: number;
+  maxH: number;
+  color?: string;
+  align?: "left" | "right";
+}) {
   if (!ctx.doc.style.showLogo) return null;
   const logo = ctx.logo;
   if (logo) {
@@ -476,7 +555,15 @@ export function Brandmark({ ctx, x, y, maxW, maxH, color, align = "left" }: { ct
     }
     const left = align === "right" ? x + maxW - w : x;
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={logo.dataUri} alt="" width={w} height={h} style={{ position: "absolute", left, top: y, width: w, height: h, objectFit: "contain" }} />;
+    return (
+      <img
+        src={logo.dataUri}
+        alt=""
+        width={w}
+        height={h}
+        style={{ position: "absolute", left, top: y, width: w, height: h, objectFit: "contain" }}
+      />
+    );
   }
   const raw = ctx.doc.style.handle.trim();
   if (!raw) return null;
@@ -486,7 +573,8 @@ export function Brandmark({ ctx, x, y, maxW, maxH, color, align = "left" }: { ct
   while (size > 20 && measureWidth(raw, { font, weight: 600, size }) > maxW) size -= 2;
   let handle = raw;
   if (measureWidth(handle, { font, weight: 600, size }) > maxW) {
-    while (handle.length > 4 && measureWidth(`${handle}…`, { font, weight: 600, size }) > maxW) handle = handle.slice(0, -1);
+    while (handle.length > 4 && measureWidth(`${handle}…`, { font, weight: 600, size }) > maxW)
+      handle = handle.slice(0, -1);
     handle = `${handle}…`;
     ctx.issues.push("handle_truncated");
   }
@@ -512,7 +600,21 @@ export function Brandmark({ ctx, x, y, maxW, maxH, color, align = "left" }: { ct
 }
 
 /** Numeração da lâmina em carrosséis. */
-export function Counter({ ctx, x, y, color, align = "right", width = 200 }: { ctx: SlideCtx; x: number; y: number; color?: string; align?: "left" | "right"; width?: number }) {
+export function Counter({
+  ctx,
+  x,
+  y,
+  color,
+  align = "right",
+  width = 200,
+}: {
+  ctx: SlideCtx;
+  x: number;
+  y: number;
+  color?: string;
+  align?: "left" | "right";
+  width?: number;
+}) {
   if (!ctx.isCarousel) return null;
   return (
     <div
@@ -554,14 +656,31 @@ export function SwipeHint({ ctx, x, y, color }: { ctx: SlideCtx; x: number; y: n
     >
       <span style={{ marginRight: 12 }}>Deslize</span>
       <svg width="34" height="20" viewBox="0 0 34 20">
-        <path d="M2 10 H30 M22 2 L31 10 L22 18" stroke={color ?? ctx.palette.muted} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <path
+          d="M2 10 H30 M22 2 L31 10 L22 18"
+          stroke={color ?? ctx.palette.muted}
+          strokeWidth="3"
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </svg>
     </div>
   );
 }
 
 /** Filete de destaque usado como `lead` de pilhas de texto. */
-export function AccentRule({ color, width = 96, height = 6, gap = 30 }: { color: string; width?: number; height?: number; gap?: number }) {
+export function AccentRule({
+  color,
+  width = 96,
+  height = 6,
+  gap = 30,
+}: {
+  color: string;
+  width?: number;
+  height?: number;
+  gap?: number;
+}) {
   return <div style={{ display: "flex", width, height, backgroundColor: color, marginBottom: gap }} />;
 }
 

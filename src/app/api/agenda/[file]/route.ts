@@ -9,5 +9,11 @@ export async function GET(_request: Request, { params }: { params: Promise<{ fil
     return null;
   });
   if (!ics) return new Response("Agenda não encontrada", { status: 404 });
-  return new Response(ics, { headers: { "content-type": "text/calendar; charset=utf-8", "cache-control": "private, max-age=600", "content-disposition": 'inline; filename="prisma-os.ics"' } });
+  return new Response(ics, {
+    headers: {
+      "content-type": "text/calendar; charset=utf-8",
+      "cache-control": "private, max-age=600",
+      "content-disposition": 'inline; filename="prisma-os.ics"',
+    },
+  });
 }

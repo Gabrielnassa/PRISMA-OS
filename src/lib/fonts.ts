@@ -11,7 +11,10 @@ export const FONT_IDS = [
 ] as const;
 export type FontId = (typeof FONT_IDS)[number];
 
-export const FONT_CATALOG: Record<FontId, { label: string; category: "sans" | "serif" | "display"; weights: number[] }> = {
+export const FONT_CATALOG: Record<
+  FontId,
+  { label: string; category: "sans" | "serif" | "display"; weights: number[] }
+> = {
   inter: { label: "Inter", category: "sans", weights: [400, 600, 800] },
   "dm-sans": { label: "DM Sans", category: "sans", weights: [400, 600, 800] },
   montserrat: { label: "Montserrat", category: "sans", weights: [400, 600, 800] },

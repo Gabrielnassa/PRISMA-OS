@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { resetEnvCache } from "@/server/env";
 import { IntegrationError, IntegrationNotConfiguredError, ValidationError } from "@/server/errors";
-import { downloadMetaImage, fetchInstagramProfile, instagramStatus, isMetaCdnUrl, normalizeHandle } from "@/server/integrations/instagram";
+import {
+  downloadMetaImage,
+  fetchInstagramProfile,
+  instagramStatus,
+  isMetaCdnUrl,
+  normalizeHandle,
+} from "@/server/integrations/instagram";
 
 const saved = { token: process.env.META_ACCESS_TOKEN, id: process.env.META_IG_USER_ID, db: process.env.DATABASE_URL };
 
@@ -58,7 +64,9 @@ describe("consulta pela API oficial da Meta", () => {
     expect(instagramStatus().configured).toBe(false);
     expect(instagramStatus().detail).toMatch(/META_ACCESS_TOKEN e META_IG_USER_ID/);
     let called = false;
-    await expect(fetchInstagramProfile("cafe", { fetchImpl: (async () => ((called = true), json({}))) as typeof fetch })).rejects.toBeInstanceOf(IntegrationNotConfiguredError);
+    await expect(
+      fetchInstagramProfile("cafe", { fetchImpl: (async () => ((called = true), json({}))) as typeof fetch }),
+    ).rejects.toBeInstanceOf(IntegrationNotConfiguredError);
     expect(called).toBe(false);
   });
 
@@ -90,7 +98,11 @@ describe("consulta pela API oficial da Meta", () => {
           media: {
             data: [
               { media_type: "IMAGE", media_url: "https://scontent.cdninstagram.com/p1.jpg" },
-              { media_type: "VIDEO", media_url: "https://scontent.cdninstagram.com/v.mp4", thumbnail_url: "https://scontent.cdninstagram.com/capa.jpg" },
+              {
+                media_type: "VIDEO",
+                media_url: "https://scontent.cdninstagram.com/v.mp4",
+                thumbnail_url: "https://scontent.cdninstagram.com/capa.jpg",
+              },
               { media_type: "CAROUSEL_ALBUM", media_url: "https://outro-site.com/x.jpg" },
             ],
           },
@@ -101,7 +113,9 @@ describe("consulta pela API oficial da Meta", () => {
     }) as typeof fetch;
     const p = await fetchInstagramProfile("@Cafe.DaEsquina", { fetchImpl });
     expect(seenUrl).toContain("https://graph.facebook.com/v23.0/17841400000000000?fields=");
-    expect(decodeURIComponent(seenUrl)).toContain("business_discovery.username(cafe.daesquina){username,name,profile_picture_url,media.limit(9){media_type,media_url,thumbnail_url}}");
+    expect(decodeURIComponent(seenUrl)).toContain(
+      "business_discovery.username(cafe.daesquina){username,name,profile_picture_url,media.limit(9){media_type,media_url,thumbnail_url}}",
+    );
     expect(seenUrl).not.toContain("access_token");
     expect(seenAuth).toBe("Bearer EAAtokenexemplo1234567890");
     expect(p).toEqual({
@@ -121,20 +135,36 @@ describe("consulta pela API oficial da Meta", () => {
       [{ error: { code: 1 } }, 500, /HTTP 500, código 1/],
     ];
     for (const [body, status, msg] of cases) {
-      const err = await fetchInstagramProfile("cafe", { fetchImpl: (async () => json(body, status)) as typeof fetch }).catch((e) => e);
+      const err = await fetchInstagramProfile("cafe", {
+        fetchImpl: (async () => json(body, status)) as typeof fetch,
+      }).catch((e) => e);
       expect(err).toBeInstanceOf(IntegrationError);
       expect((err as Error).message).toMatch(msg);
     }
-    const net = await fetchInstagramProfile("cafe", { fetchImpl: (async () => { throw new TypeError("fetch failed"); }) as typeof fetch }).catch((e) => e);
+    const net = await fetchInstagramProfile("cafe", {
+      fetchImpl: (async () => {
+        throw new TypeError("fetch failed");
+      }) as typeof fetch,
+    }).catch((e) => e);
     expect((net as IntegrationError).retryable).toBe(true);
   });
 
   it("baixa só imagens do CDN, com tipo e tamanho conferidos", async () => {
-    const img = (type: string, body = "abc") => (async () => new Response(body, { status: 200, headers: { "content-type": type } })) as typeof fetch;
+    const img = (type: string, body = "abc") =>
+      (async () => new Response(body, { status: 200, headers: { "content-type": type } })) as typeof fetch;
     expect(await downloadMetaImage("https://example.com/a.jpg", { fetchImpl: img("image/jpeg") })).toBeNull();
-    expect(await downloadMetaImage("https://scontent.cdninstagram.com/a.jpg", { fetchImpl: img("text/html") })).toBeNull();
-    expect(await downloadMetaImage("https://scontent.cdninstagram.com/a.jpg", { fetchImpl: img("image/jpeg", "x".repeat(50)), maxBytes: 10 })).toBeNull();
-    const ok = await downloadMetaImage("https://scontent.cdninstagram.com/a.jpg", { fetchImpl: img("image/jpeg; charset=binary") });
+    expect(
+      await downloadMetaImage("https://scontent.cdninstagram.com/a.jpg", { fetchImpl: img("text/html") }),
+    ).toBeNull();
+    expect(
+      await downloadMetaImage("https://scontent.cdninstagram.com/a.jpg", {
+        fetchImpl: img("image/jpeg", "x".repeat(50)),
+        maxBytes: 10,
+      }),
+    ).toBeNull();
+    const ok = await downloadMetaImage("https://scontent.cdninstagram.com/a.jpg", {
+      fetchImpl: img("image/jpeg; charset=binary"),
+    });
     expect(ok?.mimeType).toBe("image/jpeg");
     expect(ok?.data.toString()).toBe("abc");
   });

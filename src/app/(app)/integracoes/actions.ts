@@ -3,7 +3,13 @@
 import { requireAuth } from "@/server/auth/next";
 import { refresh } from "next/cache";
 import { bool, runAction, str, type ActionState } from "@/server/actions";
-import { APP_PROVIDERS, APP_PROVIDER_INFO, removeAppCredentials, saveAppCredentials, type AppProvider } from "@/server/services/integration-apps";
+import {
+  APP_PROVIDERS,
+  APP_PROVIDER_INFO,
+  removeAppCredentials,
+  saveAppCredentials,
+  type AppProvider,
+} from "@/server/services/integration-apps";
 import { removeSmtp, saveSmtp, testSmtp } from "@/server/services/email";
 import { createWebhook, deleteWebhook, testWebhook } from "@/server/services/webhooks";
 import { assertCan } from "@/server/authz/permissions";
@@ -31,7 +37,9 @@ export async function testProviderAction(_prev: ActionState, _form: FormData): P
     );
     // A mensagem do provedor já é segura (traduzida em mapAnthropicError) e é o diagnóstico que o administrador precisa.
     if (!r.ok) throw new IntegrationError(r.detail, false);
-    return { message: `${r.detail}${r.usage ? ` Consumo do teste: ${r.usage.inputTokens + r.usage.cacheReadTokens + r.usage.cacheWriteTokens} tokens de entrada, ${r.usage.outputTokens} de saída.` : ""}` };
+    return {
+      message: `${r.detail}${r.usage ? ` Consumo do teste: ${r.usage.inputTokens + r.usage.cacheReadTokens + r.usage.cacheWriteTokens} tokens de entrada, ${r.usage.outputTokens} de saída.` : ""}`,
+    };
   });
 }
 
@@ -64,7 +72,14 @@ export async function removeAppAction(_prev: ActionState, form: FormData): Promi
 export async function saveSmtpAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const auth = await requireAuth();
   return runAction(async () => {
-    await saveSmtp(auth, { host: str(form, "host"), port: str(form, "port"), secure: bool(form, "secure"), user: str(form, "user"), from: str(form, "from"), password: str(form, "password") });
+    await saveSmtp(auth, {
+      host: str(form, "host"),
+      port: str(form, "port"),
+      secure: bool(form, "secure"),
+      user: str(form, "user"),
+      from: str(form, "from"),
+      password: str(form, "password"),
+    });
     refresh();
     return { message: "E-mail configurado. Use “Enviar teste” para conferir." };
   });
@@ -87,7 +102,10 @@ export async function removeSmtpAction(_prev: ActionState, _form: FormData): Pro
   });
 }
 
-export async function createWebhookAction(_prev: ActionState<{ secret: string }>, form: FormData): Promise<ActionState<{ secret: string }>> {
+export async function createWebhookAction(
+  _prev: ActionState<{ secret: string }>,
+  form: FormData,
+): Promise<ActionState<{ secret: string }>> {
   const auth = await requireAuth();
   return runAction(async () => {
     const r = await createWebhook(auth, { url: str(form, "url"), events: form.getAll("events").map(String) });

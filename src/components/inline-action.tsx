@@ -5,14 +5,25 @@ import { ActionForm, useFormPending } from "./form";
 import { cx } from "./ui";
 import { useToastAction } from "./toast";
 
-function InlineButton({ label, pendingText, tone }: { label: string; pendingText: string; tone: "neutral" | "danger" }) {
+function InlineButton({
+  label,
+  pendingText,
+  tone,
+}: {
+  label: string;
+  pendingText: string;
+  tone: "neutral" | "danger";
+}) {
   const pending = useFormPending();
   return (
     <button
       type="submit"
       disabled={pending}
       aria-busy={pending}
-      className={cx("text-xs hover:underline disabled:cursor-wait disabled:opacity-60", tone === "danger" ? "text-red-300" : "text-ink-300 hover:text-ink-50")}
+      className={cx(
+        "text-xs hover:underline disabled:cursor-wait disabled:opacity-60",
+        tone === "danger" ? "text-red-300" : "text-ink-300 hover:text-ink-50",
+      )}
     >
       {pending ? pendingText : label}
     </button>
@@ -43,7 +54,14 @@ export function InlineAction({
 }) {
   const [state, dispatch] = useToastAction(action);
   return (
-    <ActionForm action={dispatch} state={state} confirmMessage={confirmMessage} confirmLabel={label} danger={tone === "danger"} className={className}>
+    <ActionForm
+      action={dispatch}
+      state={state}
+      confirmMessage={confirmMessage}
+      confirmLabel={label}
+      danger={tone === "danger"}
+      className={className}
+    >
       {Object.entries(fields).map(([name, value]) => (
         <input key={name} type="hidden" name={name} value={value} />
       ))}

@@ -3,7 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-type Status = { status: string; job: { status: string; attempts: number; maxAttempts: number; lastError: string | null } | null };
+type Status = {
+  status: string;
+  job: { status: string; attempts: number; maxAttempts: number; lastError: string | null } | null;
+};
 
 /** Acompanha a tarefa de geração e atualiza a página ao concluir. */
 export function GenerationStatus({ contentId }: { contentId: string }) {
@@ -36,9 +39,16 @@ export function GenerationStatus({ contentId }: { contentId: string }) {
 
   const job = data?.job;
   return (
-    <div className="relative flex items-start gap-4 overflow-hidden rounded-[var(--radius-card)] border border-ink-800 bg-ink-900 p-5 pl-6" role="status" aria-live="polite">
+    <div
+      className="relative flex items-start gap-4 overflow-hidden rounded-[var(--radius-card)] border border-ink-800 bg-ink-900 p-5 pl-6"
+      role="status"
+      aria-live="polite"
+    >
       <span aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-sky-400" />
-      <span className="mt-1 size-5 shrink-0 animate-spin rounded-full border-2 border-sky-300 border-t-transparent" aria-hidden />
+      <span
+        className="mt-1 size-5 shrink-0 animate-spin rounded-full border-2 border-sky-300 border-t-transparent"
+        aria-hidden
+      />
       <div className="text-sm">
         <div className="font-semibold text-sky-100">Gerando a peça</div>
         <p className="mt-1 text-sky-100/80">
@@ -47,7 +57,9 @@ export function GenerationStatus({ contentId }: { contentId: string }) {
             : job?.status === "queued"
               ? `Falha temporária; nova tentativa em instantes (${job.attempts} de ${job.maxAttempts}). ${job.lastError ?? ""}`
               : job?.status === "running"
-                ? job.attempts > 1 ? `Escrevendo os textos e montando a arte (tentativa ${job.attempts} de ${job.maxAttempts}).` : "Escrevendo os textos e montando a arte."
+                ? job.attempts > 1
+                  ? `Escrevendo os textos e montando a arte (tentativa ${job.attempts} de ${job.maxAttempts}).`
+                  : "Escrevendo os textos e montando a arte."
                 : "Verificando o andamento..."}
         </p>
         <p className="mt-2 text-xs text-sky-100/60">Costuma levar menos de um minuto.</p>

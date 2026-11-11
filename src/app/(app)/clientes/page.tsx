@@ -10,19 +10,33 @@ import { CreateClientForm } from "./create-client-form";
 
 export const metadata: Metadata = { title: "Clientes" };
 
-const STATUS = { active: { label: "Ativo", tone: "success" }, paused: { label: "Pausado", tone: "warning" }, archived: { label: "Arquivado", tone: "neutral" } } as const;
+const STATUS = {
+  active: { label: "Ativo", tone: "success" },
+  paused: { label: "Pausado", tone: "warning" },
+  archived: { label: "Arquivado", tone: "neutral" },
+} as const;
 
-export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ arquivados?: string; excluido?: string; erro?: string }> }) {
+export default async function ClientsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ arquivados?: string; excluido?: string; erro?: string }>;
+}) {
   const auth = await requireAuth();
   const { arquivados, excluido, erro } = await searchParams;
-  const [clients, months] = await Promise.all([listClients(auth, { includeArchived: arquivados === "1" }), monthByClient(auth, currentMonth())]);
+  const [clients, months] = await Promise.all([
+    listClients(auth, { includeArchived: arquivados === "1" }),
+    monthByClient(auth, currentMonth()),
+  ]);
   const month = new Map(months.map((m) => [m.clientId, m]));
   return (
     <>
       <PageHeader
         title="Clientes"
         actions={
-          <Link href={arquivados === "1" ? "/clientes" : "/clientes?arquivados=1"} className="text-sm text-ink-300 hover:text-ink-50">
+          <Link
+            href={arquivados === "1" ? "/clientes" : "/clientes?arquivados=1"}
+            className="text-sm text-ink-300 hover:text-ink-50"
+          >
             {arquivados === "1" ? "Ocultar arquivados" : "Mostrar arquivados"}
           </Link>
         }
@@ -50,7 +64,11 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
       {clients.length === 0 ? (
         <EmptyState
           title="Nenhum cliente disponível"
-          description={can(auth.role, "client.create") ? "Cadastre o primeiro cliente acima." : "Peça ao administrador acesso aos clientes com que você trabalha."}
+          description={
+            can(auth.role, "client.create")
+              ? "Cadastre o primeiro cliente acima."
+              : "Peça ao administrador acesso aos clientes com que você trabalha."
+          }
         />
       ) : (
         <Card>
@@ -69,7 +87,10 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
               {clients.map((c) => (
                 <tr key={c.id} className="transition-colors hover:bg-ink-850/50">
                   <Td>
-                    <Link href={`/clientes/${c.id}`} className="font-medium text-ink-50 underline-offset-4 hover:underline">
+                    <Link
+                      href={`/clientes/${c.id}`}
+                      className="font-medium text-ink-50 underline-offset-4 hover:underline"
+                    >
                       {c.name}
                     </Link>
                   </Td>
@@ -82,15 +103,39 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
                   <Td className="min-w-[150px]">
                     {(() => {
                       const m = month.get(c.id);
-                      if (!m || m.contracted === 0) return <Link href={`/clientes/${c.id}?aba=editorial`} className="text-[12.5px] text-ink-400 hover:text-ink-100">Definir pacote</Link>;
+                      if (!m || m.contracted === 0)
+                        return (
+                          <Link
+                            href={`/clientes/${c.id}?aba=editorial`}
+                            className="text-[12.5px] text-ink-400 hover:text-ink-100"
+                          >
+                            Definir pacote
+                          </Link>
+                        );
                       const pct = Math.min(100, Math.round((m.produced / m.contracted) * 100));
                       return (
-                        <Link href={`/clientes/${c.id}?aba=editorial`} className="block" title={m.plan === "approved" ? "Linha editorial aprovada" : m.plan === "draft" ? "Linha editorial em rascunho" : "Sem linha editorial no mês"}>
+                        <Link
+                          href={`/clientes/${c.id}?aba=editorial`}
+                          className="block"
+                          title={
+                            m.plan === "approved"
+                              ? "Linha editorial aprovada"
+                              : m.plan === "draft"
+                                ? "Linha editorial em rascunho"
+                                : "Sem linha editorial no mês"
+                          }
+                        >
                           <span className="tabular text-[12.5px] text-ink-100">
                             {m.produced} de {m.contracted}
                           </span>
                           <span className="mt-1 block h-[3px] rounded-full bg-ink-800">
-                            <span className={cx("block h-[3px] rounded-full", pct >= 100 ? "bg-emerald-400" : "bg-iris-400")} style={{ width: `${pct}%` }} />
+                            <span
+                              className={cx(
+                                "block h-[3px] rounded-full",
+                                pct >= 100 ? "bg-emerald-400" : "bg-iris-400",
+                              )}
+                              style={{ width: `${pct}%` }}
+                            />
                           </span>
                         </Link>
                       );

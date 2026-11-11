@@ -75,24 +75,38 @@ export function ContentTable({
   return (
     <>
       {onDelete && chosen.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-ink-800 bg-ink-850/60 px-5 py-2.5 text-[13px]" role="region" aria-label="Ações para os selecionados">
+        <div
+          className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-ink-800 bg-ink-850/60 px-5 py-2.5 text-[13px]"
+          role="region"
+          aria-label="Ações para os selecionados"
+        >
           {confirming ? (
             <>
               <span className="text-ink-100">
-                Excluir {chosen.length === 1 ? "1 conteúdo" : `${chosen.length} conteúdos`} de vez? Versões, aprovações e comentários também serão apagados. Não dá para desfazer.
+                Excluir {chosen.length === 1 ? "1 conteúdo" : `${chosen.length} conteúdos`} de vez? Versões, aprovações
+                e comentários também serão apagados. Não dá para desfazer.
               </span>
               <span className="ml-auto flex gap-2">
                 <Button type="button" size="sm" variant="ghost" disabled={pending} onClick={() => setConfirming(false)}>
                   Cancelar
                 </Button>
-                <Button type="button" size="sm" variant="danger" disabled={pending} aria-busy={pending} onClick={remove}>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="danger"
+                  disabled={pending}
+                  aria-busy={pending}
+                  onClick={remove}
+                >
                   {pending ? "Excluindo..." : "Sim, excluir"}
                 </Button>
               </span>
             </>
           ) : (
             <>
-              <span className="font-medium text-ink-100">{chosen.length === 1 ? "1 selecionado" : `${chosen.length} selecionados`}</span>
+              <span className="font-medium text-ink-100">
+                {chosen.length === 1 ? "1 selecionado" : `${chosen.length} selecionados`}
+              </span>
               <button type="button" className="text-ink-400 hover:text-ink-100" onClick={() => setSelected([])}>
                 Limpar seleção
               </button>
@@ -110,14 +124,27 @@ export function ContentTable({
           return (
             <li key={c.id} className={cx("flex gap-3 px-4 py-3.5", on && "bg-iris-400/[0.05]")}>
               {onDelete ? (
-                <input type="checkbox" className={cx(checkbox, "mt-1")} aria-label={`Selecionar ${c.title} (lista)`} checked={on} disabled={c.status === "generating"} onChange={() => toggle(c.id)} />
+                <input
+                  type="checkbox"
+                  className={cx(checkbox, "mt-1")}
+                  aria-label={`Selecionar ${c.title} (lista)`}
+                  checked={on}
+                  disabled={c.status === "generating"}
+                  onChange={() => toggle(c.id)}
+                />
               ) : null}
               <div className="min-w-0 flex-1">
-                <Link href={`/conteudos/${c.id}`} className="block font-medium leading-snug text-ink-50">
+                <Link href={`/conteudos/${c.id}`} className="block leading-snug font-medium text-ink-50">
                   {c.title}
                 </Link>
                 <div className="mt-1 text-[12.5px] text-ink-400">
-                  {[showClient ? c.clientName : null, FORMAT_LABELS[c.format], c.currentVersion ? `v${c.currentVersion}` : null].filter(Boolean).join(" · ")}
+                  {[
+                    showClient ? c.clientName : null,
+                    FORMAT_LABELS[c.format],
+                    c.currentVersion ? `v${c.currentVersion}` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
                 </div>
                 <div className="mt-2 flex items-center justify-between gap-3">
                   <StatusBadge status={c.status} />
@@ -136,7 +163,14 @@ export function ContentTable({
             <tr>
               {onDelete ? (
                 <Th className="w-10 pr-0">
-                  <input type="checkbox" className={checkbox} aria-label="Selecionar todos desta página" checked={allOn} disabled={selectable.length === 0} onChange={toggleAll} />
+                  <input
+                    type="checkbox"
+                    className={checkbox}
+                    aria-label="Selecionar todos desta página"
+                    checked={allOn}
+                    disabled={selectable.length === 0}
+                    onChange={toggleAll}
+                  />
                 </Th>
               ) : null}
               <Th>Título</Th>
@@ -166,7 +200,10 @@ export function ContentTable({
                     </Td>
                   ) : null}
                   <Td>
-                    <Link href={`/conteudos/${c.id}`} className="font-medium text-ink-50 underline-offset-4 hover:underline">
+                    <Link
+                      href={`/conteudos/${c.id}`}
+                      className="font-medium text-ink-50 underline-offset-4 hover:underline"
+                    >
                       {c.title}
                     </Link>
                   </Td>
@@ -179,7 +216,7 @@ export function ContentTable({
                     {c.currentVersion ? `v${c.currentVersion}` : "—"}
                     {c.hasApprovedVersion ? <span className="ml-1 text-xs text-emerald-300">(aprovada)</span> : null}
                   </Td>
-                  <Td className="whitespace-nowrap text-[13px] text-ink-400">
+                  <Td className="text-[13px] whitespace-nowrap text-ink-400">
                     <span title={c.updatedTitle}>{c.updatedLabel}</span>
                   </Td>
                 </tr>

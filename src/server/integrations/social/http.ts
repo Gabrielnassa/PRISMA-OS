@@ -10,12 +10,19 @@ export function setSocialFetch(f: typeof fetch | undefined): void {
   override = f;
 }
 
-export async function socialFetch(url: string, init: RequestInit & { timeoutMs?: number; network: string }): Promise<Response> {
+export async function socialFetch(
+  url: string,
+  init: RequestInit & { timeoutMs?: number; network: string },
+): Promise<Response> {
   const { timeoutMs = 30_000, network, ...rest } = init;
   try {
     return await (override ?? fetch)(url, { ...rest, signal: AbortSignal.timeout(timeoutMs) });
   } catch (err) {
-    throw new IntegrationError(`Não foi possível falar com ${network} (rede ou tempo esgotado). Uma nova tentativa é feita em instantes.`, true, { cause: err, providerCode: "network" });
+    throw new IntegrationError(
+      `Não foi possível falar com ${network} (rede ou tempo esgotado). Uma nova tentativa é feita em instantes.`,
+      true,
+      { cause: err, providerCode: "network" },
+    );
   }
 }
 

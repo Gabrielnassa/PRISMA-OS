@@ -45,7 +45,10 @@ export async function saveVersionAction(
 export async function submitApprovalAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const auth = await requireAuth();
   return runAction(async () => {
-    await submitForApproval(auth, str(form, "contentId"), { versionId: str(form, "versionId"), note: str(form, "note") });
+    await submitForApproval(auth, str(form, "contentId"), {
+      versionId: str(form, "versionId"),
+      note: str(form, "note"),
+    });
     refresh();
     return { message: "Enviado para aprovação." };
   });
@@ -57,7 +60,10 @@ export async function decideApprovalAction(_prev: ActionState, form: FormData): 
     const decision = str(form, "decision") === "approved" ? "approved" : "rejected";
     await decideApproval(auth, str(form, "approvalId"), { decision, note: str(form, "note") });
     refresh();
-    return { message: decision === "approved" ? "Versão aprovada." : "Versão reprovada; a equipe foi orientada pelo comentário." };
+    return {
+      message:
+        decision === "approved" ? "Versão aprovada." : "Versão reprovada; a equipe foi orientada pelo comentário.",
+    };
   });
 }
 
@@ -112,7 +118,10 @@ export async function retryGenerationAction(_prev: ActionState, form: FormData):
 }
 
 /** Revisão por IA (consultiva; não substitui as regras nem a aprovação humana). */
-export async function aiReviewAction(_prev: ActionState<ReviewOutput>, form: FormData): Promise<ActionState<ReviewOutput>> {
+export async function aiReviewAction(
+  _prev: ActionState<ReviewOutput>,
+  form: FormData,
+): Promise<ActionState<ReviewOutput>> {
   const auth = await requireAuth();
   return runAction(async () => {
     assertCan(auth.role, "content.edit");
@@ -134,11 +143,21 @@ export async function aiReviewAction(_prev: ActionState<ReviewOutput>, form: For
       },
     });
     refresh();
-    return { data: out.output, message: out.isDemo ? "Revisão de demonstração." : out.reused ? "Esta versão já tinha sido revisada (sem nova cobrança)." : undefined };
+    return {
+      data: out.output,
+      message: out.isDemo
+        ? "Revisão de demonstração."
+        : out.reused
+          ? "Esta versão já tinha sido revisada (sem nova cobrança)."
+          : undefined,
+    };
   });
 }
 
-export async function approvalLinkAction(_prev: ActionState<{ url: string; expiresAt: string; clientName: string; title: string }>, form: FormData): Promise<ActionState<{ url: string; expiresAt: string; clientName: string; title: string }>> {
+export async function approvalLinkAction(
+  _prev: ActionState<{ url: string; expiresAt: string; clientName: string; title: string }>,
+  form: FormData,
+): Promise<ActionState<{ url: string; expiresAt: string; clientName: string; title: string }>> {
   const auth = await requireAuth();
   return runAction(async () => ({ data: await createApprovalLink(auth, str(form, "approvalId")) }));
 }
@@ -155,7 +174,10 @@ export async function emailApprovalLinkAction(_prev: ActionState, form: FormData
       subject: `Aprovação: ${link.title}`,
       text: `Olá!\n\n${auth.userName}, da ${auth.organizationName}, enviou "${link.title}" para a sua aprovação.\n\nVeja a peça e responda por aqui (sem login): ${link.url}\n\nO link vale até ${new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeZone: "America/Sao_Paulo" }).format(new Date(link.expiresAt))}.`,
     });
-    if (!sent) throw new ValidationError("O e-mail ainda não está configurado em Integrações. Copie o link ou envie pelo WhatsApp.");
+    if (!sent)
+      throw new ValidationError(
+        "O e-mail ainda não está configurado em Integrações. Copie o link ou envie pelo WhatsApp.",
+      );
     return { message: `Link enviado para ${email}.` };
   });
 }
@@ -163,7 +185,10 @@ export async function emailApprovalLinkAction(_prev: ActionState, form: FormData
 export async function assignAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const auth = await requireAuth();
   return runAction(async () => {
-    await setAssignment(auth, str(form, "contentId"), { assigneeId: str(form, "assigneeId") || null, dueDate: str(form, "dueDate") || null });
+    await setAssignment(auth, str(form, "contentId"), {
+      assigneeId: str(form, "assigneeId") || null,
+      dueDate: str(form, "dueDate") || null,
+    });
     refresh();
     return { message: "Responsável e prazo salvos." };
   });

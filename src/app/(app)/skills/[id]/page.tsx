@@ -6,9 +6,25 @@ import { can } from "@/server/authz/permissions";
 import { NotFoundError } from "@/server/errors";
 import { providerStatus } from "@/server/ai/gateway";
 import { listClients } from "@/server/services/clients";
-import { getCustomSkill, listCustomSkillRuns, newRunKey, type CustomSkillDetail } from "@/server/services/custom-skills";
+import {
+  getCustomSkill,
+  listCustomSkillRuns,
+  newRunKey,
+  type CustomSkillDetail,
+} from "@/server/services/custom-skills";
 import type { AuthContext } from "@/server/auth/types";
-import { Alert, Badge, Card, CardHeader, EmptyState, PageHeader, TabLinks, buttonClass, formatDateTime, formatUsd } from "@/components/ui";
+import {
+  Alert,
+  Badge,
+  Card,
+  CardHeader,
+  EmptyState,
+  PageHeader,
+  TabLinks,
+  buttonClass,
+  formatDateTime,
+  formatUsd,
+} from "@/components/ui";
 import { InlineAction } from "@/components/inline-action";
 import { CopyButton } from "@/components/copy-button";
 import { SkillForm } from "../skill-form";
@@ -34,7 +50,12 @@ export default async function SkillPage({
     throw err;
   });
   const canManage = can(auth.role, "skills.manage");
-  const tabs: Array<[string, string]> = [["usar", "Usar"], ["historico", "Histórico"], ...(canManage ? ([["editar", "Editar"]] as Array<[string, string]>) : []), ["versoes", "Versões"]];
+  const tabs: Array<[string, string]> = [
+    ["usar", "Usar"],
+    ["historico", "Histórico"],
+    ...(canManage ? ([["editar", "Editar"]] as Array<[string, string]>) : []),
+    ["versoes", "Versões"],
+  ];
   const tab = tabs.some(([t]) => t === aba) ? aba! : "usar";
 
   return (
@@ -71,11 +92,21 @@ export default async function SkillPage({
         <div className="mb-6">
           <Alert tone="warning" title="Skill arquivada">
             Ela não aparece na lista principal e não pode ser executada.
-            {canManage ? <InlineAction action={skillStatusAction} fields={{ skillId: skill.id, op: "restore" }} label="Restaurar skill" className="mt-2" /> : null}
+            {canManage ? (
+              <InlineAction
+                action={skillStatusAction}
+                fields={{ skillId: skill.id, op: "restore" }}
+                label="Restaurar skill"
+                className="mt-2"
+              />
+            ) : null}
           </Alert>
         </div>
       ) : null}
-      <TabLinks tabs={tabs.map(([t, label]) => ({ id: t, label, href: `/skills/${skill.id}?aba=${t}` }))} active={tab} />
+      <TabLinks
+        tabs={tabs.map(([t, label]) => ({ id: t, label, href: `/skills/${skill.id}?aba=${t}` }))}
+        active={tab}
+      />
       {tab === "usar" ? <UseTab auth={auth} skill={skill} defaultClientId={cliente ?? null} /> : null}
       {tab === "historico" ? <HistoryTab auth={auth} skill={skill} /> : null}
       {tab === "editar" && canManage ? <EditTab auth={auth} skill={skill} /> : null}
@@ -84,13 +115,35 @@ export default async function SkillPage({
   );
 }
 
-async function UseTab({ auth, skill, defaultClientId }: { auth: AuthContext; skill: CustomSkillDetail; defaultClientId: string | null }) {
+async function UseTab({
+  auth,
+  skill,
+  defaultClientId,
+}: {
+  auth: AuthContext;
+  skill: CustomSkillDetail;
+  defaultClientId: string | null;
+}) {
   if (!can(auth.role, "skills.run")) {
-    return <EmptyState title="Sem permissão para executar" description="Seu acesso permite consultar a skill e o histórico." />;
+    return (
+      <EmptyState
+        title="Sem permissão para executar"
+        description="Seu acesso permite consultar a skill e o histórico."
+      />
+    );
   }
-  if (skill.status === "archived") return <EmptyState title="Skill arquivada" description="Restaure a skill para voltar a usá-la." />;
-  const clients = (await listClients(auth)).filter((c) => c.status !== "archived").map((c) => ({ id: c.id, name: c.name }));
-  if (clients.length === 0) return <EmptyState title="Cadastre um cliente primeiro" description="Cada execução usa a marca e a memória de um cliente." />;
+  if (skill.status === "archived")
+    return <EmptyState title="Skill arquivada" description="Restaure a skill para voltar a usá-la." />;
+  const clients = (await listClients(auth))
+    .filter((c) => c.status !== "archived")
+    .map((c) => ({ id: c.id, name: c.name }));
+  if (clients.length === 0)
+    return (
+      <EmptyState
+        title="Cadastre um cliente primeiro"
+        description="Cada execução usa a marca e a memória de um cliente."
+      />
+    );
   const fixedClient = skill.clientId ? { id: skill.clientId, name: skill.clientName ?? "cliente" } : null;
   const provider = providerStatus();
   return (
@@ -99,7 +152,9 @@ async function UseTab({ auth, skill, defaultClientId }: { auth: AuthContext; ski
       requestKey={newRunKey()}
       clients={clients}
       fixedClient={fixedClient}
-      defaultClientId={clients.some((c) => c.id === defaultClientId) ? defaultClientId : clients.length === 1 ? clients[0]!.id : null}
+      defaultClientId={
+        clients.some((c) => c.id === defaultClientId) ? defaultClientId : clients.length === 1 ? clients[0]!.id : null
+      }
       providerReady={provider.configured}
       canCreateContent={can(auth.role, "content.create")}
     />
@@ -139,13 +194,15 @@ async function HistoryTab({ auth, skill }: { auth: AuthContext; skill: CustomSki
               <div className="mt-3 space-y-3">
                 <div>
                   <div className="text-[12px] font-medium text-ink-400">Pedido</div>
-                  <p className="mt-1 whitespace-pre-wrap text-sm text-ink-300">{r.request || "—"}</p>
+                  <p className="mt-1 text-sm whitespace-pre-wrap text-ink-300">{r.request || "—"}</p>
                 </div>
                 {r.result !== null ? (
                   <>
                     <div>
                       <div className="text-[12px] font-medium text-ink-400">Resultado</div>
-                      <div className="mt-1 whitespace-pre-wrap rounded-lg border border-ink-700 bg-ink-850 p-4 text-sm leading-relaxed text-ink-100">{r.result}</div>
+                      <div className="mt-1 rounded-lg border border-ink-700 bg-ink-850 p-4 text-sm leading-relaxed whitespace-pre-wrap text-ink-100">
+                        {r.result}
+                      </div>
                     </div>
                     {r.assumptions.length ? (
                       <ul className="list-disc space-y-0.5 pl-5 text-sm text-ink-300">
@@ -176,20 +233,38 @@ async function HistoryTab({ auth, skill }: { auth: AuthContext; skill: CustomSki
 }
 
 async function EditTab({ auth, skill }: { auth: AuthContext; skill: CustomSkillDetail }) {
-  const clients = (await listClients(auth)).filter((c) => c.status !== "archived" || c.id === skill.clientId).map((c) => ({ id: c.id, name: c.name }));
+  const clients = (await listClients(auth))
+    .filter((c) => c.status !== "archived" || c.id === skill.clientId)
+    .map((c) => ({ id: c.id, name: c.name }));
   return (
     <div className="space-y-6">
       <SkillForm
         skillId={skill.id}
         version={skill.version}
         clients={clients}
-        initial={{ name: skill.name, description: skill.description, instructions: skill.instructions, effort: skill.effort, clientId: skill.clientId, source: skill.source }}
+        initial={{
+          name: skill.name,
+          description: skill.description,
+          instructions: skill.instructions,
+          effort: skill.effort,
+          clientId: skill.clientId,
+          source: skill.source,
+        }}
       />
       {skill.status === "active" ? (
         <Card>
-          <CardHeader title="Arquivar" description="A skill sai da lista e não pode ser executada. Histórico e versões ficam guardados." />
+          <CardHeader
+            title="Arquivar"
+            description="A skill sai da lista e não pode ser executada. Histórico e versões ficam guardados."
+          />
           <div className="p-5">
-            <InlineAction action={skillStatusAction} fields={{ skillId: skill.id, op: "archive" }} label="Arquivar skill" tone="danger" confirmMessage={`Arquivar a skill "${skill.name}"?`} />
+            <InlineAction
+              action={skillStatusAction}
+              fields={{ skillId: skill.id, op: "archive" }}
+              label="Arquivar skill"
+              tone="danger"
+              confirmMessage={`Arquivar a skill "${skill.name}"?`}
+            />
           </div>
         </Card>
       ) : null}
@@ -216,7 +291,9 @@ function VersionsTab({ skill }: { skill: CustomSkillDetail }) {
               <div className="mt-3 space-y-2 text-sm">
                 {v.description ? <p className="text-ink-300">{v.description}</p> : null}
                 <p className="text-xs text-ink-400">Esforço: {EFFORT_LABEL[v.effort] ?? v.effort}</p>
-                <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg border border-ink-700 bg-ink-850 p-4 font-mono text-xs text-ink-200">{v.instructions}</pre>
+                <pre className="max-h-96 overflow-auto rounded-lg border border-ink-700 bg-ink-850 p-4 font-mono text-xs whitespace-pre-wrap text-ink-200">
+                  {v.instructions}
+                </pre>
               </div>
             </details>
           </li>

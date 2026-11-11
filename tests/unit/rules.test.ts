@@ -54,7 +54,10 @@ describe("utilitários", () => {
 
 describe("validação de arquivos pelo conteúdo", () => {
   it("identifica PNG e lê dimensões", () => {
-    const png = svgToPng('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200"><rect width="320" height="200" fill="red"/></svg>', 320);
+    const png = svgToPng(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200"><rect width="320" height="200" fill="red"/></svg>',
+      320,
+    );
     expect(sniffType(png)?.mime).toBe("image/png");
     expect(imageSize(png, "image/png")).toEqual({ width: 320, height: 200 });
   });
@@ -62,7 +65,9 @@ describe("validação de arquivos pelo conteúdo", () => {
     expect(sniffType(Buffer.from("isto não é uma imagem, apenas texto"))).toBeNull();
   });
   it("detecta SVG e recusa scripts", () => {
-    const safe = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50"><rect width="100" height="50"/></svg>');
+    const safe = Buffer.from(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50"><rect width="100" height="50"/></svg>',
+    );
     expect(sniffType(safe)?.mime).toBe("image/svg+xml");
     expect(imageSize(safe, "image/svg+xml")).toEqual({ width: 100, height: 50 });
     expect(isUnsafeSvg(safe)).toBe(false);
@@ -71,7 +76,10 @@ describe("validação de arquivos pelo conteúdo", () => {
   });
   it("detecta PDF e JPEG", () => {
     expect(sniffType(Buffer.from("%PDF-1.7\n%âãÏÓ\n1 0 obj"))?.mime).toBe("application/pdf");
-    const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 8, 0x4a, 0x46, 0x49, 0x46, 0, 1, 0xff, 0xc0, 0, 17, 8, 0, 100, 0, 200, 3, 1, 0x22, 0, 2, 0x11, 1, 3, 0x11, 1]);
+    const jpeg = Buffer.from([
+      0xff, 0xd8, 0xff, 0xe0, 0, 8, 0x4a, 0x46, 0x49, 0x46, 0, 1, 0xff, 0xc0, 0, 17, 8, 0, 100, 0, 200, 3, 1, 0x22, 0,
+      2, 0x11, 1, 3, 0x11, 1,
+    ]);
     expect(sniffType(jpeg)?.mime).toBe("image/jpeg");
     expect(imageSize(jpeg, "image/jpeg")).toEqual({ width: 200, height: 100 });
   });
@@ -81,7 +89,16 @@ describe("redirecionamento e IP de origem", () => {
   it("aceita só caminhos internos após o login", async () => {
     const { safeNextPath } = await import("@/lib/safe-redirect");
     expect(safeNextPath("/conteudos?status=approved#x")).toBe("/conteudos?status=approved#x");
-    for (const bad of ["//evil.example", "/\\evil.example", "/\tevil", "https://evil.example", "evil", "/login", "/api/health", "/%0d%0aLocation:x"]) {
+    for (const bad of [
+      "//evil.example",
+      "/\\evil.example",
+      "/\tevil",
+      "https://evil.example",
+      "evil",
+      "/login",
+      "/api/health",
+      "/%0d%0aLocation:x",
+    ]) {
       const out = safeNextPath(bad);
       expect(out === "/" || !/evil/.test(out), bad).toBe(true);
       expect(new URL(out, "http://app.test").origin).toBe("http://app.test");
@@ -97,4 +114,3 @@ describe("redirecionamento e IP de origem", () => {
     expect(clientIpFrom(new Headers({ "x-forwarded-for": "<script>" }), true)).toBeNull();
   });
 });
-

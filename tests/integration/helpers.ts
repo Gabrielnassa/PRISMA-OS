@@ -16,12 +16,21 @@ export function uniqueEmail(prefix = "user"): string {
 
 export async function newOrg(name = "Agência Teste"): Promise<{ owner: AuthContext; email: string }> {
   const email = uniqueEmail("owner");
-  await createOrganizationWithOwner({ organizationName: `${name} ${crypto.randomUUID().slice(0, 4)}`, ownerName: "Pessoa Dona", ownerEmail: email, password: PASSWORD });
+  await createOrganizationWithOwner({
+    organizationName: `${name} ${crypto.randomUUID().slice(0, 4)}`,
+    ownerName: "Pessoa Dona",
+    ownerEmail: email,
+    password: PASSWORD,
+  });
   return { owner: await authFor(email, PASSWORD), email };
 }
 
 export async function authFor(email: string, password: string): Promise<AuthContext> {
-  const { token } = await login({ email, password, ip: `10.0.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}` });
+  const { token } = await login({
+    email,
+    password,
+    ip: `10.0.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`,
+  });
   const auth = await resolveSession(token);
   if (!auth) throw new Error("sessão não resolvida");
   return auth;
@@ -37,7 +46,10 @@ export async function addMember(owner: AuthContext, role: Role): Promise<AuthCon
 
 /** PNG real gerado localmente (para testes de upload e renderização). */
 export function samplePng(width = 1200, height = 1200, color = "#6a7b8c"): Buffer {
-  return svgToPng(`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="100%" height="100%" fill="${color}"/><circle cx="${width / 2}" cy="${height / 2}" r="${width / 4}" fill="#eeeeee"/></svg>`, width);
+  return svgToPng(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="100%" height="100%" fill="${color}"/><circle cx="${width / 2}" cy="${height / 2}" r="${width / 4}" fill="#eeeeee"/></svg>`,
+    width,
+  );
 }
 
 /**
@@ -65,7 +77,12 @@ export class FakeProvider implements AiProvider {
     if (failure) throw failure;
     if (!req.demo) throw new Error("sem demo");
     if (this.delayMs) await new Promise((r) => setTimeout(r, this.delayMs));
-    const byModel = this.nextUsageByModel ?? [{ model: this.model, usage: { inputTokens: 1000, outputTokens: 500, cacheReadTokens: 2000, cacheWriteTokens: 0 } }];
+    const byModel = this.nextUsageByModel ?? [
+      {
+        model: this.model,
+        usage: { inputTokens: 1000, outputTokens: 500, cacheReadTokens: 2000, cacheWriteTokens: 0 },
+      },
+    ];
     this.nextUsageByModel = null;
     const usage = byModel.reduce(
       (a, x) => ({

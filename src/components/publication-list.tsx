@@ -6,12 +6,19 @@ import { publicationOpAction } from "@/app/(app)/publicacoes/actions";
 import { Badge, formatDateTime } from "./ui";
 import { InlineAction } from "./inline-action";
 
-const TONE = { scheduled: "info", publishing: "accent", published: "success", failed: "danger", cancelled: "neutral" } as const;
+const TONE = {
+  scheduled: "info",
+  publishing: "accent",
+  published: "success",
+  failed: "danger",
+  cancelled: "neutral",
+} as const;
 
 function metricsText(m: Publication["metrics"]): string | null {
   if (!m) return null;
   const parts: string[] = [];
-  const n = (v: number | undefined, one: string, many: string) => (typeof v === "number" ? parts.push(`${v.toLocaleString("pt-BR")} ${v === 1 ? one : many}`) : 0);
+  const n = (v: number | undefined, one: string, many: string) =>
+    typeof v === "number" ? parts.push(`${v.toLocaleString("pt-BR")} ${v === 1 ? one : many}`) : 0;
   n(m.views, "visualização", "visualizações");
   n(m.reach, "pessoa alcançada", "pessoas alcançadas");
   n(m.likes, "curtida", "curtidas");
@@ -22,7 +29,17 @@ function metricsText(m: Publication["metrics"]): string | null {
 }
 
 /** Lista de publicações com as ações de cada uma (cancelar, tentar de novo, métricas). */
-export function PublicationList({ items, showClient = true, showContent = true, canAct }: { items: Publication[]; showClient?: boolean; showContent?: boolean; canAct: boolean }) {
+export function PublicationList({
+  items,
+  showClient = true,
+  showContent = true,
+  canAct,
+}: {
+  items: Publication[];
+  showClient?: boolean;
+  showContent?: boolean;
+  canAct: boolean;
+}) {
   return (
     <ul className="divide-y divide-ink-800">
       {items.map((p) => {
@@ -49,11 +66,17 @@ export function PublicationList({ items, showClient = true, showContent = true, 
                 ) : null}
                 {showContent ? " · " : ""}
                 <span className="tabular">
-                  {p.status === "published" && p.publishedAt ? `publicada ${formatDateTime(p.publishedAt)}` : p.status === "scheduled" ? `para ${formatDateTime(p.scheduledAt)}` : formatDateTime(p.scheduledAt)}
+                  {p.status === "published" && p.publishedAt
+                    ? `publicada ${formatDateTime(p.publishedAt)}`
+                    : p.status === "scheduled"
+                      ? `para ${formatDateTime(p.scheduledAt)}`
+                      : formatDateTime(p.scheduledAt)}
                 </span>
                 {p.requestedByName ? ` · por ${p.requestedByName}` : ""}
               </div>
-              {p.error && p.status !== "published" ? <div className="mt-1 text-[12.5px] text-red-300">{p.error}</div> : null}
+              {p.error && p.status !== "published" ? (
+                <div className="mt-1 text-[12.5px] text-red-300">{p.error}</div>
+              ) : null}
               {metrics ? (
                 <div className="mt-1 text-[12.5px] text-ink-300">
                   {metrics}
@@ -63,16 +86,38 @@ export function PublicationList({ items, showClient = true, showContent = true, 
             </div>
             <div className="flex flex-wrap items-center gap-3">
               {p.externalUrl ? (
-                <a href={p.externalUrl} target="_blank" rel="noreferrer" className="text-xs text-iris-300 hover:underline">
+                <a
+                  href={p.externalUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-iris-300 hover:underline"
+                >
                   Ver post
                 </a>
               ) : null}
               {canAct && p.status === "published" && p.network !== "tiktok" ? (
-                <InlineAction action={publicationOpAction} fields={{ publicationId: p.id, op: "metrics" }} label="Atualizar métricas" pendingText="Consultando..." />
+                <InlineAction
+                  action={publicationOpAction}
+                  fields={{ publicationId: p.id, op: "metrics" }}
+                  label="Atualizar métricas"
+                  pendingText="Consultando..."
+                />
               ) : null}
-              {canAct && p.status === "failed" ? <InlineAction action={publicationOpAction} fields={{ publicationId: p.id, op: "retry" }} label="Tentar de novo" /> : null}
+              {canAct && p.status === "failed" ? (
+                <InlineAction
+                  action={publicationOpAction}
+                  fields={{ publicationId: p.id, op: "retry" }}
+                  label="Tentar de novo"
+                />
+              ) : null}
               {canAct && (p.status === "scheduled" || p.status === "failed") ? (
-                <InlineAction action={publicationOpAction} fields={{ publicationId: p.id, op: "cancel" }} label="Cancelar" tone="danger" confirmMessage="Cancelar esta publicação?" />
+                <InlineAction
+                  action={publicationOpAction}
+                  fields={{ publicationId: p.id, op: "cancel" }}
+                  label="Cancelar"
+                  tone="danger"
+                  confirmMessage="Cancelar esta publicação?"
+                />
               ) : null}
             </div>
           </li>

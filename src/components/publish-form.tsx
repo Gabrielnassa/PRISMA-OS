@@ -16,7 +16,12 @@ export interface PublishAccount {
   privacyOptions: string[];
 }
 
-const PRIVACY: Record<string, string> = { PUBLIC_TO_EVERYONE: "Público", MUTUAL_FOLLOW_FRIENDS: "Amigos", FOLLOWER_OF_CREATOR: "Seguidores", SELF_ONLY: "Só eu" };
+const PRIVACY: Record<string, string> = {
+  PUBLIC_TO_EVERYONE: "Público",
+  MUTUAL_FOLLOW_FRIENDS: "Amigos",
+  FOLLOWER_OF_CREATOR: "Seguidores",
+  SELF_ONLY: "Só eu",
+};
 
 /** Agora em Brasília, no formato do campo datetime-local. */
 function nowLocal(offsetMin = 0): string {
@@ -52,16 +57,30 @@ export function PublishForm({
   const chosen = accounts.filter((a) => selected.includes(a.id));
   const tiktokAccount = chosen.find((a) => a.network === "tiktok");
   const hasYouTube = chosen.some((a) => a.network === "youtube");
-  const privacyOptions = tiktok.status === "ok" && tiktok.data ? tiktok.data.privacyOptions : (tiktokAccount?.privacyOptions ?? []);
+  const privacyOptions =
+    tiktok.status === "ok" && tiktok.data ? tiktok.data.privacyOptions : (tiktokAccount?.privacyOptions ?? []);
   const confirm = useMemo(() => {
     const names = chosen.map((a) => `${a.networkLabel} (${a.label})`).join(", ");
-    return when === "now" ? `Publicar agora em ${names}? Depois de publicado, só dá para apagar direto na rede.` : `Agendar a publicação em ${names}?`;
+    return when === "now"
+      ? `Publicar agora em ${names}? Depois de publicado, só dá para apagar direto na rede.`
+      : `Agendar a publicação em ${names}?`;
   }, [chosen, when]);
 
-  if (accounts.length === 0) return <p className="text-[13.5px] text-ink-400">Nenhuma conta conectada para este cliente. Conecte na aba Redes do cliente.</p>;
+  if (accounts.length === 0)
+    return (
+      <p className="text-[13.5px] text-ink-400">
+        Nenhuma conta conectada para este cliente. Conecte na aba Redes do cliente.
+      </p>
+    );
 
   return (
-    <ActionForm action={action} state={state} confirmMessage={confirm} confirmLabel={when === "now" ? "Publicar" : "Agendar"} className="flex flex-col gap-4">
+    <ActionForm
+      action={action}
+      state={state}
+      confirmMessage={confirm}
+      confirmLabel={when === "now" ? "Publicar" : "Agendar"}
+      className="flex flex-col gap-4"
+    >
       {target.contentId ? <input type="hidden" name="contentId" value={target.contentId} /> : null}
       {target.mediaAssetId ? <input type="hidden" name="mediaAssetId" value={target.mediaAssetId} /> : null}
       <fieldset>
@@ -72,7 +91,9 @@ export function PublishForm({
               key={a.id}
               className={cx(
                 "flex items-start gap-2.5 rounded-[10px] border px-3 py-2.5 text-[13px]",
-                a.blocked ? "cursor-not-allowed border-ink-800 opacity-60" : "cursor-pointer border-ink-700 has-[:checked]:border-iris-400 has-[:checked]:bg-iris-400/[0.06]",
+                a.blocked
+                  ? "cursor-not-allowed border-ink-800 opacity-60"
+                  : "cursor-pointer border-ink-700 has-[:checked]:border-iris-400 has-[:checked]:bg-iris-400/[0.06]",
               )}
             >
               <input
@@ -100,27 +121,50 @@ export function PublishForm({
           <input type="radio" name="when" value="now" checked={when === "now"} onChange={() => setWhen("now")} /> Agora
         </label>
         <label className="flex items-center gap-2 text-[13px] text-ink-200">
-          <input type="radio" name="when" value="later" checked={when === "later"} onChange={() => setWhen("later")} /> Agendar
+          <input type="radio" name="when" value="later" checked={when === "later"} onChange={() => setWhen("later")} />{" "}
+          Agendar
         </label>
-        {when === "later" && suggestedAt ? <span className="text-[12px] text-ink-400">Sugerido pela data da pauta</span> : null}
+        {when === "later" && suggestedAt ? (
+          <span className="text-[12px] text-ink-400">Sugerido pela data da pauta</span>
+        ) : null}
         {when === "later" ? (
-          <Input type="datetime-local" name="scheduledAt" aria-label="Data e hora (Brasília)" min={nowLocal()} defaultValue={suggestedAt ?? nowLocal(60)} required className="w-auto" />
+          <Input
+            type="datetime-local"
+            name="scheduledAt"
+            aria-label="Data e hora (Brasília)"
+            min={nowLocal()}
+            defaultValue={suggestedAt ?? nowLocal(60)}
+            required
+            className="w-auto"
+          />
         ) : null}
       </fieldset>
 
       {isVideo || hasYouTube || tiktokAccount ? (
-        <Field label="Título" htmlFor="pub-title" hint={hasYouTube ? "Obrigatório no YouTube (até 100 caracteres)." : "Usado no TikTok (até 90 caracteres)."}>
+        <Field
+          label="Título"
+          htmlFor="pub-title"
+          hint={hasYouTube ? "Obrigatório no YouTube (até 100 caracteres)." : "Usado no TikTok (até 90 caracteres)."}
+        >
           <Input id="pub-title" name="title" maxLength={100} defaultValue={defaultTitle} />
         </Field>
       ) : null}
 
       <Field label={`Legenda (${caption.length}/2200)`} htmlFor="pub-caption">
-        <Textarea id="pub-caption" name="caption" value={caption} onChange={(e) => setCaption(e.target.value.slice(0, 2200))} className="min-h-28" />
+        <Textarea
+          id="pub-caption"
+          name="caption"
+          value={caption}
+          onChange={(e) => setCaption(e.target.value.slice(0, 2200))}
+          className="min-h-28"
+        />
       </Field>
 
       {tiktokAccount ? (
         <div className="rounded-[10px] border border-ink-700 p-3">
-          <div className="text-[13px] font-medium text-ink-100">TikTok · {tiktok.status === "ok" && tiktok.data?.nickname ? tiktok.data.nickname : tiktokAccount.label}</div>
+          <div className="text-[13px] font-medium text-ink-100">
+            TikTok · {tiktok.status === "ok" && tiktok.data?.nickname ? tiktok.data.nickname : tiktokAccount.label}
+          </div>
           <div className="mt-2 flex flex-wrap items-end gap-3">
             <Field label="Quem pode ver" htmlFor="pub-tt-privacy">
               <Select id="pub-tt-privacy" name="tiktokPrivacy" defaultValue="" required>
