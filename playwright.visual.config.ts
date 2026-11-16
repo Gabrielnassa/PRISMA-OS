@@ -2,7 +2,8 @@ import { defineConfig, devices } from "@playwright/test";
 import { E2E_ENV } from "./playwright.config";
 
 /**
- * Comparação visual: todas as telas, desktop e celular, com os dados de
+ * Comparação visual: todas as telas, desktop e celular (tema escuro) e
+ * desktop no tema claro, com os dados de
  * demonstração (npm run seed:demo) num build de produção. As referências
  * ficam em tests/visual/__snapshots__ e são geradas na imagem Docker do
  * Playwright (a mesma do CI), para não haver diferença só por fonte do
@@ -35,5 +36,10 @@ export default defineConfig({
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } },
     { name: "celular", use: { ...devices["Pixel 7"] } },
+    // Tema claro (o app segue a preferência do sistema).
+    {
+      name: "desktop-claro",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 }, colorScheme: "light" },
+    },
   ],
 });
