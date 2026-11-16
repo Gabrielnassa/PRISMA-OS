@@ -4,7 +4,10 @@ import path from "node:path";
 import pg from "pg";
 import { E2E_ENV } from "../../playwright.config";
 
-/** Banco de testes do zero, migrations e os dados de demonstração (sem worker: nada muda durante as capturas). */
+/**
+ * Banco de testes do zero, migrations, os dados de demonstração e os links das
+ * páginas do cliente (sem worker: nada muda durante as capturas).
+ */
 export default async function globalSetup(): Promise<void> {
   const client = new pg.Client({ connectionString: E2E_ENV.MIGRATION_DATABASE_URL });
   await client.connect();
@@ -20,4 +23,11 @@ export default async function globalSetup(): Promise<void> {
     env: { ...process.env, ...E2E_ENV },
     stdio: "inherit",
   });
+  // Links das páginas do cliente (aprovar e relatório), lidos pelos testes em process.env.
+  const out = execFileSync("npx", ["tsx", "--conditions=react-server", "tests/visual/links.ts"], {
+    env: { ...process.env, ...E2E_ENV },
+  }).toString();
+  const links = JSON.parse(out.trim().split("\n").pop()!) as { aprovar: string; relatorio: string };
+  process.env.CAPTURA_APROVAR = links.aprovar;
+  process.env.CAPTURA_RELATORIO = links.relatorio;
 }

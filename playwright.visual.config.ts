@@ -2,7 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 import { E2E_ENV } from "./playwright.config";
 
 /**
- * Comparação visual: 10 telas, desktop e celular, com os dados de
+ * Comparação visual: todas as telas, desktop e celular, com os dados de
  * demonstração (npm run seed:demo) num build de produção. As referências
  * ficam em tests/visual/__snapshots__ e são geradas na imagem Docker do
  * Playwright (a mesma do CI), para não haver diferença só por fonte do

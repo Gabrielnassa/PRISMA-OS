@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 /**
- * As 10 telas principais com os dados de demonstração. Datas e tempos
+ * Todas as telas, com os dados de demonstração. Datas e tempos
  * relativos (que mudam a cada dia) ficam mascarados; o resto precisa bater
  * com a referência. Para atualizar as referências: npm run capturas.
  */
@@ -49,6 +49,25 @@ test("login", async ({ page }) => {
   await snap(page, "01-login");
 });
 
+test.describe("páginas do cliente", () => {
+  test("aprovar", async ({ page }) => {
+    await page.goto(process.env.CAPTURA_APROVAR!);
+    await snap(page, "30-aprovar");
+  });
+
+  test("relatório", async ({ page }) => {
+    await page.goto(process.env.CAPTURA_RELATORIO!);
+    await snap(page, "31-relatorio");
+  });
+});
+
+async function openClient(page: Page) {
+  await page.goto("/clientes");
+  await page.getByRole("link", { name: "Coli Loterias" }).first().click();
+  await expect(page.getByRole("heading", { name: "Coli Loterias" })).toBeVisible();
+  return page.url();
+}
+
 test.describe("telas com login", () => {
   test.beforeEach(async ({ page }) => login(page));
 
@@ -60,10 +79,33 @@ test.describe("telas com login", () => {
   });
 
   test("cliente", async ({ page }) => {
-    await page.goto("/clientes");
-    await page.getByRole("link", { name: "Coli Loterias" }).first().click();
-    await expect(page.getByRole("heading", { name: "Coli Loterias" })).toBeVisible();
+    await openClient(page);
     await snap(page, "04-cliente");
+  });
+
+  for (const [aba, nome] of [
+    ["marca", "11-cliente-marca"],
+    ["editorial", "12-cliente-editorial"],
+    ["memoria", "13-cliente-memoria"],
+    ["arquivos", "14-cliente-arquivos"],
+    ["redes", "15-cliente-redes"],
+    ["conteudos", "16-cliente-conteudos"],
+  ] as const) {
+    test(`cliente: ${aba}`, async ({ page }) => {
+      const url = await openClient(page);
+      await page.goto(`${url.split("?")[0]}?aba=${aba}`);
+      await snap(page, nome);
+    });
+  }
+
+  test("relatório do mês (equipe)", async ({ page }) => {
+    await openClient(page);
+    await page
+      .getByRole("link", { name: /relatório/i })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/relatorios\//);
+    await snap(page, "17-relatorio-equipe");
   });
 
   test("conteúdos", async ({ page }) => {
@@ -97,4 +139,22 @@ test.describe("telas com login", () => {
     await page.goto("/integracoes");
     await snap(page, "10-integracoes");
   });
+
+  for (const [rota, nome] of [
+    ["/criar", "18-criar"],
+    ["/midia", "19-midia"],
+    ["/templates", "20-layouts"],
+    ["/skills", "21-skills"],
+    ["/skills/nova", "22-skill-nova"],
+    ["/custos", "23-custos"],
+    ["/usuarios", "24-equipe"],
+    ["/historico", "25-historico"],
+    ["/configuracoes", "26-configuracoes"],
+    ["/avisos", "27-avisos"],
+  ] as const) {
+    test(rota, async ({ page }) => {
+      await page.goto(rota);
+      await snap(page, nome);
+    });
+  }
 });
