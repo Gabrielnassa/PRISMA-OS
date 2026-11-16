@@ -12,6 +12,18 @@ echo "  Versão: $(git log -1 --format='%h de %cd' --date=format:'%d/%m/%Y %H:%M
 echo "  Endereço: $(bash .devcontainer/endereco.sh)"
 echo
 
+# Arquivos do sistema mudados aqui dentro (à mão ou por um assistente) e que
+# não vieram do GitHub: a causa mais comum de o PRISMA OS parar de ligar.
+alterados="$(git status --porcelain --untracked-files=no 2>/dev/null)"
+if [ -n "$alterados" ]; then
+  falha "Arquivos do sistema alterados neste Codespace (não vieram do GitHub):"
+  printf '%s\n' "$alterados" | sed 's/^/          /'
+  echo "        Para guardar essas alterações à parte e voltar à versão do GitHub:"
+  echo "          git stash && bash .devcontainer/iniciar.sh"
+  echo "        (para recuperá-las depois: git stash pop)"
+  problemas=1
+fi
+
 if node .devcontainer/esperar-banco.mjs --uma-vez >/dev/null 2>&1; then
   ok "Banco de dados respondendo"
 else
