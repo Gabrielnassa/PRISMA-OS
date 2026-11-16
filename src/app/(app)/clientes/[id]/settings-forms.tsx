@@ -67,8 +67,8 @@ export function BudgetForm({
           defaultValue={budget.alertPct ?? 80}
         />
       </Field>
-      <label className="flex items-center gap-2 text-sm text-ink-200">
-        <input type="checkbox" name="hardStop" defaultChecked={budget.hardStop ?? true} className="accent-iris-400" />
+      <label className="flex items-center gap-2 text-base text-fg">
+        <input type="checkbox" name="hardStop" defaultChecked={budget.hardStop ?? true} className="accent-accent" />
         Interromper novas gerações ao atingir o teto
       </label>
       <FormMessage state={state} />

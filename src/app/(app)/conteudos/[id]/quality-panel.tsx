@@ -32,17 +32,17 @@ export function QualityPanel({ report, live = false }: { report: QualityReport |
           )
         }
       />
-      <ul className="max-h-[420px] divide-y divide-ink-800 overflow-y-auto">
+      <ul className="max-h-[420px] divide-y divide-line overflow-y-auto">
         {ordered.map((item, i) => (
           <li key={`${item.id}-${i}`} className="flex gap-3 px-5 py-2.5">
             <Badge tone={SEVERITY[item.severity].tone} className="mt-0.5 shrink-0">
               {SEVERITY[item.severity].label}
             </Badge>
-            <div className="min-w-0 text-sm">
-              <p className={cx(item.severity === "critical" ? "text-ink-50" : "text-ink-200")}>{item.message}</p>
-              {item.suggestion ? <p className="mt-0.5 text-xs text-ink-400">{item.suggestion}</p> : null}
+            <div className="min-w-0 text-base">
+              <p className={cx(item.severity === "critical" ? "text-fg" : "text-fg")}>{item.message}</p>
+              {item.suggestion ? <p className="mt-0.5 text-sm text-muted">{item.suggestion}</p> : null}
               {item.slideIndex !== undefined || item.field ? (
-                <p className="mt-0.5 text-[11px] text-ink-400">
+                <p className="mt-0.5 text-xs text-muted">
                   {item.slideIndex !== undefined ? `Lâmina ${item.slideIndex + 1}` : ""}
                   {item.field ? ` · ${FIELD_LABELS[item.field]}` : ""}
                 </p>

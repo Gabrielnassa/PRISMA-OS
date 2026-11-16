@@ -40,18 +40,18 @@ export function GenerationStatus({ contentId }: { contentId: string }) {
   const job = data?.job;
   return (
     <div
-      className="relative flex items-start gap-4 overflow-hidden rounded-[var(--radius-card)] border border-ink-800 bg-ink-900 p-5 pl-6"
+      className="relative flex items-start gap-4 overflow-hidden rounded-md border border-line bg-surface p-5 pl-6"
       role="status"
       aria-live="polite"
     >
-      <span aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-sky-400" />
+      <span aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-faint" />
       <span
-        className="mt-1 size-5 shrink-0 animate-spin rounded-full border-2 border-sky-300 border-t-transparent"
+        className="mt-1 size-5 shrink-0 animate-spin rounded-full border-2 border-accent border-t-transparent"
         aria-hidden
       />
-      <div className="text-sm">
-        <div className="font-semibold text-sky-100">Gerando a peça</div>
-        <p className="mt-1 text-sky-100/80">
+      <div className="text-base">
+        <div className="font-semibold text-fg">Gerando a peça</div>
+        <p className="mt-1 text-muted">
           {job?.status === "queued" && job.attempts === 0
             ? "Na fila, aguardando a vez."
             : job?.status === "queued"
@@ -62,7 +62,7 @@ export function GenerationStatus({ contentId }: { contentId: string }) {
                   : "Escrevendo os textos e montando a arte."
                 : "Verificando o andamento..."}
         </p>
-        <p className="mt-2 text-xs text-sky-100/60">Costuma levar menos de um minuto.</p>
+        <p className="mt-2 text-sm text-muted">Costuma levar menos de um minuto.</p>
       </div>
     </div>
   );

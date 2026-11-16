@@ -62,7 +62,7 @@ export default async function SkillPage({
     <>
       <PageHeader
         eyebrow={
-          <Link href="/skills" className="hover:text-ink-200">
+          <Link href="/skills" className="hover:text-fg">
             Skills
           </Link>
         }
@@ -175,37 +175,37 @@ async function HistoryTab({ auth, skill }: { auth: AuthContext; skill: CustomSki
   return (
     <Card>
       <CardHeader title="Execuções" description="As 30 mais recentes" />
-      <ul className="divide-y divide-ink-800">
+      <ul className="divide-y divide-line">
         {runs.map((r) => (
           <li key={r.id}>
             <details className="group px-5 py-3">
-              <summary className="flex cursor-pointer flex-wrap items-center gap-2 text-sm">
-                <span className="text-ink-100">{formatDateTime(r.createdAt)}</span>
-                <span className="text-ink-400">· {r.clientName ?? "—"}</span>
-                <span className="text-ink-400">· v{r.version}</span>
+              <summary className="flex cursor-pointer flex-wrap items-center gap-2 text-base">
+                <span className="text-fg">{formatDateTime(r.createdAt)}</span>
+                <span className="text-muted">· {r.clientName ?? "—"}</span>
+                <span className="text-muted">· v{r.version}</span>
                 <Badge tone={STATUS[r.status]?.tone ?? "info"}>{STATUS[r.status]?.label ?? r.status}</Badge>
                 {r.isDemo ? <Badge tone="warning">demonstração</Badge> : null}
-                <span className="ml-auto text-xs text-ink-400">
+                <span className="ml-auto text-sm text-muted">
                   {r.createdByName ?? ""}
                   {!r.isDemo && r.costUsd !== null ? ` · ${formatUsd(r.costUsd, 4)}` : ""}
                 </span>
-                <span className="basis-full truncate text-xs text-ink-400">{r.request}</span>
+                <span className="basis-full truncate text-sm text-muted">{r.request}</span>
               </summary>
               <div className="mt-3 space-y-3">
                 <div>
-                  <div className="text-[12px] font-medium text-ink-400">Pedido</div>
-                  <p className="mt-1 text-sm whitespace-pre-wrap text-ink-300">{r.request || "—"}</p>
+                  <div className="text-sm font-medium text-muted">Pedido</div>
+                  <p className="mt-1 text-base whitespace-pre-wrap text-muted">{r.request || "—"}</p>
                 </div>
                 {r.result !== null ? (
                   <>
                     <div>
-                      <div className="text-[12px] font-medium text-ink-400">Resultado</div>
-                      <div className="mt-1 rounded-lg border border-ink-700 bg-ink-850 p-4 text-sm leading-relaxed whitespace-pre-wrap text-ink-100">
+                      <div className="text-sm font-medium text-muted">Resultado</div>
+                      <div className="mt-1 rounded-md border border-line bg-surface p-4 text-base leading-relaxed whitespace-pre-wrap text-fg">
                         {r.result}
                       </div>
                     </div>
                     {r.assumptions.length ? (
-                      <ul className="list-disc space-y-0.5 pl-5 text-sm text-ink-300">
+                      <ul className="list-disc space-y-0.5 pl-5 text-base text-muted">
                         {r.assumptions.map((a) => (
                           <li key={a}>{a}</li>
                         ))}
@@ -221,7 +221,7 @@ async function HistoryTab({ auth, skill }: { auth: AuthContext; skill: CustomSki
                     </div>
                   </>
                 ) : (
-                  <p className="text-sm text-ink-400">Sem resultado nesta execução.</p>
+                  <p className="text-base text-muted">Sem resultado nesta execução.</p>
                 )}
               </div>
             </details>
@@ -276,22 +276,22 @@ function VersionsTab({ skill }: { skill: CustomSkillDetail }) {
   return (
     <Card>
       <CardHeader title="Versões" />
-      <ul className="divide-y divide-ink-800">
+      <ul className="divide-y divide-line">
         {skill.versions.map((v) => (
           <li key={v.version}>
             <details className="px-5 py-3">
-              <summary className="flex cursor-pointer flex-wrap items-center gap-2 text-sm">
+              <summary className="flex cursor-pointer flex-wrap items-center gap-2 text-base">
                 <Badge tone={v.version === skill.version ? "accent" : "neutral"}>v{v.version}</Badge>
-                <span className="text-ink-100">{v.name}</span>
-                <span className="ml-auto text-xs text-ink-400">
+                <span className="text-fg">{v.name}</span>
+                <span className="ml-auto text-sm text-muted">
                   {formatDateTime(v.createdAt)}
                   {v.createdByName ? ` · ${v.createdByName}` : ""}
                 </span>
               </summary>
-              <div className="mt-3 space-y-2 text-sm">
-                {v.description ? <p className="text-ink-300">{v.description}</p> : null}
-                <p className="text-xs text-ink-400">Esforço: {EFFORT_LABEL[v.effort] ?? v.effort}</p>
-                <pre className="max-h-96 overflow-auto rounded-lg border border-ink-700 bg-ink-850 p-4 font-mono text-xs whitespace-pre-wrap text-ink-200">
+              <div className="mt-3 space-y-2 text-base">
+                {v.description ? <p className="text-muted">{v.description}</p> : null}
+                <p className="text-sm text-muted">Esforço: {EFFORT_LABEL[v.effort] ?? v.effort}</p>
+                <pre className="max-h-96 overflow-auto rounded-md border border-line bg-surface p-4 font-mono text-sm whitespace-pre-wrap text-fg">
                   {v.instructions}
                 </pre>
               </div>

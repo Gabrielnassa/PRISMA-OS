@@ -189,7 +189,7 @@ export function BrandForm({
                         aria-label={`${label} (seletor)`}
                         value={colors[key]}
                         onChange={(e) => setColors((c) => ({ ...c, [key]: e.target.value }))}
-                        className="h-9 w-9 shrink-0 cursor-pointer rounded-md border border-ink-700 bg-transparent"
+                        className="h-9 w-9 shrink-0 cursor-pointer rounded-md border border-line bg-transparent"
                       />
                       <Input
                         id={`c-${key}`}
@@ -246,19 +246,19 @@ export function BrandForm({
                 </Select>
               </Field>
               <fieldset className="md:col-span-2">
-                <legend className="mb-2 text-sm font-medium text-ink-200">Famílias de layout preferidas</legend>
+                <legend className="mb-2 text-base font-medium text-fg">Famílias de layout preferidas</legend>
                 <div className="flex flex-wrap gap-2">
                   {TEMPLATE_FAMILIES.map((f) => (
                     <label
                       key={f}
-                      className="flex cursor-pointer items-center gap-2 rounded-md border border-ink-700 px-3 py-1.5 text-[13px] has-[:checked]:border-iris-400/70 has-[:checked]:bg-iris-400/[0.06]"
+                      className="flex cursor-pointer items-center gap-2 rounded-md border border-line px-3 py-1.5 text-base has-[:checked]:border-accent/70 has-[:checked]:bg-accent/5"
                     >
                       <input
                         type="checkbox"
                         name="visual.preferredFamilies"
                         value={f}
                         defaultChecked={brand.visual.preferredFamilies.includes(f)}
-                        className="accent-iris-400"
+                        className="accent-accent"
                       />
                       {FAMILY_LABELS[f]}
                     </label>
@@ -308,16 +308,16 @@ export function BrandForm({
                   maxLength={2000}
                 />
               </Field>
-              <label className="flex items-start gap-3 rounded-md border border-ink-700 p-3 text-[13.5px] md:col-span-2">
+              <label className="flex items-start gap-3 rounded-md border border-line p-3 text-base md:col-span-2">
                 <input
                   type="checkbox"
                   name="visual.configured"
                   defaultChecked={brand.visual.configured}
-                  className="mt-0.5 accent-iris-400"
+                  className="mt-0.5 accent-accent"
                 />
                 <span>
-                  <span className="font-medium text-ink-100">Identidade visual definida</span>
-                  <span className="block text-ink-400">
+                  <span className="font-medium text-fg">Identidade visual definida</span>
+                  <span className="block text-muted">
                     Marque quando cores e fontes estiverem confirmadas com o cliente. Antes disso, as peças são
                     sinalizadas como provisórias.
                   </span>
@@ -325,46 +325,43 @@ export function BrandForm({
               </label>
             </div>
 
-            <div
-              className="rounded-[var(--radius-card)] border border-ink-800 p-4"
-              aria-label="Pré-visualização da identidade"
-            >
-              <div className="mb-3 text-[12px] font-medium text-ink-400">Pré-visualização</div>
-              <div className="overflow-hidden rounded-lg" style={{ backgroundColor: colors.background }}>
+            <div className="rounded-md border border-line p-4" aria-label="Pré-visualização da identidade">
+              <div className="mb-3 text-sm font-medium text-muted">Pré-visualização</div>
+              <div className="overflow-hidden rounded-md" style={{ backgroundColor: colors.background }}>
                 <div className="h-2" style={{ backgroundColor: colors.accent }} />
                 <div className="p-5">
-                  <div className="text-[11px] font-semibold tracking-widest uppercase" style={{ color: colors.accent }}>
+                  <div className="text-xs font-semibold tracking-widest uppercase" style={{ color: colors.accent }}>
                     Exemplo
                   </div>
                   <div
-                    className="mt-1 text-2xl leading-tight font-bold"
+                    className="mt-1 text-lg leading-tight font-bold"
                     style={{ color: colors.text, fontFamily: FONT_CATALOG[fonts.heading].label }}
                   >
                     Título da peça
                   </div>
                   <p
-                    className="mt-2 text-sm"
+                    className="mt-2 text-base"
                     style={{ color: colors.text, fontFamily: FONT_CATALOG[fonts.body].label }}
                   >
                     Texto de apoio com a fonte de corpo.
                   </p>
                 </div>
                 <div className="p-5" style={{ backgroundColor: colors.primary }}>
-                  <div className="text-lg font-bold" style={{ color: colors.background }}>
+                  <div className="text-md font-bold" style={{ color: colors.background }}>
                     Lâmina na cor primária
                   </div>
                 </div>
               </div>
               <div className="mt-3 flex gap-1.5">
                 {COLOR_FIELDS.map(([k]) => (
-                  <div key={k} className="h-6 flex-1 rounded" style={{ backgroundColor: colors[k] }} title={k} />
+                  <div key={k} className="rounded h-6 flex-1" style={{ backgroundColor: colors[k] }} title={k} />
                 ))}
               </div>
-              <p className={cx("mt-3 text-xs", textContrast >= 4.5 ? "text-emerald-300" : "text-amber-300")}>
+              <p className={cx("mt-3 text-sm", textContrast >= 4.5 ? "text-ok" : "text-warn")}>
                 Contraste texto/fundo: {textContrast.toFixed(1)}:1{" "}
                 {textContrast >= 4.5 ? "(adequado)" : "(baixo; a peça ajusta o contraste)"}
               </p>
-              <p className="mt-2 text-xs text-ink-400">Prévia aproximada, com as mesmas fontes das peças finais.</p>
+              <p className="mt-2 text-sm text-muted">Prévia aproximada, com as mesmas fontes das peças finais.</p>
             </div>
           </div>
         </Card>
@@ -432,14 +429,14 @@ export function BrandForm({
       </fieldset>
 
       {canEdit ? (
-        <div className="sticky bottom-0 z-10 -mx-1 flex flex-wrap items-center gap-3 border-t border-ink-800 bg-ink-950/90 px-1 py-3 backdrop-blur">
+        <div className="sticky bottom-0 z-10 -mx-1 flex flex-wrap items-center gap-3 border-t border-line bg-bg/90 px-1 py-3 backdrop-blur">
           <SubmitButton pendingText="Salvando...">Salvar perfil da marca</SubmitButton>
           <div className="min-w-0 flex-1">
             <FormMessage state={state} />
           </div>
         </div>
       ) : (
-        <p className="text-sm text-ink-400">Seu papel permite apenas consultar o perfil.</p>
+        <p className="text-base text-muted">Seu papel permite apenas consultar o perfil.</p>
       )}
     </ActionForm>
   );

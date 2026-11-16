@@ -43,7 +43,7 @@ export default async function MediaPage({
           <MediaUploader clientId={clientId} />
         </Card>
       ) : can(auth.role, "media.upload") ? (
-        <p className="mb-4 text-sm text-ink-400">Para enviar arquivos, escolha um cliente no filtro.</p>
+        <p className="mb-4 text-base text-muted">Para enviar arquivos, escolha um cliente no filtro.</p>
       ) : null}
       <form className="mb-6 grid gap-2 md:grid-cols-[1fr_220px_180px_auto]" action="/midia">
         <Input
@@ -70,7 +70,7 @@ export default async function MediaPage({
         </Select>
         <button
           type="submit"
-          className="inline-flex h-9 items-center justify-center rounded-md border border-ink-700 bg-ink-900 px-3.5 text-[13.5px] font-medium text-ink-100 transition-colors hover:border-ink-600 hover:bg-ink-850"
+          className="inline-flex h-9 items-center justify-center rounded-md border border-line bg-surface px-3.5 text-base font-medium text-fg transition-colors hover:border-control hover:bg-surface"
         >
           Filtrar
         </button>
@@ -80,7 +80,7 @@ export default async function MediaPage({
         showClient={!clientId}
         deleteAction={can(auth.role, "media.delete") ? deleteMediaAction : undefined}
       />
-      <div className="mt-4 flex justify-between text-sm text-ink-400">
+      <div className="mt-4 flex justify-between text-base text-muted">
         <span>{total} arquivo(s)</span>
         <span className="flex gap-3">
           {page > 1 ? <Link href={pageHref(page - 1)}>← Anterior</Link> : null}

@@ -49,7 +49,7 @@ export function AppKeysForm({
           Salvar chaves
         </SubmitButton>
         {state.status === "error" && !state.fieldErrors ? (
-          <span className="text-[12.5px] text-red-300">{state.message}</span>
+          <span className="text-sm text-danger">{state.message}</span>
         ) : null}
       </div>
     </ActionForm>
@@ -102,7 +102,7 @@ export function SmtpForm({
           required
         />
       </Field>
-      <label className="flex items-center gap-2 text-[13px] text-ink-200 sm:col-span-2">
+      <label className="flex items-center gap-2 text-base text-fg sm:col-span-2">
         <input type="checkbox" name="secure" defaultChecked={initial.secure} />
         Conexão segura (SSL, porta 465). Desmarque para STARTTLS na porta 587.
       </label>
@@ -111,7 +111,7 @@ export function SmtpForm({
           Salvar e-mail
         </SubmitButton>
         {state.status === "error" && !state.fieldErrors ? (
-          <span className="text-[12.5px] text-red-300">{state.message}</span>
+          <span className="text-sm text-danger">{state.message}</span>
         ) : null}
       </div>
     </ActionForm>
@@ -148,16 +148,16 @@ export function WebhookForm({ events }: { events: Array<[string, string]> }) {
         <Input id="wh-url" name="url" type="url" placeholder="https://" required />
       </Field>
       <fieldset>
-        <legend className="mb-1.5 text-[13px] font-medium text-ink-200">Avisar quando</legend>
+        <legend className="mb-1.5 text-base font-medium text-fg">Avisar quando</legend>
         <div className="grid gap-1.5 sm:grid-cols-2">
           {events.map(([id, label]) => (
-            <label key={id} className="flex items-center gap-2 text-[13px] text-ink-200">
+            <label key={id} className="flex items-center gap-2 text-base text-fg">
               <input type="checkbox" name="events" value={id} defaultChecked />
               {label}
             </label>
           ))}
         </div>
-        {err("events") ? <p className="mt-1 text-[12.5px] text-red-300">{err("events")}</p> : null}
+        {err("events") ? <p className="mt-1 text-sm text-danger">{err("events")}</p> : null}
       </fieldset>
       <div>
         <SubmitButton size="sm" variant="secondary">
@@ -165,10 +165,10 @@ export function WebhookForm({ events }: { events: Array<[string, string]> }) {
         </SubmitButton>
       </div>
       {state.status === "ok" && state.data ? (
-        <div className="rounded-[10px] border border-emerald-400/25 bg-emerald-400/[0.05] p-3 text-[13px] text-ink-100">
+        <div className="rounded-md border border-ok/40 bg-ok/5 p-3 text-base text-fg">
           <p>Segredo de assinatura (aparece só agora). Use para conferir o cabeçalho X-Prisma-Signature:</p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <code className="rounded-[4px] bg-ink-950 px-2 py-1 font-mono text-[12px] break-all ring-1 ring-ink-700 select-all">
+            <code className="rounded-sm bg-bg px-2 py-1 font-mono text-sm break-all ring-1 ring-line select-all">
               {state.data.secret}
             </code>
             <CopyButton text={state.data.secret} />

@@ -46,12 +46,12 @@ export const metadata: Metadata = { title: "Início" };
 
 const PIPELINE: ContentStatus[] = ["generating", "in_review", "awaiting_approval", "approved", "rejected", "failed"];
 const PIPELINE_BAR: Partial<Record<ContentStatus, string>> = {
-  generating: "bg-sky-400",
-  in_review: "bg-iris-400",
-  awaiting_approval: "bg-amber-400",
-  approved: "bg-emerald-400",
-  rejected: "bg-red-400",
-  failed: "bg-red-400",
+  generating: "bg-faint",
+  in_review: "bg-faint",
+  awaiting_approval: "bg-faint",
+  approved: "bg-ok",
+  rejected: "bg-warn",
+  failed: "bg-danger",
 };
 
 /** Ex.: "Quarta-feira, 28 de outubro" (só a primeira letra maiúscula). */
@@ -214,16 +214,16 @@ export default async function DashboardPage({
             <Card>
               <CardHeader title="Minhas tarefas" description={tasks.length ? undefined : "Nada com você agora"} />
               {tasks.length ? (
-                <ul className="divide-y divide-ink-800/70">
+                <ul className="divide-y divide-line">
                   {tasks.map((t) => (
                     <li key={`${t.kind}-${t.contentId}`}>
                       <Link
                         href={`/conteudos/${t.contentId}`}
-                        className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-ink-850/60"
+                        className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-surface/60"
                       >
                         <div className="min-w-0 flex-1">
-                          <div className="truncate text-[14px] font-medium text-ink-100">{t.title}</div>
-                          <div className="mt-0.5 text-[12.5px] text-ink-400">
+                          <div className="truncate text-base font-medium text-fg">{t.title}</div>
+                          <div className="mt-0.5 text-sm text-muted">
                             {t.clientName} · {t.kind === "approval" ? "aprovar" : STATUS_LABELS[t.status].toLowerCase()}
                           </div>
                         </div>
@@ -257,14 +257,12 @@ export default async function DashboardPage({
                 description={weekAhead.length ? undefined : "Nada agendado"}
               />
               {weekAhead.length ? (
-                <ul className="divide-y divide-ink-800/70">
+                <ul className="divide-y divide-line">
                   {weekAhead.map((p) => (
-                    <li key={p.id} className="flex items-center gap-3 px-5 py-3 text-[13.5px]">
-                      <span className="tabular w-24 shrink-0 text-[12.5px] text-ink-400">
-                        {formatDateTime(p.scheduledAt)}
-                      </span>
-                      <span className="min-w-0 flex-1 truncate text-ink-100">{p.contentTitle ?? p.title}</span>
-                      <span className="shrink-0 text-[12.5px] text-ink-400">{NETWORK_LABELS[p.network]}</span>
+                    <li key={p.id} className="flex items-center gap-3 px-5 py-3 text-base">
+                      <span className="tabular w-24 shrink-0 text-sm text-muted">{formatDateTime(p.scheduledAt)}</span>
+                      <span className="min-w-0 flex-1 truncate text-fg">{p.contentTitle ?? p.title}</span>
+                      <span className="shrink-0 text-sm text-muted">{NETWORK_LABELS[p.network]}</span>
                     </li>
                   ))}
                 </ul>
@@ -304,18 +302,18 @@ export default async function DashboardPage({
                   />
                 </div>
               ) : (
-                <ul className="divide-y divide-ink-800/70">
+                <ul className="divide-y divide-line">
                   {data.recent.map((r) => (
                     <li key={r.id}>
                       <Link
                         href={`/conteudos/${r.id}`}
-                        className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-ink-850/60"
+                        className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-surface/60"
                       >
                         <div className="min-w-0 flex-1">
-                          <div className="truncate text-[14px] font-medium text-ink-100">{r.title}</div>
-                          <div className="mt-0.5 flex gap-2 text-[12.5px] text-ink-400">
+                          <div className="truncate text-base font-medium text-fg">{r.title}</div>
+                          <div className="mt-0.5 flex gap-2 text-sm text-muted">
                             <span className="truncate">{r.clientName}</span>
-                            <span className="shrink-0 text-[12px] text-ink-400" title={formatDateTime(r.updatedAt)}>
+                            <span className="shrink-0 text-sm text-muted" title={formatDateTime(r.updatedAt)}>
                               {formatRelative(r.updatedAt)}
                             </span>
                           </div>
@@ -340,13 +338,13 @@ export default async function DashboardPage({
                         href={`/conteudos?status=${s}${clientId ? `&cliente=${clientId}` : ""}`}
                         className={cx("group block", status && status !== s && "opacity-50")}
                       >
-                        <div className="mb-1.5 flex items-baseline justify-between text-[13px]">
-                          <span className="text-ink-300 group-hover:text-ink-100">{STATUS_LABELS[s]}</span>
-                          <span className="tabular text-[12px] text-ink-200">{n}</span>
+                        <div className="mb-1.5 flex items-baseline justify-between text-base">
+                          <span className="text-muted group-hover:text-fg">{STATUS_LABELS[s]}</span>
+                          <span className="tabular text-sm text-fg">{n}</span>
                         </div>
-                        <div className="h-[3px] rounded-full bg-ink-800">
+                        <div className="h-[3px] rounded-sm bg-surface-2">
                           <div
-                            className={cx("h-[3px] rounded-full", n > 0 ? PIPELINE_BAR[s] : "")}
+                            className={cx("h-[3px] rounded-sm", n > 0 ? PIPELINE_BAR[s] : "")}
                             style={{ width: `${(n / total) * 100}%` }}
                           />
                         </div>
@@ -355,9 +353,9 @@ export default async function DashboardPage({
                   );
                 })}
               </ul>
-              <div className="border-t border-ink-800 px-5 py-3.5 text-[12.5px] text-ink-400">
+              <div className="border-t border-line px-5 py-3.5 text-sm text-muted">
                 Tempo médio até a aprovação ({periodLabel}):{" "}
-                <span className="font-medium text-ink-100">
+                <span className="font-medium text-fg">
                   {data.avgHoursToApproval === null
                     ? "sem dados"
                     : data.avgHoursToApproval < 48
@@ -386,7 +384,7 @@ export default async function DashboardPage({
                     <Td>
                       <Link
                         href={`/clientes/${c.clientId}`}
-                        className="font-medium text-ink-100 underline-offset-4 hover:underline"
+                        className="font-medium text-fg underline-offset-4 hover:underline"
                       >
                         {c.name}
                       </Link>
@@ -394,7 +392,7 @@ export default async function DashboardPage({
                     <Td className="text-right">{c.contents}</Td>
                     <Td className="text-right">{c.pending}</Td>
                     <Td className="text-right">{c.approved}</Td>
-                    <Td className="tabular text-right text-[12.5px]">{formatUsd(c.costUsd)}</Td>
+                    <Td className="tabular text-right text-sm">{formatUsd(c.costUsd)}</Td>
                   </tr>
                 ))}
               </tbody>

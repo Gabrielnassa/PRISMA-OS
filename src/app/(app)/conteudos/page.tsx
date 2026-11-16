@@ -71,7 +71,7 @@ export default async function ContentsPage({
         </Select>
         <button
           type="submit"
-          className="inline-flex h-9 items-center justify-center rounded-md border border-ink-700 bg-ink-900 px-3.5 text-[13.5px] font-medium text-ink-100 transition-colors hover:border-ink-600 hover:bg-ink-850"
+          className="inline-flex h-9 items-center justify-center rounded-md border border-line bg-surface px-3.5 text-base font-medium text-fg transition-colors hover:border-control hover:bg-surface"
         >
           Filtrar
         </button>
@@ -91,18 +91,18 @@ export default async function ContentsPage({
             items={toContentRows(items)}
             onDelete={can(auth.role, "content.delete") ? deleteContentsAction : undefined}
             footer={
-              <div className="flex items-center justify-between px-5 py-3 text-sm text-ink-400">
+              <div className="flex items-center justify-between px-5 py-3 text-base text-muted">
                 <span>
                   {total} conteúdo(s) · página {page} de {Math.max(1, Math.ceil(total / PAGE))}
                 </span>
                 <span className="flex gap-3">
                   {page > 1 ? (
-                    <Link href={qs(page - 1)} className="hover:text-ink-50">
+                    <Link href={qs(page - 1)} className="hover:text-fg">
                       ← Anterior
                     </Link>
                   ) : null}
                   {page * PAGE < total ? (
-                    <Link href={qs(page + 1)} className="hover:text-ink-50">
+                    <Link href={qs(page + 1)} className="hover:text-fg">
                       Próxima →
                     </Link>
                   ) : null}

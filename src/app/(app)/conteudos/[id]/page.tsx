@@ -268,15 +268,15 @@ export default async function ContentPage({
                     key={s.id}
                     src={`/api/contents/${id}/versions/${current.id}/slides/${i}`}
                     alt={`Lâmina ${i + 1}`}
-                    className="w-full rounded-lg border border-ink-700"
+                    className="w-full rounded-md border border-line"
                     loading="lazy"
                   />
                 ))}
               </div>
-              <div className="border-t border-ink-700 p-5 text-sm">
-                <div className="text-[12px] font-medium text-ink-400">Legenda</div>
-                <p className="mt-1 whitespace-pre-wrap text-ink-100">{current.document.caption || "—"}</p>
-                <p className="mt-2 text-iris-300">{current.document.hashtags.join(" ")}</p>
+              <div className="border-t border-line p-5 text-base">
+                <div className="text-sm font-medium text-muted">Legenda</div>
+                <p className="mt-1 whitespace-pre-wrap text-fg">{current.document.caption || "—"}</p>
+                <p className="mt-2 text-accent">{current.document.hashtags.join(" ")}</p>
               </div>
             </Card>
             <QualityPanel report={detail.quality} />
@@ -352,23 +352,23 @@ export default async function ContentPage({
         <div className="flex min-w-0 flex-col gap-6">
           <Card>
             <CardHeader title="Versões" />
-            <ul className="divide-y divide-ink-800">
+            <ul className="divide-y divide-line">
               {detail.versions.map((v, i) => (
-                <li key={v.id} className="flex flex-wrap items-center gap-2 px-5 py-2.5 text-sm">
-                  <span className="font-semibold text-ink-100">v{v.number}</span>
+                <li key={v.id} className="flex flex-wrap items-center gap-2 px-5 py-2.5 text-base">
+                  <span className="font-semibold text-fg">v{v.number}</span>
                   <SourceBadge source={v.source} />
                   {v.id === detail.approvedVersionId ? <Badge tone="success">Aprovada</Badge> : null}
                   {v.qualityPassed === false ? (
                     <Badge tone="danger">{v.criticalCount === 1 ? "1 crítico" : `${v.criticalCount} críticos`}</Badge>
                   ) : null}
-                  <span className="min-w-0 flex-1 truncate text-xs text-ink-400">
+                  <span className="min-w-0 flex-1 truncate text-sm text-muted">
                     {v.createdByName ?? "—"} · {formatDateTime(v.createdAt)}
                     {v.changeNote ? ` · ${v.changeNote}` : ""}
                   </span>
                   {detail.versions[i + 1] ? (
                     <Link
                       href={`/conteudos/${id}?comparar=${detail.versions[i + 1]!.id}&com=${v.id}#comparacao`}
-                      className="text-xs text-iris-300 hover:underline"
+                      className="text-sm text-accent hover:underline"
                     >
                       Comparar com v{detail.versions[i + 1]!.number}
                     </Link>
@@ -385,36 +385,36 @@ export default async function ContentPage({
                 </li>
               ))}
               {detail.versions.length === 0 ? (
-                <li className="px-5 py-3 text-sm text-ink-400">Nenhuma versão ainda.</li>
+                <li className="px-5 py-3 text-base text-muted">Nenhuma versão ainda.</li>
               ) : null}
             </ul>
           </Card>
 
           <Card>
             <CardHeader title="Briefing" />
-            <dl className="space-y-3 p-5 text-sm">
+            <dl className="space-y-3 p-5 text-base">
               <div>
-                <dt className="text-xs text-ink-400">Briefing</dt>
-                <dd className="mt-0.5 whitespace-pre-wrap text-ink-100">{detail.briefing.text}</dd>
+                <dt className="text-sm text-muted">Briefing</dt>
+                <dd className="mt-0.5 whitespace-pre-wrap text-fg">{detail.briefing.text}</dd>
               </div>
               {detail.briefing.keyMessages ? (
                 <div>
-                  <dt className="text-xs text-ink-400">Mensagens-chave</dt>
-                  <dd className="mt-0.5 whitespace-pre-wrap text-ink-100">{detail.briefing.keyMessages}</dd>
+                  <dt className="text-sm text-muted">Mensagens-chave</dt>
+                  <dd className="mt-0.5 whitespace-pre-wrap text-fg">{detail.briefing.keyMessages}</dd>
                 </div>
               ) : null}
               <div className="grid gap-3 sm:grid-cols-3">
                 <div>
-                  <dt className="text-xs text-ink-400">Público</dt>
-                  <dd className="mt-0.5 text-ink-100">{detail.briefing.audience || "Perfil da marca"}</dd>
+                  <dt className="text-sm text-muted">Público</dt>
+                  <dd className="mt-0.5 text-fg">{detail.briefing.audience || "Perfil da marca"}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-ink-400">Oferta</dt>
-                  <dd className="mt-0.5 text-ink-100">{detail.briefing.offer || "—"}</dd>
+                  <dt className="text-sm text-muted">Oferta</dt>
+                  <dd className="mt-0.5 text-fg">{detail.briefing.offer || "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-ink-400">CTA</dt>
-                  <dd className="mt-0.5 text-ink-100">{detail.briefing.cta || "—"}</dd>
+                  <dt className="text-sm text-muted">CTA</dt>
+                  <dd className="mt-0.5 text-fg">{detail.briefing.cta || "—"}</dd>
                 </div>
               </div>
             </dl>
@@ -422,24 +422,24 @@ export default async function ContentPage({
 
           <Card>
             <CardHeader title="Histórico" />
-            <ol className="max-h-96 divide-y divide-ink-800 overflow-y-auto">
+            <ol className="max-h-96 divide-y divide-line overflow-y-auto">
               {history.map((h) => (
-                <li key={h.id} className="px-5 py-2.5 text-sm">
+                <li key={h.id} className="px-5 py-2.5 text-base">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-ink-100">{ACTION_LABELS[h.action] ?? h.action}</span>
-                    <span className="text-xs text-ink-400">
+                    <span className="text-fg">{ACTION_LABELS[h.action] ?? h.action}</span>
+                    <span className="text-sm text-muted">
                       {h.actorName ?? (h.actorType === "worker" ? "worker" : "sistema")} · {formatDateTime(h.createdAt)}
                     </span>
                   </div>
                   {h.action === "content.version_created" &&
                   Array.isArray(h.metadata.changes) &&
                   h.metadata.changes.length ? (
-                    <p className="mt-0.5 text-xs text-ink-400">
+                    <p className="mt-0.5 text-sm text-muted">
                       v{String(h.metadata.version)}: {(h.metadata.changes as string[]).slice(0, 8).join(", ")}
                     </p>
                   ) : null}
                   {h.action.startsWith("approval.") && h.metadata.note ? (
-                    <p className="mt-0.5 text-xs text-ink-400">“{String(h.metadata.note)}”</p>
+                    <p className="mt-0.5 text-sm text-muted">“{String(h.metadata.note)}”</p>
                   ) : null}
                 </li>
               ))}
@@ -449,10 +449,10 @@ export default async function ContentPage({
           {detail.aiRuns.length ? (
             <Card>
               <CardHeader title="Execuções de IA" />
-              <ul className="divide-y divide-ink-800 text-sm">
+              <ul className="divide-y divide-line text-base">
                 {detail.aiRuns.map((r) => (
                   <li key={r.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-2.5">
-                    <span className="font-mono text-[12.5px] text-ink-100">{r.skillId}</span>
+                    <span className="font-mono text-sm text-fg">{r.skillId}</span>
                     <Dot
                       tone={
                         r.status === "succeeded"
@@ -473,7 +473,7 @@ export default async function ContentPage({
                             : "Falhou"}
                     </Dot>
                     {r.isDemo ? <Badge tone="warning">demo</Badge> : null}
-                    <span className="tabular basis-full text-[11.5px] text-ink-400">
+                    <span className="tabular basis-full text-xs text-muted">
                       {r.model} ·{" "}
                       {r.isDemo ? "sem custo" : r.costUsd === null ? "tarifa não cadastrada" : formatUsd(r.costUsd, 4)}{" "}
                       · {formatDateTime(r.createdAt)}
@@ -525,7 +525,7 @@ export default async function ContentPage({
               { v: compare.b, vid: compare.bId },
             ].map(({ v, vid }) => (
               <div key={vid}>
-                <div className="mb-2 text-sm font-semibold text-ink-100">Versão {v.number}</div>
+                <div className="mb-2 text-base font-semibold text-fg">Versão {v.number}</div>
                 <div className="grid grid-cols-2 gap-2">
                   {v.document.slides.map((s, i) => (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -533,12 +533,12 @@ export default async function ContentPage({
                       key={s.id}
                       src={`/api/contents/${id}/versions/${vid}/slides/${i}`}
                       alt={`v${v.number} lâmina ${i + 1}`}
-                      className="w-full rounded-lg border border-ink-700"
+                      className="w-full rounded-md border border-line"
                       loading="lazy"
                     />
                   ))}
                 </div>
-                <p className="mt-2 text-xs whitespace-pre-wrap text-ink-400">{v.document.caption}</p>
+                <p className="mt-2 text-sm whitespace-pre-wrap text-muted">{v.document.caption}</p>
               </div>
             ))}
           </div>

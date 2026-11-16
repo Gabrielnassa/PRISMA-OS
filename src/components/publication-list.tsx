@@ -41,23 +41,23 @@ export function PublicationList({
   canAct: boolean;
 }) {
   return (
-    <ul className="divide-y divide-ink-800">
+    <ul className="divide-y divide-line">
       {items.map((p) => {
         const metrics = metricsText(p.metrics);
         return (
-          <li key={p.id} className="flex flex-wrap items-start gap-x-4 gap-y-2 px-5 py-3.5 text-[13.5px]">
+          <li key={p.id} className="flex flex-wrap items-start gap-x-4 gap-y-2 px-5 py-3.5 text-base">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="font-medium text-ink-50">{NETWORK_LABELS[p.network]}</span>
-                <span className="text-ink-400">{p.accountLabel}</span>
+                <span className="font-medium text-fg">{NETWORK_LABELS[p.network]}</span>
+                <span className="text-muted">{p.accountLabel}</span>
                 <Badge tone={TONE[p.status]}>{PUBLICATION_STATUS_LABELS[p.status]}</Badge>
-                <span className="text-[12px] text-ink-400">{KIND_LABELS[p.kind]}</span>
+                <span className="text-sm text-muted">{KIND_LABELS[p.kind]}</span>
               </div>
-              <div className="mt-0.5 truncate text-[12.5px] text-ink-400">
+              <div className="mt-0.5 truncate text-sm text-muted">
                 {showClient ? `${p.clientName} · ` : ""}
                 {showContent ? (
                   p.contentId ? (
-                    <Link href={`/conteudos/${p.contentId}`} className="hover:text-ink-100 hover:underline">
+                    <Link href={`/conteudos/${p.contentId}`} className="hover:text-fg hover:underline">
                       {p.contentTitle ?? p.title}
                     </Link>
                   ) : (
@@ -74,13 +74,11 @@ export function PublicationList({
                 </span>
                 {p.requestedByName ? ` · por ${p.requestedByName}` : ""}
               </div>
-              {p.error && p.status !== "published" ? (
-                <div className="mt-1 text-[12.5px] text-red-300">{p.error}</div>
-              ) : null}
+              {p.error && p.status !== "published" ? <div className="mt-1 text-sm text-danger">{p.error}</div> : null}
               {metrics ? (
-                <div className="mt-1 text-[12.5px] text-ink-300">
+                <div className="mt-1 text-sm text-muted">
                   {metrics}
-                  {p.metricsAt ? <span className="text-ink-500"> · {formatDateTime(p.metricsAt)}</span> : null}
+                  {p.metricsAt ? <span className="text-faint"> · {formatDateTime(p.metricsAt)}</span> : null}
                 </div>
               ) : null}
             </div>
@@ -90,7 +88,7 @@ export function PublicationList({
                   href={p.externalUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-xs text-iris-300 hover:underline"
+                  className="text-sm text-accent hover:underline"
                 >
                   Ver post
                 </a>

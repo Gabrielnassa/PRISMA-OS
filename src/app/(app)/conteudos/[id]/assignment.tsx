@@ -44,7 +44,7 @@ export function AssignmentForm({
           Salvar
         </SubmitButton>
       ) : null}
-      {state.status === "error" ? <p className="text-[12.5px] text-red-300 sm:col-span-3">{state.message}</p> : null}
+      {state.status === "error" ? <p className="text-sm text-danger sm:col-span-3">{state.message}</p> : null}
     </ActionForm>
   );
 }

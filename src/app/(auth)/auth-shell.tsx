@@ -8,19 +8,17 @@ import { PrismaWordmark } from "@/components/brand/logo";
  */
 export function AuthShell({ children }: { children: ReactNode }) {
   return (
-    <main className="grid min-h-dvh bg-ink-950 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+    <main className="grid min-h-dvh bg-bg lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
       <div className="flex flex-col px-6 py-8 sm:px-12">
         <PrismaWordmark />
-        <div className="page-enter mx-auto flex w-full max-w-[380px] flex-1 flex-col justify-center py-12">
-          {children}
-        </div>
-        <p className="text-[11.5px] text-ink-400">Acesso restrito à equipe da agência.</p>
+        <div className="mx-auto flex w-full max-w-[380px] flex-1 flex-col justify-center py-12">{children}</div>
+        <p className="text-xs text-muted">Acesso restrito à equipe da agência.</p>
       </div>
-      <aside className="relative hidden overflow-hidden border-l border-ink-800 bg-ink-900 lg:flex lg:flex-col lg:justify-center lg:pl-14">
-        <p className="max-w-md font-display text-[30px] leading-[1.1] font-medium tracking-[-0.04em] text-ink-50">
+      <aside className="relative hidden overflow-hidden border-l border-line bg-surface lg:flex lg:flex-col lg:justify-center lg:pl-14">
+        <p className="max-w-md text-lg leading-[1.1] font-semibold text-fg">
           Pautas, peças, aprovações e publicações de todos os clientes num só lugar.
         </p>
-        <figure className="mt-10 overflow-hidden rounded-l-[var(--radius-card)] border border-r-0 border-ink-700">
+        <figure className="mt-10 overflow-hidden rounded-l-[var(--radius-card)] border border-r-0 border-line">
           <Image
             src="/produto.png"
             alt="Tela inicial do PRISMA OS"

@@ -41,20 +41,17 @@ function ToastItem({ toast, onDone }: { toast: Toast; onDone: () => void }) {
   return (
     <div
       role={toast.tone === "error" ? "alert" : "status"}
-      className="toast-enter pointer-events-auto flex w-full max-w-sm items-start gap-2.5 rounded-[10px] border border-ink-700 bg-ink-850 py-2.5 pr-3 pl-4 text-[13.5px] leading-snug text-ink-50 shadow-[0_4px_16px_rgb(0_0_0/0.35)]"
+      className="toast-enter pointer-events-auto flex w-full max-w-sm items-start gap-2.5 rounded-md border border-line bg-surface py-2.5 pr-3 pl-4 text-base leading-snug text-fg shadow-[0_4px_16px_rgb(0_0_0/0.35)]"
     >
       <span
         aria-hidden
-        className={cx(
-          "mt-[6px] size-1.5 shrink-0 rounded-full",
-          toast.tone === "error" ? "bg-red-400" : "bg-emerald-400",
-        )}
+        className={cx("mt-[6px] size-1.5 shrink-0 rounded-full", toast.tone === "error" ? "bg-danger" : "bg-ok")}
       />
       <span className="flex-1">{toast.text}</span>
       <button
         type="button"
         onClick={onDone}
-        className="-my-0.5 rounded-full px-1.5 text-ink-400 hover:text-ink-50"
+        className="-my-0.5 rounded-sm px-1.5 text-muted hover:text-fg"
         aria-label="Fechar aviso"
       >
         ×

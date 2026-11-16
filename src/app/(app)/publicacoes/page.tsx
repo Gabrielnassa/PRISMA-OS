@@ -67,7 +67,7 @@ export default async function PublicationsPage({
             title="Publicar vídeo da biblioteca"
             description="Reels, TikTok, YouTube e Facebook"
             actions={
-              <a href="/publicacoes" className="text-[13px] text-ink-400 hover:text-ink-100">
+              <a href="/publicacoes" className="text-base text-muted hover:text-fg">
                 Fechar
               </a>
             }

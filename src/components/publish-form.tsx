@@ -68,7 +68,7 @@ export function PublishForm({
 
   if (accounts.length === 0)
     return (
-      <p className="text-[13.5px] text-ink-400">
+      <p className="text-base text-muted">
         Nenhuma conta conectada para este cliente. Conecte na aba Redes do cliente.
       </p>
     );
@@ -84,16 +84,16 @@ export function PublishForm({
       {target.contentId ? <input type="hidden" name="contentId" value={target.contentId} /> : null}
       {target.mediaAssetId ? <input type="hidden" name="mediaAssetId" value={target.mediaAssetId} /> : null}
       <fieldset>
-        <legend className="mb-2 text-[13px] font-medium text-ink-200">Onde publicar</legend>
+        <legend className="mb-2 text-base font-medium text-fg">Onde publicar</legend>
         <div className="grid gap-2 sm:grid-cols-2">
           {accounts.map((a) => (
             <label
               key={a.id}
               className={cx(
-                "flex items-start gap-2.5 rounded-[10px] border px-3 py-2.5 text-[13px]",
+                "flex items-start gap-2.5 rounded-md border px-3 py-2.5 text-base",
                 a.blocked
-                  ? "cursor-not-allowed border-ink-800 opacity-60"
-                  : "cursor-pointer border-ink-700 has-[:checked]:border-iris-400 has-[:checked]:bg-iris-400/[0.06]",
+                  ? "cursor-not-allowed border-line opacity-60"
+                  : "cursor-pointer border-line has-[:checked]:border-accent has-[:checked]:bg-accent/5",
               )}
             >
               <input
@@ -106,9 +106,9 @@ export function PublishForm({
                 onChange={(e) => setSelected((s) => (e.target.checked ? [...s, a.id] : s.filter((x) => x !== a.id)))}
               />
               <span className="min-w-0">
-                <span className="block font-medium text-ink-50">{a.networkLabel}</span>
-                <span className="block truncate text-ink-400">{a.label}</span>
-                {a.blocked ? <span className="mt-0.5 block text-[12px] text-amber-300">{a.blocked}</span> : null}
+                <span className="block font-medium text-fg">{a.networkLabel}</span>
+                <span className="block truncate text-muted">{a.label}</span>
+                {a.blocked ? <span className="mt-0.5 block text-sm text-warn">{a.blocked}</span> : null}
               </span>
             </label>
           ))}
@@ -116,16 +116,16 @@ export function PublishForm({
       </fieldset>
 
       <fieldset className="flex flex-wrap items-end gap-4">
-        <legend className="mb-2 text-[13px] font-medium text-ink-200">Quando</legend>
-        <label className="flex items-center gap-2 text-[13px] text-ink-200">
+        <legend className="mb-2 text-base font-medium text-fg">Quando</legend>
+        <label className="flex items-center gap-2 text-base text-fg">
           <input type="radio" name="when" value="now" checked={when === "now"} onChange={() => setWhen("now")} /> Agora
         </label>
-        <label className="flex items-center gap-2 text-[13px] text-ink-200">
+        <label className="flex items-center gap-2 text-base text-fg">
           <input type="radio" name="when" value="later" checked={when === "later"} onChange={() => setWhen("later")} />{" "}
           Agendar
         </label>
         {when === "later" && suggestedAt ? (
-          <span className="text-[12px] text-ink-400">Sugerido pela data da pauta</span>
+          <span className="text-sm text-muted">Sugerido pela data da pauta</span>
         ) : null}
         {when === "later" ? (
           <Input
@@ -161,8 +161,8 @@ export function PublishForm({
       </Field>
 
       {tiktokAccount ? (
-        <div className="rounded-[10px] border border-ink-700 p-3">
-          <div className="text-[13px] font-medium text-ink-100">
+        <div className="rounded-md border border-line p-3">
+          <div className="text-base font-medium text-fg">
             TikTok · {tiktok.status === "ok" && tiktok.data?.nickname ? tiktok.data.nickname : tiktokAccount.label}
           </div>
           <div className="mt-2 flex flex-wrap items-end gap-3">
@@ -180,7 +180,7 @@ export function PublishForm({
             </Field>
             <button
               type="button"
-              className="mb-2 text-[12.5px] text-iris-300 hover:underline disabled:opacity-60"
+              className="mb-2 text-sm text-accent hover:underline disabled:opacity-60"
               disabled={loadingTikTok}
               onClick={() => {
                 const fd = new FormData();
@@ -191,8 +191,8 @@ export function PublishForm({
               {loadingTikTok ? "Consultando..." : "Atualizar opções da conta"}
             </button>
           </div>
-          {tiktok.status === "error" ? <p className="mt-1 text-[12.5px] text-red-300">{tiktok.message}</p> : null}
-          <label className="mt-3 flex items-start gap-2 text-[12.5px] text-ink-300">
+          {tiktok.status === "error" ? <p className="mt-1 text-sm text-danger">{tiktok.message}</p> : null}
+          <label className="mt-3 flex items-start gap-2 text-sm text-muted">
             <input type="checkbox" name="tiktokConsent" className="mt-0.5" required />
             Ao publicar, concordo com a Confirmação de Uso de Música da TikTok.
           </label>
@@ -200,7 +200,7 @@ export function PublishForm({
       ) : null}
 
       {hasYouTube ? (
-        <div className="flex flex-wrap items-end gap-4 rounded-[10px] border border-ink-700 p-3">
+        <div className="flex flex-wrap items-end gap-4 rounded-md border border-line p-3">
           <Field label="Visibilidade no YouTube" htmlFor="pub-yt">
             <Select id="pub-yt" name="youtubePrivacy" defaultValue="private">
               <option value="private">Privado</option>
@@ -208,13 +208,13 @@ export function PublishForm({
               <option value="public">Público</option>
             </Select>
           </Field>
-          <label className="mb-2 flex items-center gap-2 text-[12.5px] text-ink-300">
+          <label className="mb-2 flex items-center gap-2 text-sm text-muted">
             <input type="checkbox" name="madeForKids" /> Conteúdo feito para crianças
           </label>
         </div>
       ) : null}
 
-      <label className="flex items-center gap-2 text-[13px] text-ink-200">
+      <label className="flex items-center gap-2 text-base text-fg">
         <input type="checkbox" name="allowComments" defaultChecked /> Permitir comentários
       </label>
 

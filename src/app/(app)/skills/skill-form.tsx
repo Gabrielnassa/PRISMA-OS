@@ -94,13 +94,13 @@ export function SkillForm({
                   onChange={(e) => onFile(e.target.files?.[0])}
                 />
               </Field>
-              <details className="rounded-lg border border-ink-700 p-3">
-                <summary className="cursor-pointer text-sm text-ink-200">Ou cole o conteúdo do SKILL.md</summary>
+              <details className="rounded-md border border-line p-3">
+                <summary className="cursor-pointer text-base text-fg">Ou cole o conteúdo do SKILL.md</summary>
                 <Textarea
                   aria-label="Conteúdo do SKILL.md"
                   value={pasted}
                   onChange={(e) => setPasted(e.target.value)}
-                  className="mt-3 min-h-40 font-mono text-xs"
+                  className="mt-3 min-h-40 font-mono text-sm"
                   placeholder={
                     "---\nname: minha-skill\ndescription: O que ela faz e quando usar\n---\n\n# Instruções\n..."
                   }
@@ -234,7 +234,7 @@ export function SkillForm({
               required
               minLength={10}
               maxLength={SKILL_LIMITS.instructions}
-              className="tabular min-h-80 text-[13px]"
+              className="tabular min-h-80 text-base"
             />
           </Field>
           <Field
@@ -259,7 +259,7 @@ export function SkillForm({
           <div className="flex flex-wrap items-center gap-3">
             <SubmitButton pendingText="Salvando...">{skillId ? "Salvar alterações" : "Criar skill"}</SubmitButton>
             {skillId ? (
-              <span className="text-xs text-ink-400">
+              <span className="text-sm text-muted">
                 Alterar nome, descrição, instruções ou esforço cria uma nova versão; as anteriores ficam guardadas.
               </span>
             ) : null}

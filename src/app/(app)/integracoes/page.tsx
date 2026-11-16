@@ -20,9 +20,7 @@ import { removeAppAction, removeSmtpAction, webhookOpAction } from "./actions";
 
 export const metadata: Metadata = { title: "Integrações" };
 
-const code = (t: string) => (
-  <code className="rounded-[4px] bg-ink-800 px-1 font-mono text-[12.5px] text-ink-100">{t}</code>
-);
+const code = (t: string) => <code className="rounded-sm bg-surface-2 px-1 font-mono text-sm text-fg">{t}</code>;
 
 const APP_STEPS: Record<AppProvider, ReactNode[]> = {
   meta: [
@@ -70,19 +68,19 @@ function AppCard({ s, canManage }: { s: AppStatus; canManage: boolean }) {
   const info = APP_PROVIDER_INFO[s.provider];
   return (
     <Card className="flex h-full flex-col">
-      <div className="border-b border-ink-800 px-5 pt-4 pb-3.5">
-        <h3 className="text-[15px] font-semibold tracking-[-0.015em] text-ink-50">{info.networks}</h3>
-        <div className="mt-1 flex items-center gap-2 text-[13px] text-ink-400">
+      <div className="border-b border-line px-5 pt-4 pb-3.5">
+        <h3 className="text-md font-semibold text-fg">{info.networks}</h3>
+        <div className="mt-1 flex items-center gap-2 text-base text-muted">
           <span>{info.app}</span>
           <span aria-hidden>·</span>
-          <Dot tone={s.configured ? "success" : "neutral"} className="text-[13px]">
+          <Dot tone={s.configured ? "success" : "neutral"} className="text-base">
             {s.configured ? "Conectado" : "Não conectado"}
           </Dot>
         </div>
       </div>
-      <div className="flex flex-1 flex-col gap-5 p-5 text-sm">
+      <div className="flex flex-1 flex-col gap-5 p-5 text-base">
         {s.source === "env" ? (
-          <p className="text-ink-300">
+          <p className="text-muted">
             Chaves definidas na configuração do servidor ({code(info.env[0])}). App {code(s.publicId ?? "")}.
           </p>
         ) : canManage ? (
@@ -96,8 +94,8 @@ function AppCard({ s, canManage }: { s: AppStatus; canManage: boolean }) {
         ) : null}
         {s.redirectUri ? (
           <div className="flex flex-col gap-1.5">
-            <div className="text-[13px] font-medium text-ink-200">Endereço de retorno do login</div>
-            <code className="rounded-[6px] bg-ink-950 px-3 py-2 font-mono text-[12px] leading-relaxed break-all text-ink-100 ring-1 ring-ink-700 select-all">
+            <div className="text-base font-medium text-fg">Endereço de retorno do login</div>
+            <code className="rounded-md bg-bg px-3 py-2 font-mono text-sm leading-relaxed break-all text-fg ring-1 ring-line select-all">
               {s.redirectUri}
             </code>
             <div>
@@ -105,10 +103,10 @@ function AppCard({ s, canManage }: { s: AppStatus; canManage: boolean }) {
             </div>
           </div>
         ) : null}
-        <div className="mt-auto flex flex-col gap-3 border-t border-ink-800 pt-4">
+        <div className="mt-auto flex flex-col gap-3 border-t border-line pt-4">
           <details className="group">
-            <summary className="cursor-pointer text-[13px] text-iris-300 hover:underline">Como criar o app</summary>
-            <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-[13px] leading-relaxed text-ink-300">
+            <summary className="cursor-pointer text-base text-accent hover:underline">Como criar o app</summary>
+            <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-base leading-relaxed text-muted">
               {APP_STEPS[s.provider].map((step, i) => (
                 <li key={i}>{step}</li>
               ))}
@@ -173,12 +171,12 @@ export default async function IntegrationsPage() {
           ))}
         </div>
       ) : (
-        <p className="text-sm text-ink-400">
+        <p className="text-base text-muted">
           As chaves dos apps são gerenciadas pela administração. As contas de cada cliente são conectadas na aba Redes
           do cliente.
         </p>
       )}
-      <p className="mt-3 text-[13px] text-ink-400">
+      <p className="mt-3 text-base text-muted">
         Depois de salvar as chaves, conecte as contas de cada cliente na página do cliente, aba Redes.
       </p>
 
@@ -189,12 +187,12 @@ export default async function IntegrationsPage() {
             title="Inteligência artificial"
             actions={<StatusBadge ok={provider.configured} demo={provider.configured && provider.isDemo} />}
           />
-          <div className="space-y-3 p-5 text-sm">
-            <p className="text-ink-200">{provider.label}</p>
-            <p className="text-ink-400">{provider.detail}</p>
+          <div className="space-y-3 p-5 text-base">
+            <p className="text-fg">{provider.label}</p>
+            <p className="text-muted">{provider.detail}</p>
             {provider.configured && can(auth.role, "integrations.test") ? <TestProviderForm disabled={false} /> : null}
             {!provider.configured ? (
-              <ol className="list-decimal space-y-1 pl-5 text-ink-300">
+              <ol className="list-decimal space-y-1 pl-5 text-muted">
                 <li>
                   Crie uma chave em console.anthropic.com (Claude) ou platform.openai.com (ChatGPT). A assinatura do
                   ChatGPT não inclui a chave; o uso da API é cobrado à parte.
@@ -214,10 +212,10 @@ export default async function IntegrationsPage() {
             description="Fotos e vídeos das pastas dos clientes, só leitura"
             actions={<StatusBadge ok={drive.configured} />}
           />
-          <div className="space-y-3 p-5 text-sm">
-            <p className="text-ink-400">{drive.detail}</p>
+          <div className="space-y-3 p-5 text-base">
+            <p className="text-muted">{drive.detail}</p>
             {!drive.configured ? (
-              <ol className="list-decimal space-y-1 pl-5 text-ink-300">
+              <ol className="list-decimal space-y-1 pl-5 text-muted">
                 <li>No Google Cloud, ative a API do Google Drive e crie uma conta de serviço.</li>
                 <li>
                   Gere a chave JSON da conta de serviço e defina o conteúdo em {code("GOOGLE_SERVICE_ACCOUNT_JSON")} na
@@ -235,24 +233,24 @@ export default async function IntegrationsPage() {
             description="Consulta de perfis comerciais para sugerir as cores da marca"
             actions={<StatusBadge ok={instagram.configured} />}
           />
-          <div className="space-y-3 p-5 text-sm">
-            <p className="text-ink-400">{instagram.detail}</p>
+          <div className="space-y-3 p-5 text-base">
+            <p className="text-muted">{instagram.detail}</p>
             {!instagram.configured ? (
-              <p className="text-ink-300">Sem isso, use as imagens do cliente no perfil da marca.</p>
+              <p className="text-muted">Sem isso, use as imagens do cliente no perfil da marca.</p>
             ) : null}
           </div>
         </Card>
         <Card>
           <CardHeader title="Saúde do sistema" />
-          <ul className="divide-y divide-ink-800">
+          <ul className="divide-y divide-line">
             {checks.map((c) => (
-              <li key={c.name} className="flex items-start gap-3 px-5 py-3 text-sm">
+              <li key={c.name} className="flex items-start gap-3 px-5 py-3 text-base">
                 <Badge tone={c.ok ? "success" : c.name === "Provedor de IA" ? "warning" : "danger"}>
                   {c.ok ? "OK" : "Atenção"}
                 </Badge>
                 <div>
-                  <div className="font-medium text-ink-100">{c.name}</div>
-                  <div data-ambiente className="text-xs text-ink-400">
+                  <div className="font-medium text-fg">{c.name}</div>
+                  <div data-ambiente className="text-sm text-muted">
                     {c.detail}
                   </div>
                 </div>
@@ -275,7 +273,7 @@ export default async function IntegrationsPage() {
               <div className="space-y-4 p-5">
                 <SmtpForm initial={smtp} />
                 {smtp.configured ? (
-                  <div className="flex flex-wrap items-start justify-between gap-3 border-t border-ink-800 pt-3">
+                  <div className="flex flex-wrap items-start justify-between gap-3 border-t border-line pt-3">
                     <SmtpTestButton />
                     <InlineAction
                       action={removeSmtpAction}
@@ -292,19 +290,19 @@ export default async function IntegrationsPage() {
               <CardHeader title="Webhooks" description="Para automações no n8n, Zapier ou Make" />
               <div className="space-y-4 p-5">
                 {webhooks.length ? (
-                  <ul className="divide-y divide-ink-800 rounded-[10px] border border-ink-800">
+                  <ul className="divide-y divide-line rounded-md border border-line">
                     {webhooks.map((w) => (
-                      <li key={w.id} className="space-y-1 px-4 py-3 text-[13px]">
-                        <div className="font-medium break-all text-ink-100">{w.url}</div>
-                        <div className="text-ink-400">{w.events.map((e) => WEBHOOK_EVENT_LABELS[e]).join(" · ")}</div>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px]">
+                      <li key={w.id} className="space-y-1 px-4 py-3 text-base">
+                        <div className="font-medium break-all text-fg">{w.url}</div>
+                        <div className="text-muted">{w.events.map((e) => WEBHOOK_EVENT_LABELS[e]).join(" · ")}</div>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                           {w.lastAt ? (
-                            <span className={w.lastError ? "text-red-300" : "text-emerald-300"}>
+                            <span className={w.lastError ? "text-danger" : "text-ok"}>
                               {w.lastError ? `Falhou (${w.lastError})` : `Entregue (HTTP ${w.lastStatus})`} ·{" "}
                               {formatDateTime(w.lastAt)}
                             </span>
                           ) : (
-                            <span className="text-ink-400">Nenhum envio ainda</span>
+                            <span className="text-muted">Nenhum envio ainda</span>
                           )}
                           <InlineAction
                             action={webhookOpAction}

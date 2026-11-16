@@ -51,7 +51,7 @@ function Counter({ value, limit }: { value: string; limit: number }) {
     <span
       className={cx(
         "tabular-nums",
-        over ? "font-semibold text-red-300" : value.length > limit * 0.9 ? "text-amber-300" : "text-ink-400",
+        over ? "font-semibold text-danger" : value.length > limit * 0.9 ? "text-warn" : "text-muted",
       )}
     >
       {value.length}/{limit}
@@ -269,7 +269,7 @@ export function ContentEditor({
           <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
             <div className="flex flex-col gap-3">
               <div
-                className="relative overflow-hidden rounded-[var(--radius-card)] border border-ink-800 bg-ink-850"
+                className="relative overflow-hidden rounded-md border border-line bg-surface"
                 style={{ aspectRatio: `${ASPECTS[doc.aspect].width} / ${ASPECTS[doc.aspect].height}` }}
               >
                 {urls[selected] ? (
@@ -280,16 +280,16 @@ export function ContentEditor({
                     className="h-full w-full object-contain"
                   />
                 ) : (
-                  <div className="flex h-full items-center justify-center text-sm text-ink-400">Renderizando...</div>
+                  <div className="flex h-full items-center justify-center text-base text-muted">Renderizando...</div>
                 )}
                 {rendering ? (
-                  <span className="absolute top-2 right-2 rounded bg-black/60 px-2 py-0.5 text-[11px] text-white">
+                  <span className="rounded absolute top-2 right-2 bg-black/60 px-2 py-0.5 text-xs text-white">
                     atualizando
                   </span>
                 ) : null}
               </div>
               {previewError ? (
-                <p role="alert" className="text-xs text-red-300">
+                <p role="alert" className="text-sm text-danger">
                   {previewError}
                 </p>
               ) : null}
@@ -302,14 +302,14 @@ export function ContentEditor({
                     aria-selected={i === selected}
                     onClick={() => setSelected(i)}
                     className={cx(
-                      "relative w-20 shrink-0 overflow-hidden rounded-lg border-2 bg-ink-850",
-                      i === selected ? "border-iris-400" : "border-ink-700 hover:border-ink-500",
+                      "relative w-20 shrink-0 overflow-hidden rounded-md border-2 bg-surface",
+                      i === selected ? "border-accent" : "border-line hover:border-control",
                     )}
                     style={{ aspectRatio: `${ASPECTS[doc.aspect].width} / ${ASPECTS[doc.aspect].height}` }}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     {urls[i] ? <img src={urls[i]} alt="" className="h-full w-full object-cover" /> : null}
-                    <span className="absolute bottom-0.5 left-0.5 rounded bg-black/70 px-1 text-[10px] text-white">
+                    <span className="rounded absolute bottom-0.5 left-0.5 bg-black/70 px-1 text-xs text-white">
                       {i + 1}
                     </span>
                   </button>
@@ -361,7 +361,7 @@ export function ContentEditor({
                     variant="ghost"
                     onClick={removeSlide}
                     disabled={doc.slides.length <= slideLimits.min}
-                    className="text-red-300"
+                    className="text-danger"
                   >
                     Remover
                   </Button>
@@ -371,9 +371,7 @@ export function ContentEditor({
 
             <fieldset disabled={!canEdit} className="flex min-w-0 flex-col gap-3">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="shrink-0 text-[13.5px] font-semibold whitespace-nowrap text-ink-100">
-                  Lâmina {selected + 1}
-                </h3>
+                <h3 className="shrink-0 text-base font-semibold whitespace-nowrap text-fg">Lâmina {selected + 1}</h3>
                 <Select
                   aria-label="Tipo da lâmina"
                   value={slide.kind}
@@ -389,8 +387,8 @@ export function ContentEditor({
               </div>
               {FIELD_KEYS.filter((k) => limits[k] !== undefined).map((k) => (
                 <div key={k} className="flex flex-col gap-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <label htmlFor={`f-${k}`} className="font-medium text-ink-200">
+                  <div className="flex items-center justify-between text-sm">
+                    <label htmlFor={`f-${k}`} className="font-medium text-fg">
                       {FIELD_LABELS[k]}
                     </label>
                     <Counter value={slide.fields[k]} limit={limits[k]!} />
@@ -408,7 +406,7 @@ export function ContentEditor({
                 </div>
               ))}
               {unusedWithText.length ? (
-                <p className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-amber-200">
+                <p className="rounded-md border border-warn/40 bg-warn/5 px-3 py-2 text-sm text-fg">
                   Campos com texto que este template não exibe: {unusedWithText.map((k) => FIELD_LABELS[k]).join(", ")}.{" "}
                   <button
                     type="button"
@@ -461,7 +459,7 @@ export function ContentEditor({
                 />
               </Field>
               {template.image !== "none" ? (
-                <div className="flex flex-col gap-3 rounded-lg border border-ink-700 p-3">
+                <div className="flex flex-col gap-3 rounded-md border border-line p-3">
                   <Field
                     label={`Imagem${template.image === "required" ? " (obrigatória neste layout)" : ""}`}
                     htmlFor="image"
@@ -538,8 +536,8 @@ export function ContentEditor({
           <CardHeader title="Legenda e CTA" />
           <fieldset disabled={!canEdit} className="grid gap-4 p-5">
             <div className="flex flex-col gap-1">
-              <div className="flex justify-between text-xs">
-                <label htmlFor="caption" className="font-medium text-ink-200">
+              <div className="flex justify-between text-sm">
+                <label htmlFor="caption" className="font-medium text-fg">
                   Legenda
                 </label>
                 <Counter value={doc.caption} limit={2200} />
@@ -602,7 +600,7 @@ export function ContentEditor({
 
       <div className="flex min-w-0 flex-col gap-4">
         {canEdit ? (
-          <Card className={cx(dirty && "border-amber-400/40")}>
+          <Card className={cx(dirty && "border-warn/40")}>
             <div className="flex flex-col gap-3 p-4">
               <Field label="Nota da alteração (opcional)" htmlFor="note">
                 <Input
@@ -631,16 +629,16 @@ export function ContentEditor({
                 </Button>
               </div>
               {dirty ? (
-                <p className="text-xs text-amber-300">
+                <p className="text-sm text-warn">
                   Alterações não salvas. Salvar cria uma nova versão e exige nova aprovação.
                 </p>
               ) : (
-                <p className="text-xs text-ink-400">Sem alterações pendentes.</p>
+                <p className="text-sm text-muted">Sem alterações pendentes.</p>
               )}
               {saveMessage ? (
                 <p
                   role={saveMessage.tone === "error" ? "alert" : "status"}
-                  className={cx("text-sm", saveMessage.tone === "error" ? "text-red-300" : "text-emerald-300")}
+                  className={cx("text-base", saveMessage.tone === "error" ? "text-danger" : "text-ok")}
                 >
                   {saveMessage.text}
                 </p>
@@ -690,12 +688,12 @@ export function ContentEditor({
             </Field>
             <div className="grid grid-cols-5 gap-2">
               {(["primary", "secondary", "accent", "background", "text"] as const).map((k) => (
-                <label key={k} className="flex flex-col items-center gap-1 text-[11px] text-ink-400">
+                <label key={k} className="flex flex-col items-center gap-1 text-xs text-muted">
                   <input
                     type="color"
                     value={doc.style.colors[k]}
                     onChange={(e) => setStyle({ colors: { ...doc.style.colors, [k]: e.target.value } })}
-                    className="h-9 w-full cursor-pointer rounded-md border border-ink-600 bg-transparent"
+                    className="h-9 w-full cursor-pointer rounded-md border border-control bg-transparent"
                     aria-label={`Cor ${k}`}
                   />
                   {
@@ -738,12 +736,12 @@ export function ContentEditor({
                 </Select>
               </Field>
             </div>
-            <label className="flex items-center gap-2 text-sm text-ink-200">
+            <label className="flex items-center gap-2 text-base text-fg">
               <input
                 type="checkbox"
                 checked={doc.style.showLogo}
                 onChange={(e) => setStyle({ showLogo: e.target.checked })}
-                className="accent-iris-400"
+                className="accent-accent"
               />
               Exibir logotipo / assinatura
             </label>

@@ -83,28 +83,28 @@ export function ColorSuggest({
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : s.length >= 12 ? s : [...s, id]));
 
   return (
-    <div className="rounded-[var(--radius-card)] border border-ink-800 bg-ink-950/40 md:col-span-2">
-      <div className="border-b border-ink-800 px-4 py-3">
-        <div className="text-[14px] font-semibold text-ink-50">Sugerir cores</div>
-        <p className="mt-0.5 text-[12.5px] text-ink-400">
+    <div className="rounded-md border border-line bg-bg/40 md:col-span-2">
+      <div className="border-b border-line px-4 py-3">
+        <div className="text-base font-semibold text-fg">Sugerir cores</div>
+        <p className="mt-0.5 text-sm text-muted">
           Pelo Instagram do cliente ou por imagens dele. A sugestão só preenche os campos abaixo; você revisa e salva.
         </p>
       </div>
-      <div className="grid gap-px bg-ink-800 md:grid-cols-2">
-        <div className="bg-ink-900 p-4">
-          <label htmlFor="ig-handle" className="text-[13px] font-medium text-ink-200">
+      <div className="grid gap-px bg-surface-2 md:grid-cols-2">
+        <div className="bg-surface p-4">
+          <label htmlFor="ig-handle" className="text-base font-medium text-fg">
             Pelo @ do Instagram
           </label>
           <div className="mt-1.5 flex gap-2">
-            <div className="flex min-w-0 flex-1 items-center rounded-md border border-ink-700 bg-ink-950/60 focus-within:border-iris-400/60">
-              <span className="tabular pl-3 text-[13px] text-ink-400">@</span>
+            <div className="flex min-w-0 flex-1 items-center rounded-md border border-line bg-bg/60 focus-within:border-accent/60">
+              <span className="tabular pl-3 text-base text-muted">@</span>
               <input
                 id="ig-handle"
                 value={handle.replace(/^@/, "")}
                 onChange={(e) => setHandle(e.target.value)}
                 placeholder="perfil.da.marca"
                 autoComplete="off"
-                className="min-w-0 flex-1 bg-transparent px-1.5 py-[7px] text-[14px] text-ink-50 outline-none placeholder:text-ink-400"
+                className="min-w-0 flex-1 bg-transparent px-1.5 py-[7px] text-base text-fg outline-none placeholder:text-muted"
               />
             </div>
             <Button
@@ -117,22 +117,22 @@ export function ColorSuggest({
             </Button>
           </div>
           {canUpload && instagramReady ? (
-            <label className="mt-2.5 flex items-center gap-2 text-[12.5px] text-ink-300">
+            <label className="mt-2.5 flex items-center gap-2 text-sm text-muted">
               <input type="checkbox" checked={saveLogo} onChange={(e) => setSaveLogo(e.target.checked)} />
               Guardar a foto de perfil como logotipo na biblioteca
             </label>
           ) : null}
-          <p className="mt-2.5 text-[12.5px] leading-relaxed text-ink-400">
+          <p className="mt-2.5 text-sm leading-relaxed text-muted">
             {instagramReady
               ? "Funciona com contas comerciais ou de criador."
               : "Para buscar pelo @, conecte a Meta em Integrações. Enquanto isso, use um print do perfil ou o logotipo."}
           </p>
         </div>
 
-        <div className="bg-ink-900 p-4">
-          <div className="text-[13px] font-medium text-ink-200">De imagens do cliente</div>
+        <div className="bg-surface p-4">
+          <div className="text-base font-medium text-fg">De imagens do cliente</div>
           {images.length === 0 ? (
-            <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-400">
+            <p className="mt-1.5 text-sm leading-relaxed text-muted">
               Envie o logotipo, fotos ou um print do perfil do Instagram na aba Arquivos (PNG, JPEG ou SVG) e volte
               aqui.
             </p>
@@ -149,8 +149,8 @@ export function ColorSuggest({
                       aria-pressed={on}
                       title={img.filename}
                       className={cx(
-                        "relative size-14 overflow-hidden rounded-md border bg-ink-850",
-                        on ? "border-iris-400" : "border-ink-700 hover:border-ink-500",
+                        "relative size-14 overflow-hidden rounded-md border bg-surface",
+                        on ? "border-accent" : "border-line hover:border-control",
                       )}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -161,7 +161,7 @@ export function ColorSuggest({
                         loading="lazy"
                       />
                       {img.kind === "logo" ? (
-                        <span className="tabular absolute right-0 bottom-0 left-0 bg-ink-950/80 text-center text-[9px] text-ink-200">
+                        <span className="tabular absolute right-0 bottom-0 left-0 bg-bg/80 text-center text-xs text-fg">
                           logo
                         </span>
                       ) : null}
@@ -178,7 +178,7 @@ export function ColorSuggest({
                 >
                   {busy === "images" ? "Lendo cores..." : `Extrair cores (${selected.length})`}
                 </Button>
-                <span className="text-[12px] text-ink-400">Logotipos pesam mais que fotos.</span>
+                <span className="text-sm text-muted">Logotipos pesam mais que fotos.</span>
               </div>
             </>
           )}
@@ -186,44 +186,44 @@ export function ColorSuggest({
       </div>
 
       {error ? (
-        <p role="alert" className="border-t border-ink-800 px-4 py-3 text-[13px] text-red-300">
+        <p role="alert" className="border-t border-line px-4 py-3 text-base text-danger">
           {error}
         </p>
       ) : null}
 
       {result ? (
-        <div className="border-t border-ink-800 p-4" aria-live="polite">
+        <div className="border-t border-line p-4" aria-live="polite">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <div className="text-[13px] font-medium text-ink-100">Sugestão</div>
-            <div className="tabular text-[11.5px] text-ink-400">{result.origin}</div>
+            <div className="text-base font-medium text-fg">Sugestão</div>
+            <div className="tabular text-xs text-muted">{result.origin}</div>
           </div>
           <div className="mt-3 grid grid-cols-5 gap-2">
             {ROLES.map(([k, label]) => (
               <div key={k} className="min-w-0">
                 <div
-                  className="h-10 rounded-md ring-1 ring-white/10 ring-inset"
+                  className="h-10 rounded-md ring-1 ring-line ring-inset"
                   style={{ backgroundColor: result.colors[k] }}
                 />
-                <div className="mt-1 truncate text-[12px] text-ink-300">{label}</div>
-                <div className="tabular text-[11px] text-ink-400">{result.colors[k]}</div>
+                <div className="mt-1 truncate text-sm text-muted">{label}</div>
+                <div className="tabular text-xs text-muted">{result.colors[k]}</div>
               </div>
             ))}
           </div>
           {result.swatches.length ? (
             <div className="mt-3 flex flex-wrap items-center gap-1.5">
-              <span className="mr-1 text-[12px] text-ink-400">Cores encontradas:</span>
+              <span className="mr-1 text-sm text-muted">Cores encontradas:</span>
               {result.swatches.map((sw) => (
                 <span
                   key={sw.hex}
                   title={`${sw.hex} · ${Math.round(sw.share * 100)}%`}
-                  className="size-5 rounded-[4px] ring-1 ring-white/10 ring-inset"
+                  className="size-5 rounded-sm ring-1 ring-line ring-inset"
                   style={{ backgroundColor: sw.hex }}
                 />
               ))}
             </div>
           ) : null}
           {result.notes.length ? (
-            <ul className="mt-3 list-disc space-y-0.5 pl-5 text-[12.5px] text-ink-400">
+            <ul className="mt-3 list-disc space-y-0.5 pl-5 text-sm text-muted">
               {result.notes.map((n) => (
                 <li key={n}>{n}</li>
               ))}
@@ -240,7 +240,7 @@ export function ColorSuggest({
               Usar estas cores
             </Button>
             {applied ? (
-              <span className="text-[12.5px] text-emerald-300">
+              <span className="text-sm text-ok">
                 Cores aplicadas abaixo. Revise e salve o perfil; marque “Identidade visual definida” quando o cliente
                 confirmar.
               </span>

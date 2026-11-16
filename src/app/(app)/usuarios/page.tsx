@@ -27,25 +27,25 @@ export default async function UsersPage() {
       </Card>
       <Card className="mb-6">
         <CardHeader title="Membros" description={members.length === 1 ? "1 pessoa" : `${members.length} pessoas`} />
-        <ul className="divide-y divide-ink-800">
+        <ul className="divide-y divide-line">
           {members.map((m) => (
             <li key={m.userId} className="grid gap-3 px-5 py-4 md:grid-cols-[260px_1fr]">
               <div>
-                <div className="font-medium text-ink-100">
+                <div className="font-medium text-fg">
                   {m.name} {m.userId === auth.userId ? <Badge tone="accent">você</Badge> : null}
                 </div>
-                <div className="text-xs text-ink-400">{m.email}</div>
+                <div className="text-sm text-muted">{m.email}</div>
                 <div className="mt-1 flex flex-wrap gap-1">
                   <Badge>{ROLE_LABELS[m.role]}</Badge>
                   {!m.isActive ? <Badge tone="danger">Inativo</Badge> : null}
                 </div>
-                <div className="mt-1 text-[11px] text-ink-400">Último acesso: {formatDateTime(m.lastLoginAt)}</div>
+                <div className="mt-1 text-xs text-muted">Último acesso: {formatDateTime(m.lastLoginAt)}</div>
                 {m.userId !== auth.userId && (m.role !== "owner" || auth.role === "owner") ? (
                   <ResetPasswordForm userId={m.userId} email={m.email} />
                 ) : null}
               </div>
               {m.role === "owner" && auth.role !== "owner" ? (
-                <p className="text-xs text-ink-400">Somente proprietários alteram proprietários.</p>
+                <p className="text-sm text-muted">Somente proprietários alteram proprietários.</p>
               ) : (
                 <MemberForm
                   member={m}
@@ -60,11 +60,11 @@ export default async function UsersPage() {
       </Card>
       <Card>
         <CardHeader title="Papéis" />
-        <ul className="divide-y divide-ink-800">
+        <ul className="divide-y divide-line">
           {ROLES.map((r) => (
-            <li key={r} className="px-5 py-3 text-sm">
-              <div className="font-medium text-ink-100">{ROLE_LABELS[r]}</div>
-              <div className="text-ink-400">{ROLE_DESCRIPTIONS[r]}</div>
+            <li key={r} className="px-5 py-3 text-base">
+              <div className="font-medium text-fg">{ROLE_LABELS[r]}</div>
+              <div className="text-muted">{ROLE_DESCRIPTIONS[r]}</div>
             </li>
           ))}
         </ul>

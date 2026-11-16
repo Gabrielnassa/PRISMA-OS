@@ -124,9 +124,9 @@ export function FormMessage({ state }: { state: ActionState<unknown> }) {
     return (
       <p
         role="alert"
-        className="flex items-start gap-2.5 rounded-md border border-red-400/20 bg-red-400/[0.06] px-3 py-2 text-[13.5px] leading-relaxed text-red-200"
+        className="flex items-start gap-2.5 rounded-md border border-danger/40 bg-danger/5 px-3 py-2 text-base leading-relaxed text-fg"
       >
-        <span aria-hidden className="mt-[7px] size-1.5 shrink-0 rounded-full bg-red-400" />
+        <span aria-hidden className="mt-[7px] size-1.5 shrink-0 rounded-full bg-danger" />
         {state.message}
       </p>
     );
@@ -135,9 +135,9 @@ export function FormMessage({ state }: { state: ActionState<unknown> }) {
     return (
       <p
         role="status"
-        className="flex items-start gap-2.5 rounded-md border border-emerald-400/20 bg-emerald-400/[0.06] px-3 py-2 text-[13.5px] leading-relaxed text-emerald-100"
+        className="flex items-start gap-2.5 rounded-md border border-ok/40 bg-ok/5 px-3 py-2 text-base leading-relaxed text-fg"
       >
-        <span aria-hidden className="mt-[7px] size-1.5 shrink-0 rounded-full bg-emerald-400" />
+        <span aria-hidden className="mt-[7px] size-1.5 shrink-0 rounded-full bg-ok" />
         {state.message}
       </p>
     );

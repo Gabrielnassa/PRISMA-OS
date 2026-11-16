@@ -63,10 +63,8 @@ export function MediaUploader({ clientId, defaultKind = "image" }: { clientId: s
             }
           }}
           className={cx(
-            "flex min-h-[76px] cursor-pointer flex-col items-center justify-center gap-1 rounded-[var(--radius-card)] border border-dashed px-4 py-3 text-center text-[13px] transition-colors has-[:focus-visible]:border-iris-400",
-            over
-              ? "border-iris-400 bg-iris-400/[0.07] text-ink-50"
-              : "border-ink-600 text-ink-300 hover:border-ink-400",
+            "flex min-h-[76px] cursor-pointer flex-col items-center justify-center gap-1 rounded-md border border-dashed px-4 py-3 text-center text-base transition-colors has-[:focus-visible]:border-accent",
+            over ? "border-accent bg-accent/5 text-fg" : "border-control text-muted hover:border-control",
           )}
         >
           <input
@@ -80,13 +78,13 @@ export function MediaUploader({ clientId, defaultKind = "image" }: { clientId: s
             className="sr-only"
           />
           {picked.length ? (
-            <span className="text-ink-50">
+            <span className="text-fg">
               {picked.length === 1 ? picked[0] : `${picked.length} arquivos selecionados`}
             </span>
           ) : (
             <>
-              <span className="font-medium text-ink-100">Arraste fotos e vídeos aqui</span>
-              <span className="text-ink-400">ou clique para escolher</span>
+              <span className="font-medium text-fg">Arraste fotos e vídeos aqui</span>
+              <span className="text-muted">ou clique para escolher</span>
             </>
           )}
         </label>
@@ -116,14 +114,14 @@ export function MediaUploader({ clientId, defaultKind = "image" }: { clientId: s
         </Field>
       </div>
       {error ? (
-        <p role="alert" className="text-sm text-red-300 md:col-span-4">
+        <p role="alert" className="text-base text-danger md:col-span-4">
           {error}
         </p>
       ) : null}
       {results.length ? (
-        <ul className="space-y-1 text-sm md:col-span-4" role="status">
+        <ul className="space-y-1 text-base md:col-span-4" role="status">
           {results.map((r) => (
-            <li key={r.filename} className={r.error ? "text-red-300" : "text-emerald-300"}>
+            <li key={r.filename} className={r.error ? "text-danger" : "text-ok"}>
               {r.filename}: {r.error ?? (r.duplicate ? "já estava na biblioteca" : "enviado")}
             </li>
           ))}

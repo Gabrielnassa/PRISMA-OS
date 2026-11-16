@@ -16,12 +16,11 @@ const WEEKDAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
 /** Cor do ponto: pauta planejada, em produção (pela situação da peça), feita. */
 function tone(e: CalendarEntry): string {
-  if (e.itemStatus === "done" || e.contentStatus === "approved" || e.contentStatus === "published")
-    return "bg-emerald-400";
-  if (e.contentStatus === "awaiting_approval") return "bg-amber-400";
-  if (e.contentStatus === "failed" || e.contentStatus === "rejected") return "bg-red-400";
-  if (e.contentItemId) return "bg-iris-400";
-  return e.planApproved ? "bg-ink-400" : "bg-ink-600";
+  if (e.itemStatus === "done" || e.contentStatus === "approved" || e.contentStatus === "published") return "bg-ok";
+  if (e.contentStatus === "awaiting_approval") return "bg-warn";
+  if (e.contentStatus === "failed" || e.contentStatus === "rejected") return "bg-danger";
+  if (e.contentItemId) return "bg-accent";
+  return e.planApproved ? "bg-muted" : "bg-control";
 }
 
 function statusText(e: CalendarEntry): string {
@@ -38,12 +37,12 @@ function Entry({ e, showClient }: { e: CalendarEntry; showClient: boolean }) {
     <Link
       href={href}
       title={`${e.clientName} · ${EDITORIAL_FORMAT_LABELS[e.format]} · ${statusText(e)}`}
-      className="group flex items-start gap-1.5 rounded-md px-1.5 py-1 hover:bg-white/[0.05]"
+      className="group flex items-start gap-1.5 rounded-md px-1.5 py-1 hover:bg-surface-2"
     >
       <span aria-hidden className={cx("mt-[6px] size-1.5 shrink-0 rounded-full", tone(e))} />
-      <span className="min-w-0 text-[12px] leading-snug">
-        {showClient ? <span className="block truncate text-ink-400">{e.clientName}</span> : null}
-        <span className="block truncate text-ink-100 group-hover:text-white">
+      <span className="min-w-0 text-sm leading-snug">
+        {showClient ? <span className="block truncate text-muted">{e.clientName}</span> : null}
+        <span className="block truncate text-fg group-hover:underline">
           {e.format === "video" ? "▶ " : ""}
           {e.title}
         </span>
@@ -86,7 +85,7 @@ export default async function CalendarPage({
             <LinkButton href={href(shiftMonth(month, -1))} variant="ghost" size="sm" aria-label="Mês anterior">
               ←
             </LinkButton>
-            <span className="min-w-[150px] text-center text-[14px] font-medium text-ink-50">{monthLabel(month)}</span>
+            <span className="min-w-[150px] text-center text-base font-medium text-fg">{monthLabel(month)}</span>
             <LinkButton href={href(shiftMonth(month, 1))} variant="ghost" size="sm" aria-label="Próximo mês">
               →
             </LinkButton>
@@ -106,21 +105,21 @@ export default async function CalendarPage({
         <button type="submit" className={buttonClass("secondary")}>
           Filtrar
         </button>
-        <span className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-ink-400">
+        <span className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
           <span className="flex items-center gap-1.5">
-            <span className="size-1.5 rounded-full bg-ink-400" />
+            <span className="size-1.5 rounded-full bg-muted" />
             Planejada
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="size-1.5 rounded-full bg-iris-400" />
+            <span className="size-1.5 rounded-full bg-accent" />
             Em produção
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="size-1.5 rounded-full bg-amber-400" />
+            <span className="size-1.5 rounded-full bg-warn" />
             Aguardando aprovação
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="size-1.5 rounded-full bg-emerald-400" />
+            <span className="size-1.5 rounded-full bg-ok" />
             Aprovada ou feita
           </span>
         </span>
@@ -142,22 +141,22 @@ export default async function CalendarPage({
         <>
           {/* Desktop: grade do mês. */}
           <Card className="hidden overflow-hidden md:block">
-            <div className="grid grid-cols-7 border-b border-ink-800 text-[12px] font-medium text-ink-400">
+            <div className="grid grid-cols-7 border-b border-line text-sm font-medium text-muted">
               {WEEKDAYS.map((d) => (
                 <div key={d} className="px-3 py-2">
                   {d}
                 </div>
               ))}
             </div>
-            <div data-calendario className="grid grid-cols-7 gap-px bg-ink-800">
+            <div data-calendario className="grid grid-cols-7 gap-px bg-surface-2">
               {cells.map((day, i) => (
-                <div key={i} className={cx("min-h-[112px] bg-ink-900 p-1.5", !day && "bg-ink-950/60")}>
+                <div key={i} className={cx("min-h-[112px] bg-surface p-1.5", !day && "bg-bg/60")}>
                   {day ? (
                     <>
                       <div
                         className={cx(
-                          "tabular mb-1 px-1.5 text-[12px]",
-                          day === today ? "font-semibold text-iris-300" : "text-ink-400",
+                          "tabular mb-1 px-1.5 text-sm",
+                          day === today ? "font-semibold text-accent" : "text-muted",
                         )}
                       >
                         {Number(day.slice(8))}
@@ -178,8 +177,8 @@ export default async function CalendarPage({
                 <Card>
                   <div
                     className={cx(
-                      "border-b border-ink-800 px-4 py-2 text-[12.5px] font-medium",
-                      day === today ? "text-iris-300" : "text-ink-300",
+                      "border-b border-line px-4 py-2 text-sm font-medium",
+                      day === today ? "text-accent" : "text-muted",
                     )}
                   >
                     {new Intl.DateTimeFormat("pt-BR", {

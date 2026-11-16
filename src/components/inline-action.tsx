@@ -21,8 +21,8 @@ function InlineButton({
       disabled={pending}
       aria-busy={pending}
       className={cx(
-        "text-xs hover:underline disabled:cursor-wait disabled:opacity-60",
-        tone === "danger" ? "text-red-300" : "text-ink-300 hover:text-ink-50",
+        "text-sm hover:underline disabled:cursor-wait disabled:opacity-60",
+        tone === "danger" ? "text-danger" : "text-muted hover:text-fg",
       )}
     >
       {pending ? pendingText : label}
@@ -67,7 +67,7 @@ export function InlineAction({
       ))}
       <InlineButton label={label} pendingText={pendingText ?? "Aguarde..."} tone={tone} />
       {state.status === "error" ? (
-        <p role="alert" className="mt-1 text-xs text-red-300">
+        <p role="alert" className="mt-1 text-sm text-danger">
           {state.message}
         </p>
       ) : null}

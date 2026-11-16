@@ -96,7 +96,7 @@ export default async function ClientPage({
     <>
       <PageHeader
         eyebrow={
-          <Link href="/clientes" className="hover:text-ink-200">
+          <Link href="/clientes" className="hover:text-fg">
             Clientes
           </Link>
         }
@@ -172,32 +172,28 @@ async function Overview({
             title="Primeiros passos"
             description={`${steps.length - pendingSteps} de ${steps.length} concluídos`}
           />
-          <ol className="grid gap-px bg-ink-800 sm:grid-cols-2 xl:grid-cols-3 [&>*]:bg-ink-900">
+          <ol className="grid gap-px bg-surface-2 sm:grid-cols-2 xl:grid-cols-3 [&>*]:bg-surface">
             {steps.map((st) => (
               <li key={st.id}>
                 <Link
                   href={st.href}
-                  className="flex h-full items-start gap-3 px-5 py-3.5 transition-colors hover:bg-ink-850"
+                  className="flex h-full items-start gap-3 px-5 py-3.5 transition-colors hover:bg-surface"
                 >
                   <span
                     aria-hidden
                     className={
                       st.done
-                        ? "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-400/15 text-[11px] text-emerald-300"
-                        : "mt-0.5 size-5 shrink-0 rounded-full border border-ink-600"
+                        ? "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-ok/15 text-xs text-ok"
+                        : "mt-0.5 size-5 shrink-0 rounded-full border border-control"
                     }
                   >
                     {st.done ? "✓" : null}
                   </span>
                   <span className="min-w-0">
-                    <span
-                      className={
-                        st.done ? "block text-[13.5px] text-ink-300" : "block text-[13.5px] font-medium text-ink-50"
-                      }
-                    >
+                    <span className={st.done ? "block text-base text-muted" : "block text-base font-medium text-fg"}>
                       {st.label}
                     </span>
-                    <span className="block text-[12.5px] text-ink-400">
+                    <span className="block text-sm text-muted">
                       <span className="sr-only">{st.done ? "Pronto: " : "Pendente: "}</span>
                       {st.hint}
                     </span>
@@ -219,39 +215,35 @@ async function Overview({
           }
         />
         <div className="p-5">
-          <div className="h-[3px] rounded-full bg-ink-800">
+          <div className="h-[3px] rounded-sm bg-surface-2">
             <div
-              className={
-                completeness.percent === 100
-                  ? "h-[3px] rounded-full bg-emerald-400"
-                  : "h-[3px] rounded-full bg-iris-400"
-              }
+              className={completeness.percent === 100 ? "h-[3px] rounded-sm bg-ok" : "h-[3px] rounded-sm bg-accent"}
               style={{ width: `${completeness.percent}%` }}
             />
           </div>
           {completeness.missing.length ? (
-            <p className="mt-3 text-sm text-ink-300">
-              Falta preencher: <span className="text-ink-100">{completeness.missing.join(", ")}</span>.
+            <p className="mt-3 text-base text-muted">
+              Falta preencher: <span className="text-fg">{completeness.missing.join(", ")}</span>.
             </p>
           ) : (
-            <p className="mt-3 text-sm text-emerald-300">Perfil completo.</p>
+            <p className="mt-3 text-base text-ok">Perfil completo.</p>
           )}
-          <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
+          <dl className="mt-5 grid gap-4 text-base sm:grid-cols-2">
             <div>
-              <dt className="text-ink-400">Público-alvo</dt>
-              <dd className="mt-0.5 text-ink-100">{client.brand.audience.targetAudience || "—"}</dd>
+              <dt className="text-muted">Público-alvo</dt>
+              <dd className="mt-0.5 text-fg">{client.brand.audience.targetAudience || "—"}</dd>
             </div>
             <div>
-              <dt className="text-ink-400">Tom de voz</dt>
-              <dd className="mt-0.5 text-ink-100">{client.brand.voice.tone || "—"}</dd>
+              <dt className="text-muted">Tom de voz</dt>
+              <dd className="mt-0.5 text-fg">{client.brand.voice.tone || "—"}</dd>
             </div>
             <div>
-              <dt className="text-ink-400">Cores</dt>
+              <dt className="text-muted">Cores</dt>
               <dd className="mt-1 flex gap-1.5">
                 {Object.entries(client.brand.visual.colors).map(([k, v]) => (
                   <span
                     key={k}
-                    className="size-6 rounded-[4px] ring-1 ring-white/10 ring-inset"
+                    className="size-6 rounded-sm ring-1 ring-line ring-inset"
                     style={{ backgroundColor: v }}
                     title={`${k}: ${v}`}
                   />
@@ -264,11 +256,11 @@ async function Overview({
               </dd>
             </div>
             <div>
-              <dt className="text-ink-400">Termos proibidos</dt>
-              <dd className="mt-0.5 text-ink-100">{client.brand.voice.forbiddenTerms.join(", ") || "—"}</dd>
+              <dt className="text-muted">Termos proibidos</dt>
+              <dd className="mt-0.5 text-fg">{client.brand.voice.forbiddenTerms.join(", ") || "—"}</dd>
             </div>
           </dl>
-          <div className="tabular mt-6 border-t border-ink-800 pt-3 text-[11.5px] text-ink-400">
+          <div className="tabular mt-6 border-t border-line pt-3 text-xs text-muted">
             Revisão {client.brandRevision} · atualizado em {formatDateTime(client.brandUpdatedAt)}
           </div>
         </div>
@@ -279,7 +271,7 @@ async function Overview({
           {can(auth.role, "client.update") ? (
             <ClientSettingsForm client={client} canArchive={can(auth.role, "client.archive")} />
           ) : (
-            <div className="p-5 text-sm text-ink-300">Situação: {CLIENT_STATUS_LABELS[client.status]}</div>
+            <div className="p-5 text-base text-muted">Situação: {CLIENT_STATUS_LABELS[client.status]}</div>
           )}
         </Card>
         {can(auth.role, "costs.manage") ? (
@@ -345,7 +337,7 @@ async function MemoryTab({ auth, clientId }: { auth: Auth; clientId: string }) {
         <EmptyState title="Memória vazia" description="Registre fatos e preferências confirmados do cliente." />
       ) : (
         <Card>
-          <ul className="divide-y divide-ink-800">
+          <ul className="divide-y divide-line">
             {memories.map((m) => (
               <li key={m.id} className="flex flex-wrap items-start gap-3 px-5 py-3">
                 <Badge
@@ -362,10 +354,10 @@ async function MemoryTab({ auth, clientId }: { auth: Auth; clientId: string }) {
                   {MEMORY_KIND_LABELS[m.kind]}
                 </Badge>
                 <div className="min-w-0 flex-1">
-                  <p className={m.status === "archived" ? "text-sm text-ink-400 line-through" : "text-sm text-ink-100"}>
+                  <p className={m.status === "archived" ? "text-base text-muted line-through" : "text-base text-fg"}>
                     {m.content}
                   </p>
-                  <p className="mt-0.5 text-xs text-ink-400">
+                  <p className="mt-0.5 text-sm text-muted">
                     {m.source === "approval_feedback" ? "Origem: reprovação" : "Registro manual"} ·{" "}
                     {m.createdByName ?? "—"} · {formatDateTime(m.createdAt)}
                     {m.kind === "suggestion" && m.status === "active" ? " · aguardando revisão" : ""}
@@ -407,7 +399,7 @@ async function FilesTab({ auth, clientId }: { auth: Auth; clientId: string }) {
           description="Fotos e vídeos do cliente direto da pasta compartilhada."
           actions={
             drive?.lastImportAt ? (
-              <span className="text-[12.5px] text-ink-400" title={formatDateTime(drive.lastImportAt)}>
+              <span className="text-sm text-muted" title={formatDateTime(drive.lastImportAt)}>
                 Última importação {formatRelative(drive.lastImportAt)}
               </span>
             ) : null
@@ -539,14 +531,14 @@ async function EditorialTab({
           Uma pasta por peça, com as imagens, a legenda e os textos alternativos.{" "}
           <a
             href={`/api/clients/${clientId}/delivery?mes=${month}`}
-            className="font-medium text-iris-300 hover:underline"
+            className="font-medium text-accent hover:underline"
           >
             Baixar entrega do mês (.zip)
           </a>
         </Alert>
       ) : null}
       {estimate.totalUsd !== null ? (
-        <p className="-mt-3 text-[12.5px] text-ink-400">
+        <p className="-mt-3 text-sm text-muted">
           {estimate.note} Gasto de IA do cliente neste mês: {formatUsd(overview.monthSpendUsd, 2)}.
         </p>
       ) : null}
@@ -586,14 +578,14 @@ async function EditorialTab({
         />
         {plan && plan.items.length ? <EditorialItems items={plan.items} month={month} canEdit={canEdit} /> : null}
         {plan && canEdit ? (
-          <div className="border-t border-ink-800 px-5 py-4">
+          <div className="border-t border-line px-5 py-4">
             <ApproveForm planId={plan.id} approved={plan.status === "approved"} pending={pendingPieces} blank={blank} />
           </div>
         ) : null}
         {canEdit && (!plan || plan.status === "draft") ? (
-          <div className={plan ? "border-t border-ink-800" : ""}>
+          <div className={plan ? "border-t border-line" : ""}>
             {total === 0 ? (
-              <p className="p-5 text-[13.5px] text-ink-400">
+              <p className="p-5 text-base text-muted">
                 Defina o pacote mensal do cliente para montar a linha editorial.
               </p>
             ) : (
@@ -601,7 +593,7 @@ async function EditorialTab({
             )}
           </div>
         ) : null}
-        {!plan && !canEdit ? <p className="p-5 text-[13.5px] text-ink-400">Sem linha editorial neste mês.</p> : null}
+        {!plan && !canEdit ? <p className="p-5 text-base text-muted">Sem linha editorial neste mês.</p> : null}
       </Card>
     </div>
   );
@@ -633,18 +625,18 @@ function AccountRow({ a, canConnect }: { a: SocialAccount; canConnect: boolean }
     <li className="flex flex-wrap items-center gap-3 px-5 py-3">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       {a.avatarUrl ? (
-        <img src={a.avatarUrl} alt="" className="size-9 rounded-full object-cover ring-1 ring-ink-700" />
+        <img src={a.avatarUrl} alt="" className="size-9 rounded-full object-cover ring-1 ring-line" />
       ) : (
-        <span className="size-9 rounded-full bg-ink-800" />
+        <span className="size-9 rounded-full bg-surface-2" />
       )}
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2 text-[14px] font-medium text-ink-50">
+        <div className="flex flex-wrap items-center gap-2 text-base font-medium text-fg">
           {NETWORK_LABELS[a.network]}
           {a.status === "active" ? <Badge tone="success">Conectada</Badge> : <Badge tone="danger">Reconectar</Badge>}
         </div>
-        <div className="truncate text-[12.5px] text-ink-400">
+        <div className="truncate text-sm text-muted">
           {a.profileUrl ? (
-            <a href={a.profileUrl} target="_blank" rel="noreferrer" className="hover:text-ink-100 hover:underline">
+            <a href={a.profileUrl} target="_blank" rel="noreferrer" className="hover:text-fg hover:underline">
               {a.username ? `@${a.username.replace(/^@/, "")}` : a.displayName}
             </a>
           ) : (
@@ -652,9 +644,7 @@ function AccountRow({ a, canConnect }: { a: SocialAccount; canConnect: boolean }
           )}
           {a.connectedByName ? ` · conectada por ${a.connectedByName} ${formatRelative(a.connectedAt)}` : ""}
         </div>
-        {a.status !== "active" && a.lastError ? (
-          <div className="mt-0.5 text-[12px] text-red-300">{a.lastError}</div>
-        ) : null}
+        {a.status !== "active" && a.lastError ? <div className="mt-0.5 text-sm text-danger">{a.lastError}</div> : null}
       </div>
       {canConnect ? (
         <InlineAction
@@ -714,16 +704,16 @@ async function RedesTab({
             <Card key={g.provider} className="flex flex-col">
               <CardHeader title={g.title} description={g.note} />
               {mine.length ? (
-                <ul className="divide-y divide-ink-800">
+                <ul className="divide-y divide-line">
                   {mine.map((a) => (
                     <AccountRow key={a.id} a={a} canConnect={canConnect} />
                   ))}
                 </ul>
               ) : (
-                <p className="px-5 py-4 text-[13.5px] text-ink-400">Nenhuma conta conectada.</p>
+                <p className="px-5 py-4 text-base text-muted">Nenhuma conta conectada.</p>
               )}
               {canConnect ? (
-                <div className="mt-auto border-t border-ink-800 px-5 py-4">
+                <div className="mt-auto border-t border-line px-5 py-4">
                   {configured[g.provider] ? (
                     <a
                       href={`/api/conexoes/${g.provider}/iniciar?cliente=${clientId}`}
@@ -732,9 +722,9 @@ async function RedesTab({
                       {mine.length ? "Conectar de novo" : `Conectar ${g.title}`}
                     </a>
                   ) : (
-                    <p className="text-[12.5px] text-ink-400">
+                    <p className="text-sm text-muted">
                       Falta cadastrar as chaves do app em{" "}
-                      <Link href="/integracoes" className="text-iris-300 hover:underline">
+                      <Link href="/integracoes" className="text-accent hover:underline">
                         Integrações
                       </Link>
                       .
@@ -760,16 +750,16 @@ async function RedesTab({
                   <img
                     src={`/api/contents/${t.contentId}/versions/${t.versionId}/slides/0`}
                     alt={t.title}
-                    className="aspect-[4/5] w-full bg-ink-850 object-cover"
+                    className="aspect-[4/5] w-full bg-surface object-cover"
                     loading="lazy"
                   />
                   <span
                     className={
                       t.state === "published"
-                        ? "absolute bottom-1 left-1 rounded bg-black/70 px-1.5 text-[10.5px] text-emerald-200"
+                        ? "rounded absolute bottom-1 left-1 bg-black/70 px-1.5 text-xs text-fg"
                         : t.state === "scheduled"
-                          ? "absolute bottom-1 left-1 rounded bg-black/70 px-1.5 text-[10.5px] text-sky-200"
-                          : "absolute bottom-1 left-1 rounded bg-black/70 px-1.5 text-[10.5px] text-amber-200"
+                          ? "rounded absolute bottom-1 left-1 bg-black/70 px-1.5 text-xs text-fg"
+                          : "rounded absolute bottom-1 left-1 bg-black/70 px-1.5 text-xs text-fg"
                     }
                   >
                     {t.state === "published"
@@ -796,11 +786,11 @@ async function RedesTab({
           }
         />
         {pubs.length ? (
-          <ul className="divide-y divide-ink-800">
+          <ul className="divide-y divide-line">
             {pubs.map((p) => (
-              <li key={p.id} className="flex flex-wrap items-center gap-3 px-5 py-3 text-[13.5px]">
-                <span className="min-w-0 flex-1 truncate text-ink-100">{p.contentTitle ?? p.title}</span>
-                <span className="text-ink-400">
+              <li key={p.id} className="flex flex-wrap items-center gap-3 px-5 py-3 text-base">
+                <span className="min-w-0 flex-1 truncate text-fg">{p.contentTitle ?? p.title}</span>
+                <span className="text-muted">
                   {NETWORK_LABELS[p.network]} · {p.accountLabel}
                 </span>
                 <Badge
@@ -816,16 +806,12 @@ async function RedesTab({
                 >
                   {PUBLICATION_STATUS_LABELS[p.status]}
                 </Badge>
-                <span className="tabular text-[12px] text-ink-400">
-                  {formatDateTime(p.publishedAt ?? p.scheduledAt)}
-                </span>
+                <span className="tabular text-sm text-muted">{formatDateTime(p.publishedAt ?? p.scheduledAt)}</span>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="px-5 py-4 text-[13.5px] text-ink-400">
-            Nada publicado ainda. Peças aprovadas têm o botão Publicar.
-          </p>
+          <p className="px-5 py-4 text-base text-muted">Nada publicado ainda. Peças aprovadas têm o botão Publicar.</p>
         )}
       </Card>
     </div>

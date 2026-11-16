@@ -40,9 +40,8 @@ export function RunPanel({
           {fixedClient ? (
             <>
               <input type="hidden" name="clientId" value={fixedClient.id} />
-              <p className="text-sm text-ink-300">
-                Cliente: <span className="font-medium text-ink-100">{fixedClient.name}</span> (skill exclusiva deste
-                cliente)
+              <p className="text-base text-muted">
+                Cliente: <span className="font-medium text-fg">{fixedClient.name}</span> (skill exclusiva deste cliente)
               </p>
             </>
           ) : (
@@ -84,7 +83,7 @@ export function RunPanel({
             <SubmitButton pendingText="Executando... pode levar até 1 minuto" disabled={!providerReady}>
               Executar skill
             </SubmitButton>
-            <span className="text-xs text-ink-400">O consumo aparece em Custos.</span>
+            <span className="text-sm text-muted">O consumo aparece em Custos.</span>
           </div>
           <FormMessage state={state} />
         </ActionForm>
@@ -110,13 +109,13 @@ export function RunResult({ result, canCreateContent }: { result: RunSkillData; 
         actions={result.isDemo ? <Badge tone="warning">demonstração</Badge> : null}
       />
       <div className="space-y-4 p-5">
-        <div className="rounded-lg border border-ink-700 bg-ink-850 p-4 text-sm leading-relaxed whitespace-pre-wrap text-ink-100">
+        <div className="rounded-md border border-line bg-surface p-4 text-base leading-relaxed whitespace-pre-wrap text-fg">
           {result.result}
         </div>
         {result.assumptions.length ? (
           <div>
-            <div className="text-[12px] font-medium text-ink-400">Para confirmar com o cliente</div>
-            <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-300">
+            <div className="text-sm font-medium text-muted">Para confirmar com o cliente</div>
+            <ul className="mt-1 list-disc space-y-0.5 pl-5 text-base text-muted">
               {result.assumptions.map((a) => (
                 <li key={a}>{a}</li>
               ))}

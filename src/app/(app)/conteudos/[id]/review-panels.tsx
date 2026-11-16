@@ -59,11 +59,11 @@ export function ApprovalPanel({
       <CardHeader title="Aprovação" description="Vale para a versão enviada. Qualquer alteração pede nova aprovação." />
       <div className="flex flex-col gap-4 p-5">
         {pending ? (
-          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
-            <div className="text-sm font-semibold text-amber-100">
+          <div className="rounded-md border border-warn/40 bg-warn/5 p-4">
+            <div className="text-base font-semibold text-fg">
               Aguardando aprovação da versão {pending.versionNumber}
             </div>
-            <div className="mt-1 text-xs text-amber-100/70">
+            <div className="mt-1 text-sm text-muted">
               Pedido por {pending.requestedByName ?? "—"} em {formatDateTime(pending.requestedAt)}
               {pending.requestNote ? ` · “${pending.requestNote}”` : ""}
             </div>
@@ -88,7 +88,7 @@ export function ApprovalPanel({
                 </div>
               </ActionForm>
             ) : (
-              <p className="mt-3 text-xs text-ink-400">A decisão cabe a quem aprova.</p>
+              <p className="mt-3 text-sm text-muted">A decisão cabe a quem aprova.</p>
             )}
             {canShare ? <ShareApprovalLink approvalId={pending.id} /> : null}
           </div>
@@ -106,7 +106,7 @@ export function ApprovalPanel({
               />
             </Field>
             {!qualityPassed ? (
-              <p className="text-xs text-red-300">
+              <p className="text-sm text-danger">
                 Corrija os problemas críticos da verificação e salve uma nova versão antes de enviar.
               </p>
             ) : null}
@@ -118,20 +118,20 @@ export function ApprovalPanel({
             </div>
           </ActionForm>
         ) : status === "approved" ? (
-          <p className="text-sm text-emerald-300">Versão aprovada.</p>
+          <p className="text-base text-ok">Versão aprovada.</p>
         ) : null}
 
         {approvals.length ? (
-          <ul className="divide-y divide-ink-800 rounded-lg border border-ink-700">
+          <ul className="divide-y divide-line rounded-md border border-line">
             {approvals.map((a) => (
-              <li key={a.id} className="px-4 py-2.5 text-sm">
+              <li key={a.id} className="px-4 py-2.5 text-base">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge tone={APPROVAL_STATUS[a.status].tone}>{APPROVAL_STATUS[a.status].label}</Badge>
-                  <span className="text-ink-200">Versão {a.versionNumber}</span>
-                  <span className="text-xs text-ink-400">{formatDateTime(a.decidedAt ?? a.requestedAt)}</span>
+                  <span className="text-fg">Versão {a.versionNumber}</span>
+                  <span className="text-sm text-muted">{formatDateTime(a.decidedAt ?? a.requestedAt)}</span>
                 </div>
                 {a.decidedByName ? (
-                  <p className="mt-1 text-xs text-ink-400">
+                  <p className="mt-1 text-sm text-muted">
                     {a.decidedByName}
                     {a.decisionNote ? `: “${a.decisionNote}”` : ""}
                   </p>
@@ -165,26 +165,26 @@ export function CommentsPanel({
     <Card>
       <CardHeader title="Comentários e ajustes" />
       {comments.length ? (
-        <ul className="divide-y divide-ink-800">
+        <ul className="divide-y divide-line">
           {comments.map((c) => (
-            <li key={c.id} className="px-5 py-3 text-sm">
-              <div className="text-xs text-ink-400">
-                <span className="font-medium text-ink-200">{c.authorName ?? "—"}</span> · {formatDateTime(c.createdAt)}
+            <li key={c.id} className="px-5 py-3 text-base">
+              <div className="text-sm text-muted">
+                <span className="font-medium text-fg">{c.authorName ?? "—"}</span> · {formatDateTime(c.createdAt)}
                 {c.versionNumber ? ` · v${c.versionNumber}` : ""}
               </div>
-              <p className="mt-1 whitespace-pre-wrap text-ink-100">{c.body}</p>
+              <p className="mt-1 whitespace-pre-wrap text-fg">{c.body}</p>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="px-5 py-3 text-sm text-ink-400">Nenhum comentário.</p>
+        <p className="px-5 py-3 text-base text-muted">Nenhum comentário.</p>
       )}
       {canComment ? (
         <ActionForm
           action={action}
           state={state}
           resetOnSuccess
-          className="flex flex-col gap-3 border-t border-ink-700 p-5"
+          className="flex flex-col gap-3 border-t border-line p-5"
         >
           <input type="hidden" name="contentId" value={contentId} />
           <label htmlFor="comment" className="sr-only">
@@ -221,9 +221,9 @@ export function RetryPanel({
 }) {
   const [state, action] = useActionState(retryGenerationAction, { status: "idle" });
   return (
-    <div className="rounded-[var(--radius-card)] border border-red-400/25 bg-red-400/[0.05] p-5">
-      <div className="text-sm font-semibold text-red-100">A geração falhou</div>
-      <p className="mt-1 text-sm text-red-100/80">{error ?? "Erro não informado."}</p>
+    <div className="rounded-md border border-danger/40 bg-danger/5 p-5">
+      <div className="text-base font-semibold text-fg">A geração falhou</div>
+      <p className="mt-1 text-base text-muted">{error ?? "Erro não informado."}</p>
       {canRetry ? (
         <ActionForm action={action} state={state} className="mt-4 flex flex-wrap items-center gap-3">
           <input type="hidden" name="contentId" value={contentId} />
@@ -233,7 +233,7 @@ export function RetryPanel({
           <FormMessage state={state} />
         </ActionForm>
       ) : (
-        <p className="mt-3 text-xs text-red-100/70">Peça a alguém da criação para tentar de novo.</p>
+        <p className="mt-3 text-sm text-muted">Peça a alguém da criação para tentar de novo.</p>
       )}
     </div>
   );
@@ -256,22 +256,22 @@ export function AiReviewPanel({ contentId, enabled }: { contentId: string; enabl
         </div>
         <FormMessage state={state} />
         {state.status === "ok" && state.data ? (
-          <div className="text-sm">
-            <p className="text-ink-200">{state.data.summary}</p>
+          <div className="text-base">
+            <p className="text-fg">{state.data.summary}</p>
             {state.data.issues.length ? (
               <ul className="mt-2 space-y-2">
                 {state.data.issues.map((i, n) => (
-                  <li key={n} className="rounded-lg border border-ink-700 p-2.5">
+                  <li key={n} className="rounded-md border border-line p-2.5">
                     <Badge
                       tone={i.severity === "critical" ? "danger" : i.severity === "warning" ? "warning" : "neutral"}
                     >
                       {i.severity}
                     </Badge>{" "}
-                    <span className="text-xs text-ink-400">
+                    <span className="text-sm text-muted">
                       {i.slideNumber ? `Lâmina ${i.slideNumber}` : "Legenda"} · {i.field}
                     </span>
-                    <p className="mt-1 text-ink-100">{i.problem}</p>
-                    <p className="text-xs text-ink-400">Sugestão: {i.suggestion}</p>
+                    <p className="mt-1 text-fg">{i.problem}</p>
+                    <p className="text-sm text-muted">Sugestão: {i.suggestion}</p>
                   </li>
                 ))}
               </ul>
@@ -292,12 +292,12 @@ function ShareApprovalLink({ approvalId }: { approvalId: string }) {
     ? `Olá! Segue a peça "${data.title}" para aprovação. É só abrir o link, conferir e responder por lá: ${data.url}`
     : "";
   return (
-    <div className="mt-4 border-t border-amber-500/20 pt-4">
-      <div className="text-[13px] font-medium text-amber-50">Aprovação pelo cliente</div>
+    <div className="mt-4 border-t border-warn/40 pt-4">
+      <div className="text-base font-medium text-fg">Aprovação pelo cliente</div>
       {data ? (
         <div className="mt-2 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <code className="rounded-[4px] bg-ink-950 px-2 py-1 font-mono text-[12px] break-all text-ink-100 ring-1 ring-ink-700 select-all">
+            <code className="rounded-sm bg-bg px-2 py-1 font-mono text-sm break-all text-fg ring-1 ring-line select-all">
               {data.url}
             </code>
           </div>
@@ -307,7 +307,7 @@ function ShareApprovalLink({ approvalId }: { approvalId: string }) {
               href={`https://wa.me/?text=${encodeURIComponent(message)}`}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex h-8 items-center rounded-full border border-emerald-400/40 px-3.5 text-[13px] font-medium text-emerald-200 hover:bg-emerald-400/10"
+              className="inline-flex h-8 items-center rounded-sm border border-ok/40 px-3.5 text-base font-medium text-fg hover:bg-ok/10"
             >
               Enviar pelo WhatsApp
             </a>
@@ -327,7 +327,7 @@ function ShareApprovalLink({ approvalId }: { approvalId: string }) {
             </SubmitButton>
           </ActionForm>
           <FormMessage state={mail} />
-          <p className="text-[12px] text-amber-100/60">O link vale 14 dias e só para esta versão.</p>
+          <p className="text-sm text-muted">O link vale 14 dias e só para esta versão.</p>
         </div>
       ) : (
         <form action={create} className="mt-2 flex flex-wrap items-center gap-3">
@@ -335,8 +335,8 @@ function ShareApprovalLink({ approvalId }: { approvalId: string }) {
           <Button type="submit" size="sm" variant="secondary" disabled={creating}>
             {creating ? "Gerando..." : "Gerar link para o cliente"}
           </Button>
-          <span className="text-[12px] text-amber-100/70">O cliente vê a peça e aprova ou pede ajuste, sem login.</span>
-          {link.status === "error" ? <span className="text-[12.5px] text-red-300">{link.message}</span> : null}
+          <span className="text-sm text-muted">O cliente vê a peça e aprova ou pede ajuste, sem login.</span>
+          {link.status === "error" ? <span className="text-sm text-danger">{link.message}</span> : null}
         </form>
       )}
     </div>

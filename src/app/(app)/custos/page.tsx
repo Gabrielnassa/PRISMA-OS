@@ -84,29 +84,24 @@ export default async function CostsPage() {
                 return (
                   <tr key={c.clientId}>
                     <Td>
-                      <Link
-                        href={`/clientes/${c.clientId}`}
-                        className="text-ink-100 underline-offset-4 hover:underline"
-                      >
+                      <Link href={`/clientes/${c.clientId}`} className="text-fg underline-offset-4 hover:underline">
                         {c.clientName}
                       </Link>
                     </Td>
                     <Td className="text-right">{c.runs}</Td>
-                    <Td className="tabular text-right text-[12.5px]">
+                    <Td className="tabular text-right text-sm">
                       {formatUsd(c.costUsd, 4)}
                       {c.budgetSpendUsd > c.costUsd ? (
-                        <span className="block text-[11.5px] text-amber-300">
+                        <span className="block text-xs text-warn">
                           + {formatUsd(c.budgetSpendUsd - c.costUsd, 4)} estimado
                         </span>
                       ) : null}
                     </Td>
                     <Td className="text-right">
                       {c.limitUsd === null ? (
-                        <span className="text-ink-400">sem teto</span>
+                        <span className="text-muted">sem teto</span>
                       ) : (
-                        <span
-                          className={pct !== null && c.alertPct !== null && pct >= c.alertPct ? "text-amber-300" : ""}
-                        >
+                        <span className={pct !== null && c.alertPct !== null && pct >= c.alertPct ? "text-warn" : ""}>
                           {formatUsd(c.limitUsd)} ({pct?.toFixed(0)}%){c.hardStop ? "" : " · só alerta"}
                         </span>
                       )}
@@ -131,17 +126,17 @@ export default async function CostsPage() {
             <tbody>
               {s.bySkill.length === 0 ? (
                 <tr>
-                  <Td className="text-ink-400">Sem execuções no mês.</Td>
+                  <Td className="text-muted">Sem execuções no mês.</Td>
                 </tr>
               ) : (
                 s.bySkill.map((k) => (
                   <tr key={k.skillId}>
                     <Td>
                       <div>{k.skillName}</div>
-                      <div className="font-mono text-[11px] text-ink-400">{k.skillId}</div>
+                      <div className="font-mono text-xs text-muted">{k.skillId}</div>
                     </Td>
                     <Td className="text-right">{k.runs}</Td>
-                    <Td className="tabular text-right text-[12.5px]">{formatUsd(k.costUsd, 4)}</Td>
+                    <Td className="tabular text-right text-sm">{formatUsd(k.costUsd, 4)}</Td>
                     <Td className="text-right">{k.avgDurationMs ? `${(k.avgDurationMs / 1000).toFixed(1)} s` : "—"}</Td>
                   </tr>
                 ))
@@ -167,12 +162,12 @@ export default async function CostsPage() {
           <tbody>
             {s.recent.map((r) => (
               <tr key={r.id}>
-                <Td className="tabular text-[12px] whitespace-nowrap text-ink-400">{formatDateTime(r.createdAt)}</Td>
+                <Td className="tabular text-sm whitespace-nowrap text-muted">{formatDateTime(r.createdAt)}</Td>
                 <Td>{r.clientName ?? "—"}</Td>
-                <Td className="text-xs">
+                <Td className="text-sm">
                   <span title={r.skillId}>{r.skillName}</span>
                 </Td>
-                <Td className="tabular text-[12px] whitespace-nowrap text-ink-300">{r.model}</Td>
+                <Td className="tabular text-sm whitespace-nowrap text-muted">{r.model}</Td>
                 <Td>
                   <span className="inline-flex items-center gap-2">
                     <Dot tone={RUN_STATUS[r.status]?.tone ?? "danger"} title={r.errorMessage ?? undefined}>
@@ -181,14 +176,14 @@ export default async function CostsPage() {
                     {r.isDemo ? <Badge tone="warning">demo</Badge> : null}
                   </span>
                 </Td>
-                <Td className="tabular text-right text-[12.5px] whitespace-nowrap">
+                <Td className="tabular text-right text-sm whitespace-nowrap">
                   {formatNumber(r.inputTokens)} / {formatNumber(r.outputTokens)}
                 </Td>
-                <Td className="tabular text-right text-[12.5px] whitespace-nowrap">
+                <Td className="tabular text-right text-sm whitespace-nowrap">
                   {r.isDemo ? (
                     "—"
                   ) : r.costUsd === null ? (
-                    <span className="text-amber-300">
+                    <span className="text-warn">
                       sem tarifa{r.estimatedCostUsd !== null ? ` (≈ ${formatUsd(r.estimatedCostUsd, 4)})` : ""}
                     </span>
                   ) : (
@@ -217,19 +212,17 @@ export default async function CostsPage() {
             {s.prices.map((p) => (
               <tr key={p.id}>
                 <Td className="whitespace-nowrap">
-                  <span className="text-ink-400">{p.provider} /</span>{" "}
-                  <span className="tabular text-[12.5px] text-ink-100">{p.model}</span>
+                  <span className="text-muted">{p.provider} /</span>{" "}
+                  <span className="tabular text-sm text-fg">{p.model}</span>
                 </Td>
-                <Td className="tabular text-right text-[12.5px] whitespace-nowrap">{formatUsd(Number(p.input))}</Td>
-                <Td className="tabular text-right text-[12.5px] whitespace-nowrap">{formatUsd(Number(p.output))}</Td>
-                <Td className="tabular text-right text-[12.5px] whitespace-nowrap">
+                <Td className="tabular text-right text-sm whitespace-nowrap">{formatUsd(Number(p.input))}</Td>
+                <Td className="tabular text-right text-sm whitespace-nowrap">{formatUsd(Number(p.output))}</Td>
+                <Td className="tabular text-right text-sm whitespace-nowrap">
                   {p.cacheRead ? formatUsd(Number(p.cacheRead)) : "—"} /{" "}
                   {p.cacheWrite ? formatUsd(Number(p.cacheWrite)) : "—"}
                 </Td>
-                <Td className="tabular text-[12px] whitespace-nowrap text-ink-400">
-                  {formatDateTime(p.effectiveFrom)}
-                </Td>
-                <Td className="max-w-md min-w-[260px] text-[12px] leading-relaxed text-ink-400">
+                <Td className="tabular text-sm whitespace-nowrap text-muted">{formatDateTime(p.effectiveFrom)}</Td>
+                <Td className="max-w-md min-w-[260px] text-sm leading-relaxed text-muted">
                   <span className="line-clamp-2" title={p.source}>
                     {p.source}
                   </span>

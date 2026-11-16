@@ -24,27 +24,25 @@ export default async function InboxPage() {
         />
       ) : (
         <Card>
-          <ul className="divide-y divide-ink-800">
+          <ul className="divide-y divide-line">
             {items.map((n) => (
               <li key={n.id}>
                 <a
                   href={`/avisos/${n.id}`}
                   className={cx(
-                    "flex items-start gap-3 px-5 py-3.5 transition-colors hover:bg-ink-850/60",
+                    "flex items-start gap-3 px-5 py-3.5 transition-colors hover:bg-surface/60",
                     n.read && "opacity-70",
                   )}
                 >
                   <span
                     aria-hidden
-                    className={cx("mt-[7px] size-1.5 shrink-0 rounded-full", n.read ? "bg-transparent" : "bg-iris-400")}
+                    className={cx("mt-[7px] size-1.5 shrink-0 rounded-full", n.read ? "bg-transparent" : "bg-accent")}
                   />
                   <span className="min-w-0 flex-1">
-                    <span className={cx("block text-[14px]", n.read ? "text-ink-200" : "font-medium text-ink-50")}>
-                      {n.title}
-                    </span>
-                    {n.body ? <span className="mt-0.5 block truncate text-[12.5px] text-ink-400">{n.body}</span> : null}
+                    <span className={cx("block text-base", n.read ? "text-fg" : "font-medium text-fg")}>{n.title}</span>
+                    {n.body ? <span className="mt-0.5 block truncate text-sm text-muted">{n.body}</span> : null}
                   </span>
-                  <span className="shrink-0 text-[12px] text-ink-400" title={formatDateTime(n.createdAt)}>
+                  <span className="shrink-0 text-sm text-muted" title={formatDateTime(n.createdAt)}>
                     {formatRelative(n.createdAt)}
                   </span>
                 </a>

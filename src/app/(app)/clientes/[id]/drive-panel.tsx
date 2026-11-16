@@ -53,17 +53,17 @@ export function DrivePanel({
           ) : null}
         </ActionForm>
       ) : folderLink ? (
-        <p className="text-[13px] text-ink-300">Pasta: {folderName ?? folderLink}</p>
+        <p className="text-base text-muted">Pasta: {folderName ?? folderLink}</p>
       ) : null}
 
       {configured ? (
-        <p className="text-[12.5px] leading-relaxed text-ink-400">
-          Compartilhe a pasta com <span className="font-medium text-ink-200 select-all">{serviceEmail}</span> (como
-          Leitor). Cada clique importa até 25 arquivos novos (fotos PNG, JPEG, GIF, SVG, vídeos MP4 e MOV, PDF); o que
-          já foi importado não entra de novo.
+        <p className="text-sm leading-relaxed text-muted">
+          Compartilhe a pasta com <span className="font-medium text-fg select-all">{serviceEmail}</span> (como Leitor).
+          Cada clique importa até 25 arquivos novos (fotos PNG, JPEG, GIF, SVG, vídeos MP4 e MOV, PDF); o que já foi
+          importado não entra de novo.
         </p>
       ) : (
-        <p className="text-[12.5px] leading-relaxed text-ink-400">
+        <p className="text-sm leading-relaxed text-muted">
           O Google Drive ainda não está conectado. O link fica salvo e a importação libera assim que a conexão for feita
           em Integrações.
         </p>
@@ -75,7 +75,7 @@ export function DrivePanel({
           <SubmitButton disabled={!configured} pendingText="Importando...">
             Importar agora
           </SubmitButton>
-          {folderName ? <span className="text-[12.5px] text-ink-400">Pasta “{folderName}”</span> : null}
+          {folderName ? <span className="text-sm text-muted">Pasta “{folderName}”</span> : null}
           {importState.status === "error" ? <FormMessage state={importState} /> : null}
         </ActionForm>
       ) : null}

@@ -32,16 +32,16 @@ export function OrgSettingsForm({
             className="min-h-40"
           />
         </Field>
-        <label className="flex items-start gap-3 text-sm">
+        <label className="flex items-start gap-3 text-base">
           <input
             type="checkbox"
             name="requireDistinctApprover"
             defaultChecked={org.requireDistinctApprover}
-            className="mt-0.5 accent-iris-400"
+            className="mt-0.5 accent-accent"
           />
           <span>
-            <span className="font-medium text-ink-100">Exigir aprovador diferente de quem solicitou</span>
-            <span className="block text-ink-400">Impede que a mesma pessoa envie e aprove a própria peça.</span>
+            <span className="font-medium text-fg">Exigir aprovador diferente de quem solicitou</span>
+            <span className="block text-muted">Impede que a mesma pessoa envie e aprove a própria peça.</span>
           </span>
         </label>
       </fieldset>

@@ -230,9 +230,9 @@ export function CreateForm({
               </Select>
             </Field>
             <fieldset>
-              <legend className="mb-2 text-sm font-medium text-ink-200">Fotos do cliente (até 10)</legend>
+              <legend className="mb-2 text-base font-medium text-fg">Fotos do cliente (até 10)</legend>
               {images.length === 0 ? (
-                <p className="text-sm text-ink-400">
+                <p className="text-base text-muted">
                   Este cliente ainda não tem fotos. Sem foto, a peça usa um layout só com texto.
                 </p>
               ) : (
@@ -243,8 +243,8 @@ export function CreateForm({
                       <label
                         key={img.id}
                         className={cx(
-                          "relative cursor-pointer overflow-hidden rounded-lg border-2 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-iris-400 has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-ink-900",
-                          on ? "border-iris-400" : "border-transparent",
+                          "relative cursor-pointer overflow-hidden rounded-md border-2 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-line",
+                          on ? "border-accent" : "border-transparent",
                         )}
                       >
                         <input
@@ -265,11 +265,11 @@ export function CreateForm({
                         <img
                           src={`/api/media/${img.id}`}
                           alt={img.altText || img.filename}
-                          className="aspect-square w-full bg-ink-850 object-cover"
+                          className="aspect-square w-full bg-surface object-cover"
                           loading="lazy"
                         />
                         {on ? (
-                          <span className="tabular absolute top-1 right-1 rounded-[4px] bg-ink-50 px-1.5 text-[10px] font-medium text-ink-950">
+                          <span className="tabular absolute top-1 right-1 rounded-sm bg-fg px-1.5 text-xs font-medium text-bg">
                             {selected.indexOf(img.id) + 1}
                           </span>
                         ) : null}
@@ -310,16 +310,16 @@ export function CreateForm({
             <FormMessage state={ideasState} />
           </ActionForm>
           {ideasState.status === "ok" && ideasState.data ? (
-            <ul className="divide-y divide-ink-800 border-t border-ink-700">
+            <ul className="divide-y divide-line border-t border-line">
               {ideasState.data.ideas.map((idea, i) => (
                 <li key={i} className="px-5 py-3">
-                  <div className="text-sm font-medium text-ink-100">{idea.title}</div>
-                  <div className="mt-0.5 text-xs text-ink-400">{idea.angle}</div>
+                  <div className="text-base font-medium text-fg">{idea.title}</div>
+                  <div className="mt-0.5 text-sm text-muted">{idea.angle}</div>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     <Badge>{FORMAT_LABELS[idea.format]}</Badge>
                     <button
                       type="button"
-                      className="text-xs font-medium text-iris-300 hover:underline"
+                      className="text-sm font-medium text-accent hover:underline"
                       onClick={() => {
                         setTitle(idea.title);
                         setBriefing(`${idea.hook}\n\n${idea.angle}\n\nJustificativa: ${idea.rationale}`);

@@ -35,7 +35,7 @@ export default async function ClientsPage({
         actions={
           <Link
             href={arquivados === "1" ? "/clientes" : "/clientes?arquivados=1"}
-            className="text-sm text-ink-300 hover:text-ink-50"
+            className="text-base text-muted hover:text-fg"
           >
             {arquivados === "1" ? "Ocultar arquivados" : "Mostrar arquivados"}
           </Link>
@@ -85,16 +85,13 @@ export default async function ClientsPage({
             </thead>
             <tbody>
               {clients.map((c) => (
-                <tr key={c.id} className="transition-colors hover:bg-ink-850/50">
+                <tr key={c.id} className="transition-colors hover:bg-surface/50">
                   <Td>
-                    <Link
-                      href={`/clientes/${c.id}`}
-                      className="font-medium text-ink-50 underline-offset-4 hover:underline"
-                    >
+                    <Link href={`/clientes/${c.id}`} className="font-medium text-fg underline-offset-4 hover:underline">
                       {c.name}
                     </Link>
                   </Td>
-                  <Td>{c.segment || <span className="text-ink-400">—</span>}</Td>
+                  <Td>{c.segment || <span className="text-muted">—</span>}</Td>
                   <Td>
                     <Badge tone={STATUS[c.status].tone}>{STATUS[c.status].label}</Badge>
                   </Td>
@@ -105,10 +102,7 @@ export default async function ClientsPage({
                       const m = month.get(c.id);
                       if (!m || m.contracted === 0)
                         return (
-                          <Link
-                            href={`/clientes/${c.id}?aba=editorial`}
-                            className="text-[12.5px] text-ink-400 hover:text-ink-100"
-                          >
+                          <Link href={`/clientes/${c.id}?aba=editorial`} className="text-sm text-muted hover:text-fg">
                             Definir pacote
                           </Link>
                         );
@@ -125,15 +119,12 @@ export default async function ClientsPage({
                                 : "Sem linha editorial no mês"
                           }
                         >
-                          <span className="tabular text-[12.5px] text-ink-100">
+                          <span className="tabular text-sm text-fg">
                             {m.produced} de {m.contracted}
                           </span>
-                          <span className="mt-1 block h-[3px] rounded-full bg-ink-800">
+                          <span className="mt-1 block h-[3px] rounded-sm bg-surface-2">
                             <span
-                              className={cx(
-                                "block h-[3px] rounded-full",
-                                pct >= 100 ? "bg-emerald-400" : "bg-iris-400",
-                              )}
+                              className={cx("block h-[3px] rounded-sm", pct >= 100 ? "bg-ok" : "bg-accent")}
                               style={{ width: `${pct}%` }}
                             />
                           </span>

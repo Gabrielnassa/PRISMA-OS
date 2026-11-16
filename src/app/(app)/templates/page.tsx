@@ -19,53 +19,53 @@ export default async function TemplatesPage() {
         const items = TEMPLATES.filter((t) => t.family === family);
         return (
           <section key={family} className="mb-12">
-            <SectionTitle aside={<span className="tabular text-[12px] text-ink-400">{items.length} layouts</span>}>
+            <SectionTitle aside={<span className="tabular text-sm text-muted">{items.length} layouts</span>}>
               {FAMILY_LABELS[family]}
             </SectionTitle>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {items.map((t) => (
                 <Card key={t.id} className="overflow-hidden">
-                  <div className="grid grid-cols-3 gap-1.5 border-b border-ink-800 bg-ink-950 p-3">
+                  <div className="grid grid-cols-3 gap-1.5 border-b border-line bg-bg p-3">
                     {[0, 1, 2].map((i) => (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         key={i}
                         src={`/api/templates/${t.id}?aspect=4:5&slide=${i}`}
                         alt={`${t.name}, lâmina ${i + 1} (exemplo)`}
-                        className="w-full rounded-[3px] ring-1 ring-white/5"
+                        className="w-full rounded-sm ring-1 ring-line"
                         loading="lazy"
                       />
                     ))}
                   </div>
-                  <div className="space-y-3 p-4 text-[13.5px]">
+                  <div className="space-y-3 p-4 text-base">
                     <div className="flex items-baseline justify-between gap-2">
-                      <h3 className="text-[15px] font-semibold text-ink-50">{t.name}</h3>
-                      <span className="tabular text-[11.5px] text-ink-400">v{t.version}</span>
+                      <h3 className="text-md font-semibold text-fg">{t.name}</h3>
+                      <span className="tabular text-xs text-muted">v{t.version}</span>
                     </div>
-                    <p className="leading-relaxed text-ink-300">{t.description}</p>
-                    <dl className="grid grid-cols-[72px_1fr] gap-x-3 gap-y-1 border-t border-ink-800 pt-3 text-[12.5px]">
-                      <dt className="text-ink-400">Formatos</dt>
-                      <dd className="text-ink-300">{t.formats.map((f) => FORMAT_LABELS[f]).join(" · ")}</dd>
-                      <dt className="text-ink-400">Proporções</dt>
-                      <dd className="tabular text-[12px] text-ink-300">{t.aspects.join("  ")}</dd>
-                      <dt className="text-ink-400">Foto</dt>
-                      <dd className={t.image === "required" ? "text-amber-300" : "text-ink-300"}>
+                    <p className="leading-relaxed text-muted">{t.description}</p>
+                    <dl className="grid grid-cols-[72px_1fr] gap-x-3 gap-y-1 border-t border-line pt-3 text-sm">
+                      <dt className="text-muted">Formatos</dt>
+                      <dd className="text-muted">{t.formats.map((f) => FORMAT_LABELS[f]).join(" · ")}</dd>
+                      <dt className="text-muted">Proporções</dt>
+                      <dd className="tabular text-sm text-muted">{t.aspects.join("  ")}</dd>
+                      <dt className="text-muted">Foto</dt>
+                      <dd className={t.image === "required" ? "text-warn" : "text-muted"}>
                         {t.image === "required" ? "Exige foto" : t.image === "optional" ? "Opcional" : "Sem foto"}
                       </dd>
                     </dl>
-                    <details className="text-xs text-ink-400">
-                      <summary className="cursor-pointer text-ink-400 hover:text-ink-200">Detalhes</summary>
+                    <details className="text-sm text-muted">
+                      <summary className="cursor-pointer text-muted hover:text-fg">Detalhes</summary>
                       <dl className="mt-2 space-y-2">
                         <div>
-                          <dt className="font-medium text-ink-300">Identificador</dt>
+                          <dt className="font-medium text-muted">Identificador</dt>
                           <dd className="tabular">{t.id}</dd>
                         </div>
                         <div>
-                          <dt className="font-medium text-ink-300">Finalidade</dt>
+                          <dt className="font-medium text-muted">Finalidade</dt>
                           <dd>{t.purposes.join(", ")}</dd>
                         </div>
                         <div>
-                          <dt className="font-medium text-ink-300">Campos editáveis (limite de caracteres)</dt>
+                          <dt className="font-medium text-muted">Campos editáveis (limite de caracteres)</dt>
                           <dd>
                             {(Object.keys(t.fieldLimits) as SlideKind[]).map((k) => (
                               <div key={k}>
@@ -78,15 +78,15 @@ export default async function TemplatesPage() {
                           </dd>
                         </div>
                         <div>
-                          <dt className="font-medium text-ink-300">Regras de composição</dt>
+                          <dt className="font-medium text-muted">Regras de composição</dt>
                           <dd>{t.compositionRules.join(" · ")}</dd>
                         </div>
                         <div>
-                          <dt className="font-medium text-ink-300">Critérios de qualidade</dt>
+                          <dt className="font-medium text-muted">Critérios de qualidade</dt>
                           <dd>{t.qualityCriteria.join(" · ")}</dd>
                         </div>
                         <div>
-                          <dt className="font-medium text-ink-300">Origem e licença</dt>
+                          <dt className="font-medium text-muted">Origem e licença</dt>
                           <dd>{t.origin}</dd>
                         </div>
                       </dl>

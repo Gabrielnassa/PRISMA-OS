@@ -16,11 +16,11 @@ export function DeleteClientCard({ clientId, summary }: { clientId: string; summ
   const matches = confirmsName(typed, summary.name);
 
   return (
-    <Card className="border-red-400/20">
+    <Card className="border-danger/40">
       <CardHeader title="Excluir cliente" description="Apaga de vez o cliente e tudo dele. Não dá para desfazer." />
       <div className="grid gap-4 p-5">
-        <div className="text-[13px] leading-relaxed text-ink-300">
-          <div className="text-ink-200">Será apagado:</div>
+        <div className="text-base leading-relaxed text-muted">
+          <div className="text-fg">Será apagado:</div>
           <ul className="mt-1 list-disc space-y-0.5 pl-5">
             {summary.contents ? (
               <li>
@@ -35,7 +35,7 @@ export function DeleteClientCard({ clientId, summary }: { clientId: string; summ
             ) : null}
             <li>perfil da marca e limite de custos</li>
           </ul>
-          <p className="mt-2 text-ink-400">Para só tirar o cliente das listas, prefira arquivar em Dados do cliente.</p>
+          <p className="mt-2 text-muted">Para só tirar o cliente das listas, prefira arquivar em Dados do cliente.</p>
         </div>
         {summary.inProgress ? (
           <Alert tone="warning" title="Geração em andamento">
@@ -47,7 +47,7 @@ export function DeleteClientCard({ clientId, summary }: { clientId: string; summ
           <Field
             label={
               <>
-                Para confirmar, digite <span className="font-semibold text-ink-50">{summary.name}</span>
+                Para confirmar, digite <span className="font-semibold text-fg">{summary.name}</span>
               </>
             }
             htmlFor="delete-confirmation"

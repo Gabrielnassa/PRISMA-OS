@@ -26,7 +26,7 @@ export default async function ReportPage({
   });
   const href = (m: string) => `/relatorios/${clientId}?mes=${m}`;
   return (
-    <div className="min-h-dvh bg-white print:bg-white">
+    <div data-theme="light" className="min-h-dvh">
       <ReportToolbar
         clientId={clientId}
         clientName={r.clientName}

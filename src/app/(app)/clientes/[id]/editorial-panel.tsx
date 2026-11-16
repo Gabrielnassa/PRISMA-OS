@@ -110,7 +110,7 @@ export function ProposeForm({
         </SubmitButton>
       </div>
       {!aiReady ? (
-        <p className="text-[12.5px] text-ink-400">
+        <p className="text-sm text-muted">
           IA não configurada: monte sem IA e escreva as pautas, ou configure a chave em Integrações.
         </p>
       ) : null}
@@ -154,7 +154,7 @@ function StatusButton({
       <SubmitButton variant="ghost" size="sm" pendingText="...">
         {label}
       </SubmitButton>
-      {state.status === "error" ? <p className="text-[12px] text-red-300">{state.message}</p> : null}
+      {state.status === "error" ? <p className="text-sm text-danger">{state.message}</p> : null}
     </ActionForm>
   );
 }
@@ -233,30 +233,23 @@ function ItemEditor({ item, month, onDone }: { item: EditorialItem; month: strin
 export function EditorialItems({ items, month, canEdit }: { items: EditorialItem[]; month: string; canEdit: boolean }) {
   const [editing, setEditing] = useState<string | null>(null);
   return (
-    <ol className="divide-y divide-ink-800">
+    <ol className="divide-y divide-line">
       {items.map((it) => (
-        <li key={it.id} className={cx("px-5 py-4", editing === it.id && "bg-ink-850/60")}>
+        <li key={it.id} className={cx("px-5 py-4", editing === it.id && "bg-surface/60")}>
           {editing === it.id ? (
             <ItemEditor item={it} month={month} onDone={() => setEditing(null)} />
           ) : (
             <div className="flex flex-wrap items-start gap-x-4 gap-y-2">
-              <div className="w-[76px] shrink-0 pt-0.5 text-[12.5px] text-ink-400">{shortDate(it.plannedDate)}</div>
+              <div className="w-[76px] shrink-0 pt-0.5 text-sm text-muted">{shortDate(it.plannedDate)}</div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge tone={it.format === "video" ? "ember" : "neutral"}>{EDITORIAL_FORMAT_LABELS[it.format]}</Badge>
-                  <span
-                    className={cx(
-                      "font-medium",
-                      it.title === "Pauta a definir" ? "text-ink-400 italic" : "text-ink-50",
-                    )}
-                  >
+                  <span className={cx("font-medium", it.title === "Pauta a definir" ? "text-muted italic" : "text-fg")}>
                     {it.title}
                   </span>
                 </div>
-                {it.brief ? (
-                  <p className="mt-1.5 max-w-3xl text-[13px] leading-relaxed text-ink-300">{it.brief}</p>
-                ) : null}
-                <div className="mt-1.5 text-[12px] text-ink-400">
+                {it.brief ? <p className="mt-1.5 max-w-3xl text-base leading-relaxed text-muted">{it.brief}</p> : null}
+                <div className="mt-1.5 text-sm text-muted">
                   {OBJECTIVE_LABELS[it.objective]}
                   {it.cta ? ` · CTA: ${it.cta}` : ""}
                 </div>
@@ -264,7 +257,7 @@ export function EditorialItems({ items, month, canEdit }: { items: EditorialItem
               <div className="flex shrink-0 flex-wrap items-center gap-1.5">
                 <Badge tone={STATUS_TEXT[it.status].tone}>{STATUS_TEXT[it.status].label}</Badge>
                 {it.contentItemId ? (
-                  <Link href={`/conteudos/${it.contentItemId}`} className="text-[12.5px] text-iris-300 hover:underline">
+                  <Link href={`/conteudos/${it.contentItemId}`} className="text-sm text-accent hover:underline">
                     {it.contentStatus
                       ? (STATUS_LABELS[it.contentStatus as ContentStatus] ?? "Abrir peça")
                       : "Abrir peça"}{" "}
@@ -317,7 +310,7 @@ export function ApproveForm({
     >
       <input type="hidden" name="planId" value={planId} />
       {approved && pending === 0 ? (
-        <span className="text-[13px] text-ink-400">
+        <span className="text-base text-muted">
           Todas as pautas do mês já viraram peça (vídeos são marcados à mão).
         </span>
       ) : (
@@ -326,9 +319,7 @@ export function ApproveForm({
         </SubmitButton>
       )}
       {blank > 0 ? (
-        <span className="text-[12.5px] text-amber-300">
-          Complete {blank === 1 ? "1 pauta" : `${blank} pautas`} para aprovar.
-        </span>
+        <span className="text-sm text-warn">Complete {blank === 1 ? "1 pauta" : `${blank} pautas`} para aprovar.</span>
       ) : null}
       {state.status === "error" ? <FormMessage state={state} /> : null}
     </ActionForm>
