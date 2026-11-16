@@ -1,67 +1,119 @@
 @import "tailwindcss";
 
 /*
- * Sistema visual do PRISMA OS (referência: docs/design/DESIGN-referencia.md).
- * Base grafite quase preta; azul íris para a ação principal e a navegação
- * ativa; coral só como pontuação quente (notificações, destaques). Pílulas em
- * botões e etiquetas, cartões com raio de 12px e borda fina, sem sombras.
+ * Sistema visual do PRISMA OS (regras completas: docs/design/SISTEMA.md).
+ * Ferramenta de trabalho, não vitrine: neutro por padrão, cor só como sinal,
+ * cinco tamanhos de fonte, raio de 4 px (6 px em menu e diálogo), sem sombra
+ * fora de menu e diálogo. IBM Plex Sans na interface e IBM Plex Mono nos dados.
  *
- * Tipografia: Inter em toda a interface; Sora só em títulos de 28px ou mais.
- * IBM Plex Mono apenas para código.
- *
- * Contraste: o azul de referência (#5683da) dá 3,7:1 com texto branco; o
- * botão principal usa o tom #4a74c6 (4,6:1) e o #5683da fica em indicadores.
+ * As cores são variáveis com nome de função, sempre em par (escuro e claro).
+ * O app segue a preferência do sistema; data-theme="light" ou "dark" num
+ * elemento força o tema daquele trecho (ex.: a folha do relatório).
  */
 @theme {
-  --color-ink-950: #090a0c;
-  --color-ink-900: #111111;
-  --color-ink-850: #17181b;
-  --color-ink-800: #222327;
-  --color-ink-700: #303236;
-  --color-ink-600: #4a4b50;
-  --color-ink-500: #6b6c6d;
-  --color-ink-400: #95979e;
-  --color-ink-300: #a9a9aa;
-  --color-ink-200: #d1d1d1;
-  --color-ink-100: #e5e5e7;
-  --color-ink-50: #ffffff;
-
-  --color-iris-200: #c3d3f5;
-  --color-iris-300: #9db8ee;
-  --color-iris-400: #5683da;
-  --color-iris-500: #4a74c6;
-  --color-iris-600: #3f67c2;
-
-  --color-ember-200: #ffd4c4;
-  --color-ember-300: #ffa98c;
-  --color-ember-400: #ff8964;
-  --color-ember-500: #f2734a;
-  --color-ember-900: #5a250a;
-
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Sora", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 
-  --radius-card: 12px;
+  /* Só estes cinco tamanhos existem (scripts/check-design.mjs recusa outros). */
+  --text-*: initial;
+  --text-xs: 11px;
+  --text-xs--line-height: 16px;
+  --text-sm: 12px;
+  --text-sm--line-height: 16px;
+  --text-base: 13px;
+  --text-base--line-height: 20px;
+  --text-md: 15px;
+  --text-md--line-height: 22px;
+  --text-lg: 20px;
+  --text-lg--line-height: 28px;
+
+  --radius-*: initial;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--border);
+  --color-control: var(--border-control);
+  --color-fg: var(--text);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-danger: var(--danger);
+  --color-warn: var(--warn);
+  --color-ok: var(--ok);
+}
+
+/* Escuro (padrão). */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1011;
+  --surface: #151618;
+  --surface-2: #1c1d20;
+  --border: #26282c;
+  --border-control: #62656c;
+  --text: #e8e9eb;
+  --muted: #9b9ea4;
+  --faint: #6f7278;
+  --accent: #8fb0ee;
+  --danger: #f2686c;
+  --warn: #e2a336;
+  --ok: #4cb782;
+}
+
+/* Claro: pela preferência do sistema ou forçado com data-theme="light". */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --bg: #ffffff;
+    --surface: #f6f6f7;
+    --surface-2: #eeeef0;
+    --border: #e2e3e6;
+    --border-control: #878a91;
+    --text: #17181a;
+    --muted: #5d6067;
+    --faint: #8a8d94;
+    --accent: #2f56b0;
+    --danger: #c62f36;
+    --warn: #8f5f00;
+    --ok: #1c7a4f;
+  }
+}
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #ffffff;
+  --surface: #f6f6f7;
+  --surface-2: #eeeef0;
+  --border: #e2e3e6;
+  --border-control: #878a91;
+  --text: #17181a;
+  --muted: #5d6067;
+  --faint: #8a8d94;
+  --accent: #2f56b0;
+  --danger: #c62f36;
+  --warn: #8f5f00;
+  --ok: #1c7a4f;
 }
 
 /* Estilos de base em camada própria: utilitários do Tailwind podem sobrescrever. */
 @layer base {
-  :root {
-    color-scheme: dark;
-  }
-
   html,
   body {
-    background: var(--color-ink-950);
-    color: var(--color-ink-100);
+    background: var(--bg);
+    color: var(--text);
     font-family: var(--font-sans);
-    font-size: 16px;
-    letter-spacing: -0.01em;
-    font-feature-settings: "cv11", "ss01";
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
+  }
+
+  /* Trecho com tema próprio (data-theme) também pinta o próprio fundo e texto. */
+  [data-theme] {
+    background: var(--bg);
+    color: var(--text);
   }
 
   /* Números alinhados em colunas (datas, versões, custos). */
@@ -70,78 +122,69 @@
   }
 
   ::selection {
-    background: color-mix(in srgb, var(--color-iris-500) 38%, transparent);
-    color: var(--color-ink-50);
+    background: color-mix(in srgb, var(--accent) 30%, transparent);
+    color: var(--text);
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-iris-300);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
 
-  /* O Chrome usa números tabulares nos marcadores de lista; nesta fonte o ponto fica largo. */
-  ::marker {
-    font-variant-numeric: normal;
+  ::placeholder {
+    color: var(--faint);
   }
 
   /* Barras de rolagem discretas (Chromium e Firefox). */
   * {
     scrollbar-width: thin;
-    scrollbar-color: var(--color-ink-600) transparent;
+    scrollbar-color: var(--border-control) transparent;
   }
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
   ::-webkit-scrollbar-thumb {
-    background: var(--color-ink-700);
+    background: var(--border);
     border: 3px solid transparent;
     border-radius: 999px;
     background-clip: content-box;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background-color: var(--color-ink-600);
+    background-color: var(--border-control);
   }
 
-  input[type="range"] {
-    accent-color: var(--color-iris-400);
-  }
+  input[type="range"],
   input[type="checkbox"],
   input[type="radio"] {
-    accent-color: var(--color-iris-500);
+    accent-color: var(--text);
   }
 
   /* Seletor de arquivo com a mesma linguagem dos botões secundários. */
   input[type="file"]::file-selector-button {
     margin-right: 0.75rem;
-    border: 1px solid var(--color-ink-600);
-    border-radius: 9999px;
-    background: var(--color-ink-850);
-    color: var(--color-ink-100);
+    border: 1px solid var(--border-control);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text);
     font: inherit;
-    font-size: 13px;
     font-weight: 500;
-    padding: 0.3rem 0.9rem;
+    height: 28px;
+    padding: 0 10px;
     cursor: pointer;
   }
   input[type="file"]::file-selector-button:hover {
-    background: var(--color-ink-800);
+    background: var(--surface-2);
   }
-}
 
-/* Entrada de página: um único movimento curto e discreto. */
-@keyframes prisma-rise {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
+  /* Seta própria nos seletores (a do sistema destoa da interface). */
+  select.seta {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23878a91' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 10px 6px;
   }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-.page-enter {
-  animation: prisma-rise 260ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -156,7 +199,7 @@
   html,
   body {
     background: #ffffff !important;
-    color: #18181b;
+    color: #17181a;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }

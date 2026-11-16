@@ -27,14 +27,15 @@ export const STATUS_LABELS: Record<ContentStatus, string> = {
 };
 
 export const STATUS_TONE: Record<ContentStatus, "neutral" | "info" | "warning" | "success" | "danger" | "accent"> = {
+  // Neutro para o que é normal; verde só no concluído; âmbar e vermelho só para o que pede ação.
   draft: "neutral",
-  generating: "info",
-  in_review: "accent",
-  awaiting_approval: "warning",
-  approved: "success",
-  scheduled: "info",
+  generating: "neutral",
+  in_review: "neutral",
+  awaiting_approval: "neutral",
+  approved: "neutral",
+  scheduled: "neutral",
   published: "success",
-  rejected: "danger",
+  rejected: "warning",
   failed: "danger",
   archived: "neutral",
 };

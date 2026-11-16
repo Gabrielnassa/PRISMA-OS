@@ -65,10 +65,10 @@ function initials(name: string) {
 
 function Nav({ pathname, onNavigate, isAdmin }: { pathname: string; onNavigate?: () => void; isAdmin: boolean }) {
   return (
-    <nav aria-label="Navegação principal" className="flex flex-col gap-6">
+    <nav aria-label="Navegação principal" className="flex flex-col gap-5">
       {SECTIONS.map((section) => (
         <div key={section.title}>
-          <div className="mb-1.5 px-3 text-[11.5px] font-medium text-ink-400">{section.title}</div>
+          <div className="mb-1 px-2 text-xs font-medium tracking-[0.05em] text-muted uppercase">{section.title}</div>
           <ul className="flex flex-col gap-px">
             {section.items
               .filter((item) => isAdmin || !item.admin)
@@ -82,13 +82,11 @@ function Nav({ pathname, onNavigate, isAdmin }: { pathname: string; onNavigate?:
                       onClick={onNavigate}
                       aria-current={active ? "page" : undefined}
                       className={cx(
-                        "relative flex h-9 items-center gap-2.5 rounded-full px-3 text-[14px] transition-colors",
-                        active
-                          ? "bg-white/[0.07] font-medium text-ink-50"
-                          : "text-ink-300 hover:bg-white/[0.04] hover:text-ink-100",
+                        "relative flex h-7 items-center gap-2 rounded-sm px-2 text-base transition-colors max-lg:h-11",
+                        active ? "bg-surface-2 font-medium text-fg" : "text-muted hover:bg-surface-2 hover:text-fg",
                       )}
                     >
-                      <IconCmp width={16} height={16} className={active ? "text-iris-400" : "text-ink-400"} />
+                      <IconCmp width={15} height={15} className={active ? "text-fg" : "text-faint"} />
                       {item.label}
                     </Link>
                   </li>
@@ -101,46 +99,44 @@ function Nav({ pathname, onNavigate, isAdmin }: { pathname: string; onNavigate?:
   );
 }
 
-const AI_DOT = { ready: "bg-emerald-400", demo: "bg-amber-400", off: "bg-red-400" } as const;
+const AI_DOT = { ready: "bg-ok", demo: "bg-warn", off: "bg-danger" } as const;
 
 function Footer({ info }: { info: ShellInfo }) {
   return (
-    <div className="mt-auto border-t border-ink-800 px-3 pt-3 pb-3">
+    <div className="mt-auto border-t border-line px-2 pt-2 pb-3">
       <Link
         href="/avisos"
-        className="mb-1 flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] text-ink-300 hover:bg-white/[0.04] hover:text-ink-50"
+        className="flex h-7 items-center gap-2 rounded-sm px-2 text-base text-muted hover:bg-surface-2 hover:text-fg"
       >
-        <Icon.bell width={15} height={15} className="text-ink-400" />
+        <Icon.bell width={15} height={15} className="text-faint" />
         <span className="flex-1">Avisos</span>
         {info.unread ? (
-          <span className="tabular rounded-full bg-iris-500 px-1.5 text-[11px] leading-[18px] font-semibold text-white">
-            {info.unread > 99 ? "99+" : info.unread}
-          </span>
+          <span className="tabular font-mono text-sm text-fg">{info.unread > 99 ? "99+" : info.unread}</span>
         ) : null}
       </Link>
       <Link
         href="/integracoes"
         title={info.ai.detail}
-        className="mb-2 flex items-center gap-2 rounded-full px-3 py-1.5 text-[12px] text-ink-400 hover:bg-white/[0.04] hover:text-ink-200"
+        className="mb-2 flex h-7 items-center gap-2 rounded-sm px-2 text-sm text-muted hover:bg-surface-2 hover:text-fg"
       >
         <span aria-hidden className={cx("size-1.5 shrink-0 rounded-full", AI_DOT[info.ai.state])} />
         <span className="truncate">{info.ai.label}</span>
       </Link>
-      <div className="flex items-center gap-2.5 px-2.5">
+      <div className="flex items-center gap-2 px-2">
         <span
           aria-hidden
-          className="flex size-7 shrink-0 items-center justify-center rounded-full bg-ink-800 text-[11px] font-semibold text-ink-200 ring-1 ring-ink-700"
+          className="flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xs font-semibold text-muted"
         >
           {initials(info.userName)}
         </span>
         <div className="min-w-0 flex-1 leading-tight">
-          <div className="truncate text-[13px] font-medium text-ink-100">{info.userName}</div>
-          <div className="truncate text-[11.5px] text-ink-400">{info.roleLabel}</div>
+          <div className="truncate text-base font-medium text-fg">{info.userName}</div>
+          <div className="truncate text-sm text-muted">{info.roleLabel}</div>
         </div>
         <form action={logoutAction}>
           <button
             type="submit"
-            className="inline-flex size-8 items-center justify-center rounded-full text-ink-400 hover:bg-ink-850 hover:text-ink-50"
+            className="inline-flex size-7 items-center justify-center rounded-sm text-muted hover:bg-surface-2 hover:text-fg"
             title="Sair"
             aria-label="Sair"
           >
@@ -154,12 +150,12 @@ function Footer({ info }: { info: ShellInfo }) {
 
 function Workspace({ name }: { name: string }) {
   return (
-    <div className="px-5 pt-4 pb-4">
-      <div className="text-[11.5px] text-ink-400">Agência</div>
-      <div className="truncate text-[13.5px] font-medium text-ink-100" title={name}>
+    <div className="px-4 pt-3 pb-3">
+      <div className="text-sm text-muted">Agência</div>
+      <div className="truncate text-base font-medium text-fg" title={name}>
         {name}
       </div>
-      <SearchButton className="mt-3" />
+      <SearchButton className="mt-2" />
     </div>
   );
 }
@@ -182,24 +178,24 @@ export function Sidebar({ info }: { info: ShellInfo }) {
   return (
     <>
       <CommandPalette />
-      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-ink-800 bg-ink-950 lg:flex">
-        <div className="flex h-14 shrink-0 items-center border-b border-ink-800 px-5">
+      <aside className="sticky top-0 hidden h-dvh w-54 shrink-0 flex-col border-r border-line bg-surface lg:flex">
+        <div className="flex h-12 shrink-0 items-center border-b border-line px-4">
           <Link href="/" aria-label="PRISMA OS, início">
             <PrismaWordmark />
           </Link>
         </div>
         <Workspace name={info.organizationName} />
-        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-6">
+        <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-6">
           <Nav pathname={pathname} isAdmin={info.isAdmin} />
         </div>
         <Footer info={info} />
       </aside>
 
-      <div className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-ink-800 bg-ink-950/90 px-3 backdrop-blur lg:hidden">
+      <div className="sticky top-0 z-40 flex h-12 items-center gap-2 border-b border-line bg-surface px-2 lg:hidden">
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex size-9 items-center justify-center rounded-full text-ink-200 hover:bg-ink-850"
+          className="inline-flex size-11 items-center justify-center rounded-sm text-fg hover:bg-surface-2"
           aria-label="Abrir menu"
           aria-expanded={open}
         >
@@ -210,15 +206,15 @@ export function Sidebar({ info }: { info: ShellInfo }) {
         </Link>
         <Link
           href="/avisos"
-          className="relative ml-auto inline-flex size-9 items-center justify-center rounded-full text-ink-300 hover:bg-ink-850"
+          className="relative ml-auto inline-flex size-11 items-center justify-center rounded-sm text-muted hover:bg-surface-2"
           aria-label={info.unread ? `Avisos, ${info.unread} não lidos` : "Avisos"}
         >
           <Icon.bell width={17} height={17} />
-          {info.unread ? <span className="absolute top-1 right-1 size-2 rounded-full bg-iris-400" /> : null}
+          {info.unread ? <span className="absolute top-2.5 right-2.5 size-1.5 rounded-full bg-accent" /> : null}
         </Link>
         <Link
           href="/integracoes"
-          className="inline-flex items-center gap-2 text-[12px] text-ink-400"
+          className="inline-flex items-center gap-2 pr-2 text-sm text-muted"
           title={info.ai.detail}
         >
           <span aria-hidden className={cx("size-1.5 rounded-full", AI_DOT[info.ai.state])} />
@@ -229,20 +225,20 @@ export function Sidebar({ info }: { info: ShellInfo }) {
       {open ? (
         <div className="fixed inset-0 z-50 flex lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
           <div className="absolute inset-0 bg-black/60" onClick={() => setOpen(false)} />
-          <div className="relative flex h-full w-72 max-w-[85vw] flex-col border-r border-ink-800 bg-ink-950">
-            <div className="flex h-14 shrink-0 items-center justify-between border-b border-ink-800 px-5">
+          <div className="relative flex h-full w-72 max-w-[85vw] flex-col border-r border-line bg-surface shadow-lg">
+            <div className="flex h-12 shrink-0 items-center justify-between border-b border-line px-4">
               <PrismaWordmark />
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="-mr-2 inline-flex size-9 items-center justify-center rounded-full hover:bg-ink-850"
+                className="-mr-2 inline-flex size-11 items-center justify-center rounded-sm hover:bg-surface-2"
                 aria-label="Fechar menu"
               >
                 <Icon.close />
               </button>
             </div>
             <Workspace name={info.organizationName} />
-            <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-6">
+            <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-6">
               <Nav pathname={pathname} onNavigate={() => setOpen(false)} isAdmin={info.isAdmin} />
             </div>
             <Footer info={info} />
