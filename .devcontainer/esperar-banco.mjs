@@ -1,9 +1,11 @@
 // Espera o PostgreSQL do Codespace aceitar conexões (até 2 minutos).
+// Com --uma-vez, tenta uma única vez (usado por verificar.sh).
 import pg from "pg";
 
-const fim = Date.now() + 120_000;
+const umaVez = process.argv.includes("--uma-vez");
+const fim = Date.now() + (umaVez ? 0 : 120_000);
 for (;;) {
-  const c = new pg.Client({ connectionString: process.env.MIGRATION_DATABASE_URL });
+  const c = new pg.Client({ connectionString: process.env.MIGRATION_DATABASE_URL, connectionTimeoutMillis: 5000 });
   try {
     await c.connect();
     await c.end();

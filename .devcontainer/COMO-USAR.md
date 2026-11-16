@@ -49,6 +49,16 @@ Sem isso, o sistema sugere as cores pelo logotipo ou por um print do perfil do c
 - O Codespace **desliga sozinho depois de 30 minutos sem uso**. Os dados continuam guardados; ao abrir de novo, tudo volta.
 - **Custos do GitHub:** contas pessoais têm uma cota mensal gratuita de uso do Codespaces. Acompanhe em **Settings > Billing and plans**. Desligar quando não estiver usando economiza a cota.
 
+## Se a página mostrar "HTTP ERROR 401" ou não abrir
+
+1. Confira se o Codespace está ligado: em https://github.com/codespaces, ele precisa aparecer como **Active**. Se estiver parado, abra-o e espere uns 30 segundos.
+2. No Terminal do Codespace, rode:
+   ```
+   bash .devcontainer/verificar.sh
+   ```
+   - Se terminar com **"Tudo no ar"**, o sistema está funcionando e o 401 é o GitHub pedindo para confirmar a sua conta. Abra pela aba **Portas** (Ports) > linha **PRISMA OS (3000)** > ícone de globo, em vez do favorito. Se continuar, saia e entre de novo em github.com no mesmo navegador e repita.
+   - Se apontar **[FALHA]**, rode `bash .devcontainer/iniciar.sh`. Se o erro continuar, copie tudo o que o `verificar.sh` mostrou e mande para quem dá suporte.
+
 ## Backup (importante)
 
 O GitHub **apaga automaticamente** um Codespace que fica muito tempo sem uso (o padrão é 30 dias), e com ele os dados. Faça backup com frequência e baixe para o seu computador:
@@ -63,6 +73,7 @@ O backup vai para a pasta `backups/<data>` (painel de arquivos à esquerda). Cli
 
 | Comando | Para quê |
 | --- | --- |
+| `bash .devcontainer/verificar.sh` | Mostra se o banco, o site e o worker estão no ar e, se algo parou, as últimas mensagens |
 | `bash .devcontainer/atualizar.sh` | Baixa a versão mais nova do GitHub e reinicia (faz backup antes) |
 | `bash .devcontainer/iniciar.sh` | Liga ou reinicia o sistema (use se o endereço der erro, como 401 ou 502, ou se algo travar) |
 | `npm run user:reset-password -- --email voce@exemplo.com` | Define uma senha nova (se você esquecer a sua) |
