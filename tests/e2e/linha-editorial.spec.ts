@@ -17,7 +17,15 @@ test("linha editorial do mês: do pacote às peças", async ({ page }) => {
   const clientUrl = page.url().split("?")[0]!;
 
   await page.goto(`${clientUrl}?aba=arquivos`);
-  await page.locator("#files").setInputFiles({ name: "loja.png", mimeType: "image/png", buffer: png(1200, 1200, '<rect width="1200" height="1200" fill="#1e3a8a"/><circle cx="600" cy="600" r="300" fill="#facc15"/>') });
+  await page.locator("#files").setInputFiles({
+    name: "loja.png",
+    mimeType: "image/png",
+    buffer: png(
+      1200,
+      1200,
+      '<rect width="1200" height="1200" fill="#1e3a8a"/><circle cx="600" cy="600" r="300" fill="#facc15"/>',
+    ),
+  });
   await page.getByRole("button", { name: "Enviar" }).click();
   await expect(page.getByText("loja.png: enviado")).toBeVisible();
   // Sem conta de serviço do Google: a pasta pode ser ligada, a importação explica o que falta.
@@ -37,24 +45,38 @@ test("linha editorial do mês: do pacote às peças", async ({ page }) => {
     await expect(page.getByRole("status").filter({ hasText: "3 espaços criados pelo pacote" })).toBeVisible();
     // Pautas em branco: completar as duas que viram peça.
     for (let i = 0; i < 2; i++) {
-      const blankCarousel = page.locator("main li").filter({ hasText: "Carrossel" }).filter({ hasText: "Pauta a definir" }).first();
+      const blankCarousel = page
+        .locator("main li")
+        .filter({ hasText: "Carrossel" })
+        .filter({ hasText: "Pauta a definir" })
+        .first();
       await blankCarousel.getByRole("button", { name: "Editar" }).click();
       const item = page.locator("li").filter({ has: page.getByRole("button", { name: "Salvar pauta" }) });
       await item.getByLabel("Título").fill(`Bolão da semana ${i + 1}`);
-      await item.getByLabel("Briefing").fill("Explicar como entrar no bolão da loja, com horário de atendimento e endereço.");
+      await item
+        .getByLabel("Briefing")
+        .fill("Explicar como entrar no bolão da loja, com horário de atendimento e endereço.");
       await item.getByRole("button", { name: "Salvar pauta" }).click();
       await expect(page.getByRole("status").filter({ hasText: "Pauta salva." }).first()).toBeVisible();
     }
   } else {
-    await page.getByLabel("Tema ou pedidos do mês (opcional)").fill("Bolão da Mega da Virada. Conheça a equipe da loja.");
+    await page
+      .getByLabel("Tema ou pedidos do mês (opcional)")
+      .fill("Bolão da Mega da Virada. Conheça a equipe da loja.");
     await page.getByRole("button", { name: "Propor pautas com IA" }).click();
-    await expect(page.getByRole("status").filter({ hasText: "3 pautas propostas em modo de demonstração" })).toBeVisible();
+    await expect(
+      page.getByRole("status").filter({ hasText: "3 pautas propostas em modo de demonstração" }),
+    ).toBeVisible();
   }
   await shot(page, "11-linha-editorial");
 
   await page.getByRole("button", { name: "Aprovar e criar peças" }).click();
   await page.getByRole("dialog", { name: "Confirmação" }).getByRole("button", { name: "Aprovar e criar" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "2 peças enviadas para criação. 1 vídeo fica para marcar quando feito." })).toBeVisible();
+  await expect(
+    page
+      .getByRole("status")
+      .filter({ hasText: "2 peças enviadas para criação. 1 vídeo fica para marcar quando feito." }),
+  ).toBeVisible();
   await expect(page.getByText("Virou peça")).toHaveCount(2);
 
   await page.getByRole("button", { name: "Marcar feito" }).click();

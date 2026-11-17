@@ -33,8 +33,17 @@ export async function monthByClient(auth: AuthContext, month: string): Promise<C
   const m = MonthSchema.parse(month);
   return withTx(userCtx(auth.userId), async (tx) => {
     const rows = await many<{
-      id: string; name: string; contracted: number; produced: number; videos_done: number; plan: string | null;
-      awaiting: number; in_review: number; generating: number; failed: number; approved: number;
+      id: string;
+      name: string;
+      contracted: number;
+      produced: number;
+      videos_done: number;
+      plan: string | null;
+      awaiting: number;
+      in_review: number;
+      generating: number;
+      failed: number;
+      approved: number;
     }>(
       tx,
       `WITH mm AS (SELECT $2::date AS start, ($2::date + interval '1 month') AS stop)
@@ -87,8 +96,15 @@ export async function calendarEntries(auth: AuthContext, month: string, clientId
   const m = MonthSchema.parse(month);
   return withTx(userCtx(auth.userId), async (tx) => {
     const rows = await many<{
-      planned_date: Date; client_id: string; client_name: string; title: string; format: EditorialFormat; status: CalendarEntry["itemStatus"];
-      content_item_id: string | null; content_status: ContentStatus | null; plan_status: string;
+      planned_date: Date;
+      client_id: string;
+      client_name: string;
+      title: string;
+      format: EditorialFormat;
+      status: CalendarEntry["itemStatus"];
+      content_item_id: string | null;
+      content_status: ContentStatus | null;
+      plan_status: string;
     }>(
       tx,
       `SELECT i.planned_date, i.client_id, c.name AS client_name, i.title, i.format, i.status, i.content_item_id, ci.status AS content_status, pl.status AS plan_status
@@ -124,7 +140,12 @@ export interface ChecklistStep {
 }
 
 /** O que falta para o cliente começar a produzir sem atrito (exibido até tudo estar pronto). */
-export async function clientChecklist(auth: AuthContext, clientId: string, month: string, brandPercent: number): Promise<ChecklistStep[]> {
+export async function clientChecklist(
+  auth: AuthContext,
+  clientId: string,
+  month: string,
+  brandPercent: number,
+): Promise<ChecklistStep[]> {
   const m = MonthSchema.parse(month);
   const r = await withTx(userCtx(auth.userId), async (tx) => {
     await requireClient(tx, auth, clientId);
@@ -139,21 +160,74 @@ export async function clientChecklist(auth: AuthContext, clientId: string, month
   });
   const base = `/clientes/${clientId}`;
   return [
-    { id: "brand", label: "Perfil da marca", done: brandPercent === 100, hint: brandPercent === 100 ? "Completo" : `${brandPercent}% preenchido`, href: `${base}?aba=marca` },
-    { id: "logo", label: "Logotipo", done: r.logo, hint: r.logo ? "Definido no perfil" : "Envie em Arquivos e escolha no perfil", href: r.logo ? `${base}?aba=marca` : `${base}?aba=arquivos` },
-    { id: "photos", label: "Fotos do cliente", done: r.photos >= 3, hint: r.photos >= 3 ? `${r.photos} na biblioteca` : `${r.photos} de pelo menos 3 (envie ou importe do Drive)`, href: `${base}?aba=arquivos` },
-    { id: "package", label: "Pacote mensal", done: r.pkg > 0, hint: r.pkg > 0 ? `${r.pkg} peças por mês` : "Quantas peças o cliente contratou", href: `${base}?aba=editorial` },
-    { id: "editorial", label: "Linha editorial do mês", done: r.plan === "approved", hint: r.plan === "approved" ? "Aprovada" : r.plan === "draft" ? "Em rascunho: revise e aprove" : "Ainda não montada", href: `${base}?aba=editorial` },
-    { id: "ai", label: "IA conectada", done: Boolean(getProvider() && !getProvider()!.isDemo), hint: getProvider() ? (getProvider()!.isDemo ? "Modo de demonstração" : "Pronta") : "Conecte a chave em Integrações", href: "/integracoes" },
+    {
+      id: "brand",
+      label: "Perfil da marca",
+      done: brandPercent === 100,
+      hint: brandPercent === 100 ? "Completo" : `${brandPercent}% preenchido`,
+      href: `${base}?aba=marca`,
+    },
+    {
+      id: "logo",
+      label: "Logotipo",
+      done: r.logo,
+      hint: r.logo ? "Definido no perfil" : "Envie em Arquivos e escolha no perfil",
+      href: r.logo ? `${base}?aba=marca` : `${base}?aba=arquivos`,
+    },
+    {
+      id: "photos",
+      label: "Fotos do cliente",
+      done: r.photos >= 3,
+      hint: r.photos >= 3 ? `${r.photos} na biblioteca` : `${r.photos} de pelo menos 3 (envie ou importe do Drive)`,
+      href: `${base}?aba=arquivos`,
+    },
+    {
+      id: "package",
+      label: "Pacote mensal",
+      done: r.pkg > 0,
+      hint: r.pkg > 0 ? `${r.pkg} peças por mês` : "Quantas peças o cliente contratou",
+      href: `${base}?aba=editorial`,
+    },
+    {
+      id: "editorial",
+      label: "Linha editorial do mês",
+      done: r.plan === "approved",
+      hint:
+        r.plan === "approved" ? "Aprovada" : r.plan === "draft" ? "Em rascunho: revise e aprove" : "Ainda não montada",
+      href: `${base}?aba=editorial`,
+    },
+    {
+      id: "ai",
+      label: "IA conectada",
+      done: Boolean(getProvider() && !getProvider()!.isDemo),
+      hint: getProvider()
+        ? getProvider()!.isDemo
+          ? "Modo de demonstração"
+          : "Pronta"
+        : "Conecte a chave em Integrações",
+      href: "/integracoes",
+    },
   ];
 }
 
 /** Peças com versão aprovada no mês (aprovação decidida no mês), para a entrega em lote. */
-export async function approvedInMonth(auth: AuthContext, clientId: string, month: string): Promise<Array<{ id: string; title: string; approvedVersionId: string; decidedAt: string; plannedDate: string | null }>> {
+export async function approvedInMonth(
+  auth: AuthContext,
+  clientId: string,
+  month: string,
+): Promise<
+  Array<{ id: string; title: string; approvedVersionId: string; decidedAt: string; plannedDate: string | null }>
+> {
   const m = MonthSchema.parse(month);
   return withTx(userCtx(auth.userId), async (tx) => {
     await requireClient(tx, auth, clientId);
-    const rows = await many<{ id: string; title: string; approved_version_id: string; decided_at: Date; planned_date: Date | null }>(
+    const rows = await many<{
+      id: string;
+      title: string;
+      approved_version_id: string;
+      decided_at: Date;
+      planned_date: Date | null;
+    }>(
       tx,
       `SELECT ci.id, ci.title, ci.approved_version_id, max(a.decided_at) AS decided_at,
               (SELECT i.planned_date FROM editorial_items i WHERE i.content_item_id = ci.id LIMIT 1) AS planned_date
@@ -164,6 +238,12 @@ export async function approvedInMonth(auth: AuthContext, clientId: string, month
        ORDER BY coalesce((SELECT i.planned_date FROM editorial_items i WHERE i.content_item_id = ci.id LIMIT 1), max(a.decided_at)::date), ci.title`,
       [clientId, `${m}-01`],
     );
-    return rows.map((r) => ({ id: r.id, title: r.title, approvedVersionId: r.approved_version_id, decidedAt: r.decided_at.toISOString(), plannedDate: r.planned_date ? r.planned_date.toISOString().slice(0, 10) : null }));
+    return rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      approvedVersionId: r.approved_version_id,
+      decidedAt: r.decided_at.toISOString(),
+      plannedDate: r.planned_date ? r.planned_date.toISOString().slice(0, 10) : null,
+    }));
   });
 }

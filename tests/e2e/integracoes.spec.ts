@@ -53,12 +53,19 @@ test("integrações: chaves dos apps, redes do cliente, avisos e agenda", async 
   await shot(page, "14-redes-do-cliente");
 
   // Relatório do mês do cliente (página clara, imprimível).
-  await page.getByRole("link", { name: "Relatório do mês" }).first().click().catch(async () => page.goto(`/relatorios/${clientUrl.split("/").pop()}`));
+  await page
+    .getByRole("link", { name: "Relatório do mês" })
+    .first()
+    .click()
+    .catch(async () => page.goto(`/relatorios/${clientUrl.split("/").pop()}`));
   await page.goto(`/relatorios/${clientUrl.split("/").pop()}`);
   await expect(page.getByRole("heading", { name: /Relatório de/ })).toBeVisible();
   await expect(page.getByRole("button", { name: "Imprimir ou salvar PDF" })).toBeVisible();
   await page.getByRole("button", { name: "Link para o cliente" }).click();
-  const reportUrl = (await page.getByText(/\/relatorio\/[A-Za-z0-9_-]{20,}/).first().textContent())!.split(" ")[0]!;
+  const reportUrl = (await page
+    .getByText(/\/relatorio\/[A-Za-z0-9_-]{20,}/)
+    .first()
+    .textContent())!.split(" ")[0]!;
   const visitor = await page.context().browser()!.newContext();
   const outsider = await visitor.newPage();
   await outsider.goto(`http://localhost:${process.env.E2E_PORT ?? 3100}${new URL(reportUrl).pathname}`);

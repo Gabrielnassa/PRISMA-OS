@@ -38,8 +38,12 @@ describe("pacote mensal e estimativa de custo", () => {
     const { owner, clientId } = await setup();
     const editor = await addMember(owner, "editor");
     await updateMember(owner, editor.userId, { role: "editor", isActive: true, clientIds: [clientId] });
-    await expect(setPackage(editor, clientId, { posts: 0, carousels: 4, stories: 0, videos: 4 })).rejects.toBeInstanceOf(ForbiddenError);
-    await expect(setPackage(owner, clientId, { posts: -1, carousels: 4, stories: 0, videos: 4 })).rejects.toBeInstanceOf(ValidationError);
+    await expect(
+      setPackage(editor, clientId, { posts: 0, carousels: 4, stories: 0, videos: 4 }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(
+      setPackage(owner, clientId, { posts: -1, carousels: 4, stories: 0, videos: 4 }),
+    ).rejects.toBeInstanceOf(ValidationError);
     await setPackage(owner, clientId, { posts: 0, carousels: 4, stories: 0, videos: 4, notes: "8 posts/mês" });
 
     // Demonstração: sem custo para estimar.
@@ -62,9 +66,18 @@ describe("linha editorial", () => {
     const { owner, clientId } = await setup();
     await expect(proposeEditorialPlan(owner, clientId, { month: MONTH, useAi: true })).rejects.toThrow(/pacote mensal/);
     await setPackage(owner, clientId, { posts: 0, carousels: 4, stories: 0, videos: 4 });
-    const photo = await uploadMedia(owner, clientId, { filename: "loja.png", data: samplePng(1200, 1200, "#1d4ed8") }, { kind: "image" });
+    const photo = await uploadMedia(
+      owner,
+      clientId,
+      { filename: "loja.png", data: samplePng(1200, 1200, "#1d4ed8") },
+      { kind: "image" },
+    );
 
-    const proposed = await proposeEditorialPlan(owner, clientId, { month: MONTH, theme: "Bolão da Mega da Virada. Novos horários da loja.", useAi: true });
+    const proposed = await proposeEditorialPlan(owner, clientId, {
+      month: MONTH,
+      theme: "Bolão da Mega da Virada. Novos horários da loja.",
+      useAi: true,
+    });
     expect(proposed).toMatchObject({ items: 8, isDemo: true });
     let plan = (await getEditorialPlan(owner, clientId, MONTH))!;
     expect(plan.status).toBe("draft");
@@ -89,7 +102,16 @@ describe("linha editorial", () => {
         plannedDate: it.plannedDate,
       });
     }
-    await expect(updateEditorialItem(owner, plan.items[0]!.id, { title: "Fora", brief: "", cta: "", objective: "education", format: "post", plannedDate: "2026-12-01" })).rejects.toBeInstanceOf(ValidationError);
+    await expect(
+      updateEditorialItem(owner, plan.items[0]!.id, {
+        title: "Fora",
+        brief: "",
+        cta: "",
+        objective: "education",
+        format: "post",
+        plannedDate: "2026-12-01",
+      }),
+    ).rejects.toBeInstanceOf(ValidationError);
 
     const r = await approveEditorialPlan(owner, plan.id);
     expect(r).toMatchObject({ created: 4, pending: 0, videos: 4, stoppedBecause: null });
@@ -107,11 +129,22 @@ describe("linha editorial", () => {
 
     // Aprovar de novo não duplica nada.
     expect((await approveEditorialPlan(owner, plan.id)).created).toBe(0);
-    const count = await withTx(systemCtx("teste"), (tx) => many(tx, "SELECT id FROM content_items WHERE client_id = $1", [clientId]));
+    const count = await withTx(systemCtx("teste"), (tx) =>
+      many(tx, "SELECT id FROM content_items WHERE client_id = $1", [clientId]),
+    );
     expect(count).toHaveLength(4);
 
     // Pauta já em produção não é editada; vídeo é marcado como feito à mão.
-    await expect(updateEditorialItem(owner, produced[0]!.id, { title: "Outra", brief: "x", cta: "", objective: "education", format: "carousel", plannedDate: null })).rejects.toBeInstanceOf(ConflictError);
+    await expect(
+      updateEditorialItem(owner, produced[0]!.id, {
+        title: "Outra",
+        brief: "x",
+        cta: "",
+        objective: "education",
+        format: "carousel",
+        plannedDate: null,
+      }),
+    ).rejects.toBeInstanceOf(ConflictError);
     const video = plan.items.find((i) => i.format === "video")!;
     await setEditorialItemStatus(owner, video.id, "done");
     const o = await getPackageOverview(owner, clientId);

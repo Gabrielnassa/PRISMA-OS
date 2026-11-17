@@ -25,13 +25,21 @@ export function assertSameOrigin(request: Request): void {
   const allowed = new Set<string>();
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
   if (host) allowed.add(host);
-  for (const h of extraAllowedHosts({ APP_URL: env().APP_URL, CODESPACE_NAME: process.env.CODESPACE_NAME })) allowed.add(h);
+  for (const h of extraAllowedHosts({ APP_URL: env().APP_URL, CODESPACE_NAME: process.env.CODESPACE_NAME }))
+    allowed.add(h);
   if (!allowed.has(originHost)) throw new ForbiddenError("Origem não autorizada.");
 }
 
 export function jsonError(err: unknown): NextResponse {
   if (!(err instanceof AppError)) {
-    console.error(JSON.stringify({ level: "error", msg: "api.unexpected_error", error: (err as Error)?.message, stack: (err as Error)?.stack }));
+    console.error(
+      JSON.stringify({
+        level: "error",
+        msg: "api.unexpected_error",
+        error: (err as Error)?.message,
+        stack: (err as Error)?.stack,
+      }),
+    );
   }
   const status = err instanceof AppError ? err.status : 500;
   const code = err instanceof AppError ? err.code : "internal_error";

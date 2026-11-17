@@ -1,0 +1,17 @@
+node_modules
+.next
+out
+coverage
+storage
+.e2e-storage
+test-results
+playwright-report
+backups
+servidor/backups
+docs/img
+tests/visual/__snapshots__
+package-lock.json
+next-env.d.ts
+*.md
+*.pdf
+*.sql

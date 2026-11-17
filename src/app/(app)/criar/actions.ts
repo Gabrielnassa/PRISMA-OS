@@ -40,7 +40,10 @@ export async function createContentAction(_prev: ActionState, form: FormData): P
   return result;
 }
 
-export async function suggestIdeasAction(_prev: ActionState<IdeasOutput>, form: FormData): Promise<ActionState<IdeasOutput>> {
+export async function suggestIdeasAction(
+  _prev: ActionState<IdeasOutput>,
+  form: FormData,
+): Promise<ActionState<IdeasOutput>> {
   const auth = await requireAuth();
   return runAction(async () => {
     assertCan(auth.role, "content.create");

@@ -15,8 +15,10 @@ const COMMON = {
 function Grid({ ctx, step = 90 }: { ctx: SlideCtx; step?: number }): ReactElement {
   const color = mix(ctx.palette.bg, ctx.palette.fg, 0.07);
   const lines: ReactElement[] = [];
-  for (let x = step; x < ctx.W; x += step) lines.push(<Rect key={`v${x}`} box={{ x, y: 0, w: 1, h: ctx.H }} color={color} />);
-  for (let y = step; y < ctx.H; y += step) lines.push(<Rect key={`h${y}`} box={{ x: 0, y, w: ctx.W, h: 1 }} color={color} />);
+  for (let x = step; x < ctx.W; x += step)
+    lines.push(<Rect key={`v${x}`} box={{ x, y: 0, w: 1, h: ctx.H }} color={color} />);
+  for (let y = step; y < ctx.H; y += step)
+    lines.push(<Rect key={`h${y}`} box={{ x: 0, y, w: ctx.W, h: 1 }} color={color} />);
   return <>{lines}</>;
 }
 
@@ -46,7 +48,11 @@ export const techGrade: TemplateDef = {
   defaultTheme: { cover: "dark", content: "dark", cta: "brand" },
   defaultAlign: "left",
   fieldLimits: LIMITS_STANDARD,
-  compositionRules: ["Grade de 90 px com 7% de contraste", "Barra em degradê destaque → secundária", "Sobretítulo em caixa alta espaçada"],
+  compositionRules: [
+    "Grade de 90 px com 7% de contraste",
+    "Barra em degradê destaque → secundária",
+    "Sobretítulo em caixa alta espaçada",
+  ],
   qualityCriteria: ["Grade não compete com o texto", "Contraste AA", "Sem gráficos com dados inventados"],
   render(ctx) {
     const side = ctx.safe.side;
@@ -61,7 +67,10 @@ export const techGrade: TemplateDef = {
           key: "main",
           box: { x: side, y: textTop, w: ctx.W - side * 2, h: bottom - textTop },
           justify: ctx.kind === "content" ? "start" : "end",
-          items: standardItems(ctx, { title: { cover: 100, content: 70, cta: 84 }, includeHighlight: ctx.kind === "cta" }),
+          items: standardItems(ctx, {
+            title: { cover: 100, content: 70, cta: 84 },
+            includeHighlight: ctx.kind === "cta",
+          }),
           background: { kind: "solid", color: ctx.palette.bg },
           lead: { height: 44, element: <AccentRule color={ctx.palette.accent} width={140} height={8} gap={36} /> },
         })}
@@ -109,10 +118,46 @@ export const techMetrica: TemplateDef = {
           box: { x: side, y: top, w: ctx.W - side * 2, h: bottom - top },
           justify: "center",
           items: [
-            { field: "kicker", font: "body", weight: 600, maxSize: 30, minSize: 22, lineHeight: 1.25, uppercase: true, letterSpacingEm: 0.14, color: ctx.palette.accentText, gapAfter: 24 },
-            { field: "highlight", font: "heading", weight: 700, maxSize: Math.round(240 * s), minSize: 90, lineHeight: 1, color: ctx.palette.accent, gapAfter: 36 },
-            { field: "title", font: "heading", weight: 700, maxSize: Math.round((ctx.kind === "cta" ? 84 : 58) * s), minSize: 36, lineHeight: 1.12, gapAfter: 28 },
-            { field: "body", font: "body", weight: 400, maxSize: Math.round(34 * s), minSize: 26, lineHeight: 1.4, gapAfter: 0 },
+            {
+              field: "kicker",
+              font: "body",
+              weight: 600,
+              maxSize: 30,
+              minSize: 22,
+              lineHeight: 1.25,
+              uppercase: true,
+              letterSpacingEm: 0.14,
+              color: ctx.palette.accentText,
+              gapAfter: 24,
+            },
+            {
+              field: "highlight",
+              font: "heading",
+              weight: 700,
+              maxSize: Math.round(240 * s),
+              minSize: 90,
+              lineHeight: 1,
+              color: ctx.palette.accent,
+              gapAfter: 36,
+            },
+            {
+              field: "title",
+              font: "heading",
+              weight: 700,
+              maxSize: Math.round((ctx.kind === "cta" ? 84 : 58) * s),
+              minSize: 36,
+              lineHeight: 1.12,
+              gapAfter: 28,
+            },
+            {
+              field: "body",
+              font: "body",
+              weight: 400,
+              maxSize: Math.round(34 * s),
+              minSize: 26,
+              lineHeight: 1.4,
+              gapAfter: 0,
+            },
           ],
           background: { kind: "solid", color: ctx.palette.bg },
         })}
@@ -140,14 +185,27 @@ export const techPainel: TemplateDef = {
   capacity: {
     "1:1": { content: { plain: 0.9, photo: 0.9 } },
   },
-  compositionRules: ["Painel com raio de 28 px e borda sutil", "Três controles de janela no topo", "Texto dentro do painel"],
+  compositionRules: [
+    "Painel com raio de 28 px e borda sutil",
+    "Três controles de janela no topo",
+    "Texto dentro do painel",
+  ],
   qualityCriteria: ["Não simular telas de produtos de terceiros", "Contraste AA dentro do painel"],
   render(ctx) {
     const side = ctx.safe.side;
-    const panel = { x: side, y: ctx.safe.top + 100, w: ctx.W - side * 2, h: ctx.H - ctx.safe.top - ctx.safe.bottom - 190 };
+    const panel = {
+      x: side,
+      y: ctx.safe.top + 100,
+      w: ctx.W - side * 2,
+      h: ctx.H - ctx.safe.top - ctx.safe.bottom - 190,
+    };
     const panelBg = mix(ctx.palette.bg, ctx.palette.fg, 0.07);
     const pad = 64;
-    const dots = [ctx.doc.style.colors.accent, ctx.doc.style.colors.secondary, mix(ctx.palette.bg, ctx.palette.fg, 0.35)];
+    const dots = [
+      ctx.doc.style.colors.accent,
+      ctx.doc.style.colors.secondary,
+      mix(ctx.palette.bg, ctx.palette.fg, 0.35),
+    ];
     return (
       <Root ctx={ctx}>
         <Brandmark ctx={ctx} x={side} y={ctx.safe.top - 10} maxW={220} maxH={64} />
@@ -161,7 +219,10 @@ export const techPainel: TemplateDef = {
           key: "main",
           box: { x: panel.x + pad, y: panel.y + 92 + pad, w: panel.w - pad * 2, h: panel.h - 92 - pad * 2 },
           justify: "center",
-          items: standardItems(ctx, { title: { cover: 88, content: 64, cta: 76 }, includeHighlight: ctx.kind === "cta" }),
+          items: standardItems(ctx, {
+            title: { cover: 88, content: 64, cta: 76 },
+            includeHighlight: ctx.kind === "cta",
+          }),
           background: { kind: "solid", color: panelBg },
         })}
         {ctx.textStack({

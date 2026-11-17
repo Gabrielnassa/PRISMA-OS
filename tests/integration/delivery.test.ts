@@ -3,7 +3,13 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createClient } from "../../src/server/services/clients";
 import { createContent, getContent, submitForApproval } from "../../src/server/services/content";
 import { uploadMedia } from "../../src/server/services/media";
-import { createApprovalLink, createClientApprovalLink, decideByLink, getPublicApproval, renderPublicSlide } from "../../src/server/services/approval-links";
+import {
+  createApprovalLink,
+  createClientApprovalLink,
+  decideByLink,
+  getPublicApproval,
+  renderPublicSlide,
+} from "../../src/server/services/approval-links";
 import { createWebhook, isAllowedWebhookUrl } from "../../src/server/services/webhooks";
 import { saveSmtp, setMailSender, type MailMessage } from "../../src/server/services/email";
 import { calendarFeedIcs, createCalendarFeed } from "../../src/server/services/calendar-feed";
@@ -44,7 +50,10 @@ async function pieceAwaitingApproval(owner: AuthContext, clientId: string) {
   });
   await drain();
   const piece = await getContent(owner, contentId);
-  const { approvalId } = await submitForApproval(owner, contentId, { versionId: piece.current!.id, note: "Confere o valor da cota" });
+  const { approvalId } = await submitForApproval(owner, contentId, {
+    versionId: piece.current!.id,
+    note: "Confere o valor da cota",
+  });
   return { contentId, approvalId };
 }
 
@@ -60,19 +69,32 @@ describe("aprovação pelo cliente por link", () => {
     const view = await getPublicApproval(token);
     expect(view).toMatchObject({ scope: "single", clientName: "Coli Loterias" });
     expect(view!.items).toHaveLength(1);
-    expect(view!.items[0]).toMatchObject({ title: "Mega da Virada", status: "pending", requestNote: "Confere o valor da cota", slideCount: 1 });
+    expect(view!.items[0]).toMatchObject({
+      title: "Mega da Virada",
+      status: "pending",
+      requestNote: "Confere o valor da cota",
+      slideCount: 1,
+    });
     const png = await renderPublicSlide(token, 0);
     expect(png!.subarray(1, 4).toString()).toBe("PNG");
     expect(await renderPublicSlide(token, 5)).toBeNull();
     expect(await getPublicApproval("token-que-nao-existe-123456789")).toBeNull();
 
-    await expect(decideByLink(token, { decision: "rejected", name: "Maria", note: "" })).rejects.toBeInstanceOf(ValidationError);
+    await expect(decideByLink(token, { decision: "rejected", name: "Maria", note: "" })).rejects.toBeInstanceOf(
+      ValidationError,
+    );
     await decideByLink(token, { decision: "approved", name: "Maria Coli", note: "Pode postar" });
     const piece = await getContent(owner, contentId);
     expect(piece.status).toBe("approved");
-    expect(piece.approvals[0]).toMatchObject({ status: "approved", decidedByName: "Maria Coli (cliente)", decisionNote: "Pode postar" });
+    expect(piece.approvals[0]).toMatchObject({
+      status: "approved",
+      decidedByName: "Maria Coli (cliente)",
+      decisionNote: "Pode postar",
+    });
     expect((await getPublicApproval(token))!.items[0]!.status).toBe("approved");
-    await expect(decideByLink(token, { decision: "approved", name: "Maria Coli" })).rejects.toThrow(/já foi respondido/);
+    await expect(decideByLink(token, { decision: "approved", name: "Maria Coli" })).rejects.toThrow(
+      /já foi respondido/,
+    );
     await expect(createApprovalLink(owner, approvalId)).rejects.toThrow(/já foi decidido/);
 
     // Outra organização não gera link para o pedido.
@@ -110,10 +132,17 @@ describe("link do mês (todas as peças do cliente)", () => {
     expect(await renderPublicSlide(token, 0)).toBeNull();
     expect(await renderPublicSlide(token, 0, foreign.approvalId)).toBeNull();
     expect((await renderPublicSlide(token, 0, first.approvalId))!.subarray(1, 4).toString()).toBe("PNG");
-    await expect(decideByLink(token, { approvalId: foreign.approvalId, decision: "approved", name: "Maria" })).rejects.toThrow(/não encontrada/);
+    await expect(
+      decideByLink(token, { approvalId: foreign.approvalId, decision: "approved", name: "Maria" }),
+    ).rejects.toThrow(/não encontrada/);
 
     await decideByLink(token, { approvalId: first.approvalId, decision: "approved", name: "Maria" });
-    await decideByLink(token, { approvalId: second.approvalId, decision: "rejected", name: "Maria", note: "Trocar a foto da capa." });
+    await decideByLink(token, {
+      approvalId: second.approvalId,
+      decision: "rejected",
+      name: "Maria",
+      note: "Trocar a foto da capa.",
+    });
     const after = (await getPublicApproval(token))!;
     expect(after.items.map((i) => i.status).sort()).toEqual(["approved", "rejected"]);
     expect((await getContent(owner, first.contentId)).status).toBe("approved");
@@ -135,17 +164,31 @@ describe("avisos: e-mail e webhooks", () => {
     const { updateMember } = await import("../../src/server/services/users");
     await updateMember(owner, reviewer.userId, { role: "reviewer", isActive: true, clientIds: [clientId] });
 
-    await saveSmtp(owner, { host: "smtp.hostinger.com", port: 465, secure: true, user: "contato@agencia.com.br", from: "Agência <contato@agencia.com.br>", password: "senha-do-email" });
+    await saveSmtp(owner, {
+      host: "smtp.hostinger.com",
+      port: 465,
+      secure: true,
+      user: "contato@agencia.com.br",
+      from: "Agência <contato@agencia.com.br>",
+      password: "senha-do-email",
+    });
     expect(isAllowedWebhookUrl("http://exemplo.com")).toBe(false);
-    await expect(createWebhook(owner, { url: "https://127.0.0.1/hook", events: ["approval.requested"] })).rejects.toBeInstanceOf(ValidationError);
-    const { secret } = await createWebhook(owner, { url: "https://hooks.exemplo.com/prisma", events: ["approval.requested", "approval.decided"] });
+    await expect(
+      createWebhook(owner, { url: "https://127.0.0.1/hook", events: ["approval.requested"] }),
+    ).rejects.toBeInstanceOf(ValidationError);
+    const { secret } = await createWebhook(owner, {
+      url: "https://hooks.exemplo.com/prisma",
+      events: ["approval.requested", "approval.decided"],
+    });
 
     const sent: MailMessage[] = [];
     setMailSender(async (cfg, msg) => {
       expect(cfg).toMatchObject({ host: "smtp.hostinger.com", password: "senha-do-email" });
       sent.push(msg);
     });
-    const hooks = fakeFetch([{ method: "POST", match: /hooks\.exemplo\.com\/prisma/, reply: () => ({ json: { ok: true } }) }]);
+    const hooks = fakeFetch([
+      { method: "POST", match: /hooks\.exemplo\.com\/prisma/, reply: () => ({ json: { ok: true } }) },
+    ]);
     setSocialFetch(hooks.fn);
 
     await pieceAwaitingApproval(owner, clientId);
@@ -156,7 +199,9 @@ describe("avisos: e-mail e webhooks", () => {
     // Quem pediu não recebe o próprio aviso.
     expect(sent.some((m) => m.to.includes(owner.email))).toBe(false);
 
-    const call = hooks.calls.find((c) => (c.init.headers as Record<string, string>)["X-Prisma-Event"] === "approval.requested")!;
+    const call = hooks.calls.find(
+      (c) => (c.init.headers as Record<string, string>)["X-Prisma-Event"] === "approval.requested",
+    )!;
     const headers = call.init.headers as Record<string, string>;
     const body = String(call.init.body);
     const expected = `sha256=${crypto.createHmac("sha256", secret).update(`${headers["X-Prisma-Timestamp"]}.${body}`).digest("hex")}`;
@@ -172,7 +217,10 @@ describe("agenda (ICS)", () => {
     await setPackage(owner, clientId, { posts: 2, carousels: 0, stories: 0, videos: 0 });
     await proposeEditorialPlan(owner, clientId, { month: currentMonth(), useAi: false });
     const url = await createCalendarFeed(owner);
-    const token = url.split("/").pop()!.replace(/\.ics$/, "");
+    const token = url
+      .split("/")
+      .pop()!
+      .replace(/\.ics$/, "");
     const ics = (await calendarFeedIcs(token))!;
     expect(ics).toContain("BEGIN:VCALENDAR");
     expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(2);
@@ -190,22 +238,43 @@ describe("vídeo da biblioteca", () => {
     const mp4 = Buffer.concat([Buffer.from([0, 0, 0, 0x18]), Buffer.from("ftypmp42"), Buffer.alloc(2048, 1)]);
     const video = await uploadMedia(owner, clientId, { filename: "bolao.mp4", data: mp4 }, { kind: "video" });
 
-    await saveAppCredentials(owner, "google", { publicId: "123-abc.apps.googleusercontent.com", secret: "GOCSPX-segredo" });
+    await saveAppCredentials(owner, "google", {
+      publicId: "123-abc.apps.googleusercontent.com",
+      secret: "GOCSPX-segredo",
+    });
     await saveAppCredentials(owner, "tiktok", { publicId: "awclientkey", secret: "segredo-tiktok-1234" });
     const g = new URL(await startConnection(owner, clientId, "google"));
     setSocialFetch(
       fakeFetch([
-        { method: "POST", match: /oauth2\.googleapis\.com\/token/, reply: () => ({ json: { access_token: "ya29.x", refresh_token: "1//r", expires_in: 3599 } }) },
-        { match: /youtube\/v3\/channels/, reply: () => ({ json: { items: [{ id: "UC1", snippet: { title: "Coli" } }] } }) },
+        {
+          method: "POST",
+          match: /oauth2\.googleapis\.com\/token/,
+          reply: () => ({ json: { access_token: "ya29.x", refresh_token: "1//r", expires_in: 3599 } }),
+        },
+        {
+          match: /youtube\/v3\/channels/,
+          reply: () => ({ json: { items: [{ id: "UC1", snippet: { title: "Coli" } }] } }),
+        },
       ]).fn,
     );
     await finishConnection(owner, "google", { code: "c", state: g.searchParams.get("state") });
     const t = new URL(await startConnection(owner, clientId, "tiktok"));
     setSocialFetch(
       fakeFetch([
-        { method: "POST", match: /oauth\/token\//, reply: () => ({ json: { access_token: "tt", refresh_token: "ttr", expires_in: 86400, open_id: "o1" } }) },
-        { match: /user\/info\//, reply: () => ({ json: { data: { user: { open_id: "o1", username: "coli" } }, error: { code: "ok" } } }) },
-        { method: "POST", match: /creator_info/, reply: () => ({ json: { data: { privacy_level_options: ["SELF_ONLY"] }, error: { code: "ok" } } }) },
+        {
+          method: "POST",
+          match: /oauth\/token\//,
+          reply: () => ({ json: { access_token: "tt", refresh_token: "ttr", expires_in: 86400, open_id: "o1" } }),
+        },
+        {
+          match: /user\/info\//,
+          reply: () => ({ json: { data: { user: { open_id: "o1", username: "coli" } }, error: { code: "ok" } } }),
+        },
+        {
+          method: "POST",
+          match: /creator_info/,
+          reply: () => ({ json: { data: { privacy_level_options: ["SELF_ONLY"] }, error: { code: "ok" } } }),
+        },
       ]).fn,
     );
     await finishConnection(owner, "tiktok", { code: "c", state: t.searchParams.get("state") });
@@ -213,14 +282,41 @@ describe("vídeo da biblioteca", () => {
     const yt = accounts.find((a) => a.network === "youtube")!;
     const tt = accounts.find((a) => a.network === "tiktok")!;
 
-    await expect(schedulePublications(owner, { mediaAssetId: video.id, accountIds: [tt.id], when: "now", caption: "Bolão", tiktokPrivacy: "SELF_ONLY" })).rejects.toThrow(/uso de música/);
+    await expect(
+      schedulePublications(owner, {
+        mediaAssetId: video.id,
+        accountIds: [tt.id],
+        when: "now",
+        caption: "Bolão",
+        tiktokPrivacy: "SELF_ONLY",
+      }),
+    ).rejects.toThrow(/uso de música/);
 
     const net = fakeFetch([
-      { method: "POST", match: /upload\/youtube\/v3\/videos\?uploadType=resumable/, reply: () => ({ json: {}, headers: { location: "https://www.googleapis.com/upload/session/abc" } }) },
+      {
+        method: "POST",
+        match: /upload\/youtube\/v3\/videos\?uploadType=resumable/,
+        reply: () => ({ json: {}, headers: { location: "https://www.googleapis.com/upload/session/abc" } }),
+      },
       { method: "PUT", match: /upload\/session\/abc/, reply: () => ({ json: { id: "yt-video-1" } }) },
-      { method: "POST", match: /post\/publish\/video\/init\//, reply: () => ({ json: { data: { publish_id: "pub-1", upload_url: "https://open-upload.tiktokapis.com/video/?id=1" }, error: { code: "ok" } } }) },
+      {
+        method: "POST",
+        match: /post\/publish\/video\/init\//,
+        reply: () => ({
+          json: {
+            data: { publish_id: "pub-1", upload_url: "https://open-upload.tiktokapis.com/video/?id=1" },
+            error: { code: "ok" },
+          },
+        }),
+      },
       { method: "PUT", match: /open-upload\.tiktokapis\.com/, reply: () => ({ status: 201, json: {} }) },
-      { method: "POST", match: /post\/publish\/status\/fetch\//, reply: () => ({ json: { data: { status: "PUBLISH_COMPLETE", publicaly_available_post_id: [7300001] }, error: { code: "ok" } } }) },
+      {
+        method: "POST",
+        match: /post\/publish\/status\/fetch\//,
+        reply: () => ({
+          json: { data: { status: "PUBLISH_COMPLETE", publicaly_available_post_id: [7300001] }, error: { code: "ok" } },
+        }),
+      },
     ]);
     setSocialFetch(net.fn);
     await schedulePublications(owner, {
@@ -240,9 +336,15 @@ describe("vídeo da biblioteca", () => {
       ["youtube", "published", "https://www.youtube.com/watch?v=yt-video-1"],
     ]);
     const start = net.calls.find((c) => c.url.href.includes("uploadType=resumable"))!;
-    expect(JSON.parse(String(start.init.body))).toMatchObject({ snippet: { title: "Bolão da Mega", description: "Garanta sua cota" }, status: { privacyStatus: "unlisted" } });
+    expect(JSON.parse(String(start.init.body))).toMatchObject({
+      snippet: { title: "Bolão da Mega", description: "Garanta sua cota" },
+      status: { privacyStatus: "unlisted" },
+    });
     const init = net.calls.find((c) => c.url.pathname.endsWith("/video/init/"))!;
-    expect(bodyOf(init.init)).toMatchObject({ source_info: { source: "FILE_UPLOAD", video_size: mp4.length, total_chunk_count: 1 }, post_info: { privacy_level: "SELF_ONLY" } });
+    expect(bodyOf(init.init)).toMatchObject({
+      source_info: { source: "FILE_UPLOAD", video_size: mp4.length, total_chunk_count: 1 },
+      post_info: { privacy_level: "SELF_ONLY" },
+    });
   });
 });
 
@@ -265,7 +367,8 @@ describe("relatório do mês", () => {
         [owner.organizationId, clientId, contentId, piece.approvedVersionId],
       ),
     );
-    const { monthlyReport, createReportLink, publicReport, publicReportCover } = await import("../../src/server/services/reports");
+    const { monthlyReport, createReportLink, publicReport, publicReportCover } =
+      await import("../../src/server/services/reports");
     const month = currentMonth();
     const r = await monthlyReport(owner, clientId, month);
     expect(r).toMatchObject({ clientName: "Coli Loterias", contracted: 4, delivered: 1 });

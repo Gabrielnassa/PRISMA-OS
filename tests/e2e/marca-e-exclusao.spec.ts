@@ -21,7 +21,11 @@ test("cores pelo logotipo, exclusão de peças e do cliente", async ({ page }) =
   await page.locator("#files").setInputFiles({
     name: "aurora.png",
     mimeType: "image/png",
-    buffer: png(600, 300, '<rect width="600" height="300" fill="#ffffff"/><circle cx="150" cy="150" r="110" fill="#c2410c"/><rect x="300" y="110" width="260" height="80" fill="#14532d"/>'),
+    buffer: png(
+      600,
+      300,
+      '<rect width="600" height="300" fill="#ffffff"/><circle cx="150" cy="150" r="110" fill="#c2410c"/><rect x="300" y="110" width="260" height="80" fill="#14532d"/>',
+    ),
   });
   await page.getByLabel("Tipo").selectOption("logo");
   await page.getByRole("button", { name: "Enviar" }).click();
@@ -46,7 +50,9 @@ test("cores pelo logotipo, exclusão de peças e do cliente", async ({ page }) =
     await page.goto(`/criar?cliente=${clientId}`);
     await expect(page.locator("#clientId")).toHaveValue(clientId);
     await page.getByLabel("Título interno da pauta").fill(title);
-    await page.getByLabel("Briefing", { exact: true }).fill("Divulgar o cardápio de inverno com bebidas quentes e pães artesanais da casa.");
+    await page
+      .getByLabel("Briefing", { exact: true })
+      .fill("Divulgar o cardápio de inverno com bebidas quentes e pães artesanais da casa.");
     await page.getByRole("button", { name: "Montar manualmente" }).click();
     await expect(page).toHaveURL(/\/conteudos\/[0-9a-f-]+$/);
   }
@@ -54,7 +60,10 @@ test("cores pelo logotipo, exclusão de peças e do cliente", async ({ page }) =
   // Pela página da peça: confirmação e volta para a lista.
   await page.getByRole("button", { name: "Excluir definitivamente" }).click();
   // Confirmação na janela própria do sistema.
-  await page.getByRole("dialog", { name: "Confirmação" }).getByRole("button", { name: "Excluir definitivamente" }).click();
+  await page
+    .getByRole("dialog", { name: "Confirmação" })
+    .getByRole("button", { name: "Excluir definitivamente" })
+    .click();
   await expect(page).toHaveURL(/\/conteudos\?excluido=1$/);
   await expect(page.getByText("Conteúdo excluído")).toBeVisible();
   await expect(page.getByRole("link", { name: "Pão de queijo às sextas" })).toHaveCount(0);

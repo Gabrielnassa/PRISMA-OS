@@ -18,7 +18,11 @@ const MIGRATIONS_DIR = path.resolve(process.cwd(), "db/migrations");
  * Cada arquivo roda em sua própria transação; checksums impedem edição de
  * migrations já aplicadas.
  */
-export async function migrate(opts: { migrationUrl: string; appUrl?: string; log?: (msg: string) => void }): Promise<MigrationResult> {
+export async function migrate(opts: {
+  migrationUrl: string;
+  appUrl?: string;
+  log?: (msg: string) => void;
+}): Promise<MigrationResult> {
   const log = opts.log ?? (() => undefined);
   const client = new pg.Client({ connectionString: opts.migrationUrl, application_name: "prisma-os-migrate" });
   await client.connect();
@@ -46,7 +50,9 @@ export async function migrate(opts: { migrationUrl: string; appUrl?: string; log
       const existing = applied.get(file);
       if (existing) {
         if (existing !== checksum) {
-          throw new Error(`Migration ${file} foi alterada após aplicada (checksum divergente). Crie uma nova migration.`);
+          throw new Error(
+            `Migration ${file} foi alterada após aplicada (checksum divergente). Crie uma nova migration.`,
+          );
         }
         result.skipped.push(file);
         continue;
@@ -55,7 +61,10 @@ export async function migrate(opts: { migrationUrl: string; appUrl?: string; log
       await client.query("BEGIN");
       try {
         await client.query(sql);
-        await client.query("INSERT INTO prisma_meta.schema_migrations (version, checksum) VALUES ($1, $2)", [file, checksum]);
+        await client.query("INSERT INTO prisma_meta.schema_migrations (version, checksum) VALUES ($1, $2)", [
+          file,
+          checksum,
+        ]);
         await client.query("COMMIT");
       } catch (err) {
         await client.query("ROLLBACK");

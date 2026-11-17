@@ -14,15 +14,16 @@ export default async function ChangePasswordPage() {
   if (!auth.mustChangePassword) redirect("/");
   return (
     <AuthShell>
-      <h1 className="font-display text-[34px] font-medium leading-tight tracking-[-0.04em] text-ink-50">Defina sua senha</h1>
-      <p className="mb-6 mt-3 text-[14.5px] leading-relaxed text-ink-400">
-        Olá, {auth.userName}. Você entrou com uma senha temporária criada pelo administrador. Escolha uma senha pessoal para continuar.
+      <h1 className="text-lg leading-tight font-semibold text-fg">Defina sua senha</h1>
+      <p className="mt-3 mb-6 text-md leading-relaxed text-muted">
+        Olá, {auth.userName}. Você entrou com uma senha temporária criada pelo administrador. Escolha uma senha pessoal
+        para continuar.
       </p>
-      <div className="-mx-5 rounded-[var(--radius-card)] border border-ink-800 bg-ink-900">
+      <div className="-mx-5 rounded-md border border-line bg-surface">
         <PasswordForm redirectTo="/" stacked />
       </div>
       <form action={logoutAction} className="mt-6 text-right">
-        <button type="submit" className="text-[13px] text-ink-400 hover:text-ink-100">
+        <button type="submit" className="text-base text-muted hover:text-fg">
           Sair
         </button>
       </form>

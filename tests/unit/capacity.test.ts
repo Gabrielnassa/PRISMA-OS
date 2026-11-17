@@ -24,7 +24,11 @@ describe("capacidade dos templates", () => {
   it("o plano enviado à IA usa os limites efetivos de cada lâmina", () => {
     const t = TEMPLATES.find((x) => x.id === "editorial-assimetrico")!;
     const kinds = slideKinds("carousel", 3);
-    const ids = ["00000000-0000-4000-8000-0000000000aa", "00000000-0000-4000-8000-0000000000bb", "00000000-0000-4000-8000-0000000000cc"];
+    const ids = [
+      "00000000-0000-4000-8000-0000000000aa",
+      "00000000-0000-4000-8000-0000000000bb",
+      "00000000-0000-4000-8000-0000000000cc",
+    ];
     const withPhoto = slidePlan(t, kinds, "1:1", ids);
     // Foto opcional: só lâminas com foto atribuída perdem espaço.
     expect(slidePlan(t, kinds, "1:1", ids.slice(0, 1))[1]!.limits.body).toBe(t.fieldLimits.content.body);

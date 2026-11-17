@@ -1,14 +1,32 @@
 import { AppError, IntegrationError } from "../errors";
-import { claimNextJob, completeJob, failJob, heartbeatJob, recoverStaleJobs, workerId, type FinalFailureHook, type Job } from "./queue";
+import {
+  claimNextJob,
+  completeJob,
+  failJob,
+  heartbeatJob,
+  recoverStaleJobs,
+  workerId,
+  type FinalFailureHook,
+  type Job,
+} from "./queue";
 import { handleGenerateContent } from "./generate-content";
 import { workerAuth } from "./worker-auth";
 import { GENERATE_JOB, markGenerationFailed } from "../services/content";
-import { METRICS_JOB, PUBLISH_JOB, handleMetrics, handlePublish, markPublicationFailed } from "../services/publications";
+import {
+  METRICS_JOB,
+  PUBLISH_JOB,
+  handleMetrics,
+  handlePublish,
+  markPublicationFailed,
+} from "../services/publications";
 import { WEBHOOK_JOB, handleWebhook } from "../services/webhooks";
 import { EMAIL_JOB, handleEmail } from "../services/email";
 import { runMaintenance } from "../services/maintenance";
 
-type Handler = (job: Job, auth: NonNullable<Awaited<ReturnType<typeof workerAuth>>>) => Promise<Record<string, unknown>>;
+type Handler = (
+  job: Job,
+  auth: NonNullable<Awaited<ReturnType<typeof workerAuth>>>,
+) => Promise<Record<string, unknown>>;
 
 /** `system`: tarefa interna sem pessoa por trás (ex.: entrega de webhook); roda sem contexto de usuário. */
 const HANDLERS: Record<string, { run: Handler; onFinalFailure?: FinalFailureHook; system?: boolean }> = {
@@ -32,7 +50,8 @@ function log(level: "info" | "warn" | "error", msg: string, data: Record<string,
 
 function isRetryable(err: unknown): boolean {
   if (err instanceof IntegrationError) return err.retryable;
-  if (typeof err === "object" && err !== null && "retryable" in err) return Boolean((err as { retryable: unknown }).retryable);
+  if (typeof err === "object" && err !== null && "retryable" in err)
+    return Boolean((err as { retryable: unknown }).retryable);
   if (err instanceof AppError) return false;
   // Erros desconhecidos (rede, banco) podem ser transitórios.
   return true;
@@ -41,7 +60,8 @@ function isRetryable(err: unknown): boolean {
 /** Mensagem segura para a interface: erros internos não expõem detalhes técnicos. */
 function userMessageFor(err: unknown): string {
   if (err instanceof AppError) return err.message;
-  if (typeof err === "object" && err !== null && (err as { userSafe?: boolean }).userSafe && err instanceof Error) return err.message;
+  if (typeof err === "object" && err !== null && (err as { userSafe?: boolean }).userSafe && err instanceof Error)
+    return err.message;
   return "Falha interna. O detalhe técnico foi registrado; tente novamente ou avise o administrador.";
 }
 
@@ -63,13 +83,27 @@ export async function processNextJob(worker = workerId(), opts: { heartbeatMs?: 
   try {
     if (!handler) throw Object.assign(new Error(`Tipo de tarefa desconhecido: ${job.type}`), { retryable: false });
     const auth = handler.system ? null : await workerAuth(job.organization_id, job.created_by);
-    if (!handler.system && !auth) throw Object.assign(new Error("O solicitante não tem mais acesso à organização."), { retryable: false, userSafe: true });
+    if (!handler.system && !auth)
+      throw Object.assign(new Error("O solicitante não tem mais acesso à organização."), {
+        retryable: false,
+        userSafe: true,
+      });
     const result = await handler.run(job, auth!);
     const owned = await completeJob(job, result);
-    log(owned ? "info" : "warn", owned ? "job.succeeded" : "job.lock_lost", { jobId: job.id, type: job.type, durationMs: Date.now() - started });
+    log(owned ? "info" : "warn", owned ? "job.succeeded" : "job.lock_lost", {
+      jobId: job.id,
+      type: job.type,
+      durationMs: Date.now() - started,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    const { final, owned } = await failJob(job, message, isRetryable(err), handler?.onFinalFailure, userMessageFor(err));
+    const { final, owned } = await failJob(
+      job,
+      message,
+      isRetryable(err),
+      handler?.onFinalFailure,
+      userMessageFor(err),
+    );
     const event = !owned ? "job.lock_lost" : final ? "job.failed" : "job.retry_scheduled";
     log(final ? "error" : "warn", event, { jobId: job.id, type: job.type, attempt: job.attempts, error: message });
   } finally {
@@ -85,7 +119,11 @@ export async function recoverStale(lockTimeoutMs: number): Promise<void> {
   for (const e of errors) log("error", "job.recover_failed", e);
 }
 
-export async function runWorkerLoop(opts: { pollMs: number; lockTimeoutMs: number; signal: AbortSignal }): Promise<void> {
+export async function runWorkerLoop(opts: {
+  pollMs: number;
+  lockTimeoutMs: number;
+  signal: AbortSignal;
+}): Promise<void> {
   const id = workerId();
   log("info", "worker.started", { workerId: id });
   let lastRecovery = 0;

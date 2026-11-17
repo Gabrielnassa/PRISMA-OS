@@ -15,7 +15,10 @@ export class AppError extends Error {
 }
 
 export class ValidationError extends AppError {
-  constructor(message: string, public readonly fieldErrors: Record<string, string> = {}) {
+  constructor(
+    message: string,
+    public readonly fieldErrors: Record<string, string> = {},
+  ) {
     super("validation_error", message, 400);
   }
 }
@@ -57,7 +60,9 @@ export class BudgetExceededError extends AppError {
 }
 
 export class ProviderNotConfiguredError extends AppError {
-  constructor(message = "Nenhum provedor de IA configurado. Defina ANTHROPIC_API_KEY ou OPENAI_API_KEY (veja Integrações).") {
+  constructor(
+    message = "Nenhum provedor de IA configurado. Defina ANTHROPIC_API_KEY ou OPENAI_API_KEY (veja Integrações).",
+  ) {
     super("provider_not_configured", message, 503);
   }
 }

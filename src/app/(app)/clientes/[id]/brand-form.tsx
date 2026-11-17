@@ -65,16 +65,31 @@ export function BrandForm({
       <fieldset disabled={!canEdit} className="flex flex-col gap-6">
         <Section title="Negócio">
           <Field label="Nome da empresa" htmlFor="b-company">
-            <Input id="b-company" name="business.companyName" defaultValue={brand.business.companyName} maxLength={200} />
+            <Input
+              id="b-company"
+              name="business.companyName"
+              defaultValue={brand.business.companyName}
+              maxLength={200}
+            />
           </Field>
           <Field label="Segmento" htmlFor="b-segment">
             <Input id="b-segment" name="business.segment" defaultValue={brand.business.segment} maxLength={200} />
           </Field>
           <Field label="Produtos" htmlFor="b-products">
-            <Textarea id="b-products" name="business.products" defaultValue={brand.business.products} maxLength={3000} />
+            <Textarea
+              id="b-products"
+              name="business.products"
+              defaultValue={brand.business.products}
+              maxLength={3000}
+            />
           </Field>
           <Field label="Serviços" htmlFor="b-services">
-            <Textarea id="b-services" name="business.services" defaultValue={brand.business.services} maxLength={3000} />
+            <Textarea
+              id="b-services"
+              name="business.services"
+              defaultValue={brand.business.services}
+              maxLength={3000}
+            />
           </Field>
           <Field label="Região de atuação" htmlFor="b-region">
             <Input id="b-region" name="business.region" defaultValue={brand.business.region} maxLength={300} />
@@ -86,30 +101,66 @@ export function BrandForm({
 
         <Section title="Público e posicionamento">
           <Field label="Público-alvo" htmlFor="a-target">
-            <Textarea id="a-target" name="audience.targetAudience" defaultValue={brand.audience.targetAudience} maxLength={2000} />
+            <Textarea
+              id="a-target"
+              name="audience.targetAudience"
+              defaultValue={brand.audience.targetAudience}
+              maxLength={2000}
+            />
           </Field>
           <Field label="Personas" htmlFor="a-personas" hint="Descreva perfis reais atendidos pelo cliente.">
-            <Textarea id="a-personas" name="audience.personas" defaultValue={brand.audience.personas} maxLength={4000} />
+            <Textarea
+              id="a-personas"
+              name="audience.personas"
+              defaultValue={brand.audience.personas}
+              maxLength={4000}
+            />
           </Field>
           <Field label="Proposta de valor" htmlFor="a-value">
-            <Textarea id="a-value" name="audience.valueProposition" defaultValue={brand.audience.valueProposition} maxLength={2000} />
+            <Textarea
+              id="a-value"
+              name="audience.valueProposition"
+              defaultValue={brand.audience.valueProposition}
+              maxLength={2000}
+            />
           </Field>
           <Field label="Diferenciais" htmlFor="a-diff">
-            <Textarea id="a-diff" name="audience.differentiators" defaultValue={brand.audience.differentiators} maxLength={2000} />
+            <Textarea
+              id="a-diff"
+              name="audience.differentiators"
+              defaultValue={brand.audience.differentiators}
+              maxLength={2000}
+            />
           </Field>
         </Section>
 
         <Section title="Tom de voz">
           <Field label="Tom de voz" htmlFor="v-tone">
-            <Textarea id="v-tone" name="voice.tone" defaultValue={brand.voice.tone} maxLength={2000} placeholder="Ex.: acolhedor, direto, sem jargão técnico" />
+            <Textarea
+              id="v-tone"
+              name="voice.tone"
+              defaultValue={brand.voice.tone}
+              maxLength={2000}
+              placeholder="Ex.: acolhedor, direto, sem jargão técnico"
+            />
           </Field>
           <Field label="Restrições de comunicação" htmlFor="v-restr">
-            <Textarea id="v-restr" name="voice.restrictions" defaultValue={brand.voice.restrictions} maxLength={2000} placeholder="Ex.: não prometer resultados de tratamento" />
+            <Textarea
+              id="v-restr"
+              name="voice.restrictions"
+              defaultValue={brand.voice.restrictions}
+              maxLength={2000}
+              placeholder="Ex.: não prometer resultados de tratamento"
+            />
           </Field>
           <Field label="Termos preferidos" htmlFor="v-pref" hint="Separe por vírgula.">
             <Input id="v-pref" name="voice.preferredTerms" defaultValue={brand.voice.preferredTerms.join(", ")} />
           </Field>
-          <Field label="Termos proibidos" htmlFor="v-forb" hint="Separe por vírgula. O controle de qualidade bloqueia peças que os usem.">
+          <Field
+            label="Termos proibidos"
+            htmlFor="v-forb"
+            hint="Separe por vírgula. O controle de qualidade bloqueia peças que os usem."
+          >
             <Input id="v-forb" name="voice.forbiddenTerms" defaultValue={brand.voice.forbiddenTerms.join(", ")} />
           </Field>
         </Section>
@@ -138,7 +189,7 @@ export function BrandForm({
                         aria-label={`${label} (seletor)`}
                         value={colors[key]}
                         onChange={(e) => setColors((c) => ({ ...c, [key]: e.target.value }))}
-                        className="h-9 w-9 shrink-0 cursor-pointer rounded-md border border-ink-700 bg-transparent"
+                        className="h-9 w-9 shrink-0 cursor-pointer rounded-md border border-line bg-transparent"
                       />
                       <Input
                         id={`c-${key}`}
@@ -153,7 +204,12 @@ export function BrandForm({
                 ))}
               </div>
               <Field label="Fonte dos títulos" htmlFor="f-heading">
-                <Select id="f-heading" name="visual.headingFont" value={fonts.heading} onChange={(e) => setFonts((f) => ({ ...f, heading: e.target.value as typeof f.heading }))}>
+                <Select
+                  id="f-heading"
+                  name="visual.headingFont"
+                  value={fonts.heading}
+                  onChange={(e) => setFonts((f) => ({ ...f, heading: e.target.value as typeof f.heading }))}
+                >
                   {FONT_IDS.map((id) => (
                     <option key={id} value={id}>
                       {FONT_CATALOG[id].label}
@@ -162,7 +218,12 @@ export function BrandForm({
                 </Select>
               </Field>
               <Field label="Fonte dos textos" htmlFor="f-body">
-                <Select id="f-body" name="visual.bodyFont" value={fonts.body} onChange={(e) => setFonts((f) => ({ ...f, body: e.target.value as typeof f.body }))}>
+                <Select
+                  id="f-body"
+                  name="visual.bodyFont"
+                  value={fonts.body}
+                  onChange={(e) => setFonts((f) => ({ ...f, body: e.target.value as typeof f.body }))}
+                >
                   {FONT_IDS.map((id) => (
                     <option key={id} value={id}>
                       {FONT_CATALOG[id].label}
@@ -170,7 +231,11 @@ export function BrandForm({
                   ))}
                 </Select>
               </Field>
-              <Field label="Logotipo" htmlFor="logo" hint={logos.length === 0 ? "Envie o logotipo na aba Arquivos (tipo Logotipo)." : undefined}>
+              <Field
+                label="Logotipo"
+                htmlFor="logo"
+                hint={logos.length === 0 ? "Envie o logotipo na aba Arquivos (tipo Logotipo)." : undefined}
+              >
                 <Select id="logo" name="visual.logoAssetId" value={logoId} onChange={(e) => setLogoId(e.target.value)}>
                   <option value="">Sem logotipo (usa o @ do Instagram)</option>
                   {logos.map((l) => (
@@ -181,73 +246,122 @@ export function BrandForm({
                 </Select>
               </Field>
               <fieldset className="md:col-span-2">
-                <legend className="mb-2 text-sm font-medium text-ink-200">Famílias de layout preferidas</legend>
+                <legend className="mb-2 text-base font-medium text-fg">Famílias de layout preferidas</legend>
                 <div className="flex flex-wrap gap-2">
                   {TEMPLATE_FAMILIES.map((f) => (
-                    <label key={f} className="flex cursor-pointer items-center gap-2 rounded-md border border-ink-700 px-3 py-1.5 text-[13px] has-[:checked]:border-iris-400/70 has-[:checked]:bg-iris-400/[0.06]">
-                      <input type="checkbox" name="visual.preferredFamilies" value={f} defaultChecked={brand.visual.preferredFamilies.includes(f)} className="accent-iris-400" />
+                    <label
+                      key={f}
+                      className="flex cursor-pointer items-center gap-2 rounded-md border border-line px-3 py-1.5 text-base has-[:checked]:border-accent/70 has-[:checked]:bg-accent/5"
+                    >
+                      <input
+                        type="checkbox"
+                        name="visual.preferredFamilies"
+                        value={f}
+                        defaultChecked={brand.visual.preferredFamilies.includes(f)}
+                        className="accent-accent"
+                      />
                       {FAMILY_LABELS[f]}
                     </label>
                   ))}
                 </div>
               </fieldset>
               <Field label="Estilo fotográfico" htmlFor="v-photo">
-                <Textarea id="v-photo" name="visual.photoStyle" defaultValue={brand.visual.photoStyle} maxLength={1000} />
+                <Textarea
+                  id="v-photo"
+                  name="visual.photoStyle"
+                  defaultValue={brand.visual.photoStyle}
+                  maxLength={1000}
+                />
               </Field>
               <Field label="Tratamento de imagens" htmlFor="v-treat">
-                <Textarea id="v-treat" name="visual.imageTreatment" defaultValue={brand.visual.imageTreatment} maxLength={500} />
+                <Textarea
+                  id="v-treat"
+                  name="visual.imageTreatment"
+                  defaultValue={brand.visual.imageTreatment}
+                  maxLength={500}
+                />
               </Field>
               <Field label="Estilo de ícones e ilustrações" htmlFor="v-icons">
                 <Textarea id="v-icons" name="visual.iconStyle" defaultValue={brand.visual.iconStyle} maxLength={500} />
               </Field>
               <Field label="Estilo de títulos, legendas e CTAs" htmlFor="v-cta">
-                <Textarea id="v-cta" name="visual.titleCtaStyle" defaultValue={brand.visual.titleCtaStyle} maxLength={1000} />
+                <Textarea
+                  id="v-cta"
+                  name="visual.titleCtaStyle"
+                  defaultValue={brand.visual.titleCtaStyle}
+                  maxLength={1000}
+                />
               </Field>
               <Field label="Referências aprovadas" htmlFor="v-refs">
-                <Textarea id="v-refs" name="visual.approvedReferences" defaultValue={brand.visual.approvedReferences} maxLength={2000} />
+                <Textarea
+                  id="v-refs"
+                  name="visual.approvedReferences"
+                  defaultValue={brand.visual.approvedReferences}
+                  maxLength={2000}
+                />
               </Field>
               <Field label="Elementos proibidos ou restritos" htmlFor="v-restricted">
-                <Textarea id="v-restricted" name="visual.restrictedElements" defaultValue={brand.visual.restrictedElements} maxLength={2000} />
+                <Textarea
+                  id="v-restricted"
+                  name="visual.restrictedElements"
+                  defaultValue={brand.visual.restrictedElements}
+                  maxLength={2000}
+                />
               </Field>
-              <label className="flex items-start gap-3 rounded-md border border-ink-700 p-3 text-[13.5px] md:col-span-2">
-                <input type="checkbox" name="visual.configured" defaultChecked={brand.visual.configured} className="mt-0.5 accent-iris-400" />
+              <label className="flex items-start gap-3 rounded-md border border-line p-3 text-base md:col-span-2">
+                <input
+                  type="checkbox"
+                  name="visual.configured"
+                  defaultChecked={brand.visual.configured}
+                  className="mt-0.5 accent-accent"
+                />
                 <span>
-                  <span className="font-medium text-ink-100">Identidade visual definida</span>
-                  <span className="block text-ink-400">Marque quando cores e fontes estiverem confirmadas com o cliente. Antes disso, as peças são sinalizadas como provisórias.</span>
+                  <span className="font-medium text-fg">Identidade visual definida</span>
+                  <span className="block text-muted">
+                    Marque quando cores e fontes estiverem confirmadas com o cliente. Antes disso, as peças são
+                    sinalizadas como provisórias.
+                  </span>
                 </span>
               </label>
             </div>
 
-            <div className="rounded-[var(--radius-card)] border border-ink-800 p-4" aria-label="Pré-visualização da identidade">
-              <div className="mb-3 text-[12px] font-medium text-ink-400">Pré-visualização</div>
-              <div className="overflow-hidden rounded-lg" style={{ backgroundColor: colors.background }}>
+            <div className="rounded-md border border-line p-4" aria-label="Pré-visualização da identidade">
+              <div className="mb-3 text-sm font-medium text-muted">Pré-visualização</div>
+              <div className="overflow-hidden rounded-md" style={{ backgroundColor: colors.background }}>
                 <div className="h-2" style={{ backgroundColor: colors.accent }} />
                 <div className="p-5">
-                  <div className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: colors.accent }}>
+                  <div className="text-xs font-semibold tracking-widest uppercase" style={{ color: colors.accent }}>
                     Exemplo
                   </div>
-                  <div className="mt-1 text-2xl font-bold leading-tight" style={{ color: colors.text, fontFamily: FONT_CATALOG[fonts.heading].label }}>
+                  <div
+                    className="mt-1 text-lg leading-tight font-bold"
+                    style={{ color: colors.text, fontFamily: FONT_CATALOG[fonts.heading].label }}
+                  >
                     Título da peça
                   </div>
-                  <p className="mt-2 text-sm" style={{ color: colors.text, fontFamily: FONT_CATALOG[fonts.body].label }}>
+                  <p
+                    className="mt-2 text-base"
+                    style={{ color: colors.text, fontFamily: FONT_CATALOG[fonts.body].label }}
+                  >
                     Texto de apoio com a fonte de corpo.
                   </p>
                 </div>
                 <div className="p-5" style={{ backgroundColor: colors.primary }}>
-                  <div className="text-lg font-bold" style={{ color: colors.background }}>
+                  <div className="text-md font-bold" style={{ color: colors.background }}>
                     Lâmina na cor primária
                   </div>
                 </div>
               </div>
               <div className="mt-3 flex gap-1.5">
                 {COLOR_FIELDS.map(([k]) => (
-                  <div key={k} className="h-6 flex-1 rounded" style={{ backgroundColor: colors[k] }} title={k} />
+                  <div key={k} className="rounded h-6 flex-1" style={{ backgroundColor: colors[k] }} title={k} />
                 ))}
               </div>
-              <p className={cx("mt-3 text-xs", textContrast >= 4.5 ? "text-emerald-300" : "text-amber-300")}>
-                Contraste texto/fundo: {textContrast.toFixed(1)}:1 {textContrast >= 4.5 ? "(adequado)" : "(baixo; a peça ajusta o contraste)"}
+              <p className={cx("mt-3 text-sm", textContrast >= 4.5 ? "text-ok" : "text-warn")}>
+                Contraste texto/fundo: {textContrast.toFixed(1)}:1{" "}
+                {textContrast >= 4.5 ? "(adequado)" : "(baixo; a peça ajusta o contraste)"}
               </p>
-              <p className="mt-2 text-xs text-ink-400">Prévia aproximada, com as mesmas fontes das peças finais.</p>
+              <p className="mt-2 text-sm text-muted">Prévia aproximada, com as mesmas fontes das peças finais.</p>
             </div>
           </div>
         </Card>
@@ -271,33 +385,58 @@ export function BrandForm({
           <Field label="Frequência editorial" htmlFor="ch-freq">
             <Input id="ch-freq" name="channels.frequency" defaultValue={brand.channels.frequency} maxLength={500} />
           </Field>
-          <Field label="Ofertas e condições confirmadas" htmlFor="ch-offers" hint="Somente condições confirmadas pelo cliente. A IA não usa preços fora desta lista ou do briefing." className="md:col-span-2">
-            <Textarea id="ch-offers" name="channels.confirmedOffers" defaultValue={brand.channels.confirmedOffers} maxLength={3000} />
+          <Field
+            label="Ofertas e condições confirmadas"
+            htmlFor="ch-offers"
+            hint="Somente condições confirmadas pelo cliente. A IA não usa preços fora desta lista ou do briefing."
+            className="md:col-span-2"
+          >
+            <Textarea
+              id="ch-offers"
+              name="channels.confirmedOffers"
+              defaultValue={brand.channels.confirmedOffers}
+              maxLength={3000}
+            />
           </Field>
         </Section>
 
         <Section title="Referências e responsáveis">
           <Field label="Concorrentes" htmlFor="r-comp">
-            <Textarea id="r-comp" name="references.competitors" defaultValue={brand.references.competitors} maxLength={3000} />
+            <Textarea
+              id="r-comp"
+              name="references.competitors"
+              defaultValue={brand.references.competitors}
+              maxLength={3000}
+            />
           </Field>
           <Field label="URLs de referência" htmlFor="r-urls">
-            <Textarea id="r-urls" name="references.referenceUrls" defaultValue={brand.references.referenceUrls} maxLength={3000} />
+            <Textarea
+              id="r-urls"
+              name="references.referenceUrls"
+              defaultValue={brand.references.referenceUrls}
+              maxLength={3000}
+            />
           </Field>
           <Field label="Responsáveis e contatos" htmlFor="r-resp" className="md:col-span-2">
-            <Textarea id="r-resp" name="references.responsibles" defaultValue={brand.references.responsibles} maxLength={2000} />
+            <Textarea
+              id="r-resp"
+              name="references.responsibles"
+              defaultValue={brand.references.responsibles}
+              maxLength={2000}
+            />
           </Field>
         </Section>
       </fieldset>
 
       {canEdit ? (
-        <div className="sticky bottom-0 z-10 -mx-1 flex flex-wrap items-center gap-3 border-t border-ink-800 bg-ink-950/90 px-1 py-3 backdrop-blur">
+        <div className="sticky bottom-0 z-10 -mx-1 flex flex-wrap items-center gap-3 border-t border-line bg-bg/90 px-1 py-3 backdrop-blur">
           <SubmitButton pendingText="Salvando...">Salvar perfil da marca</SubmitButton>
           <div className="min-w-0 flex-1">
             <FormMessage state={state} />
           </div>
         </div>
       ) : (
-        <p className="text-sm text-ink-400">Seu papel permite apenas consultar o perfil.</p>
+        <p className="text-base text-muted">Seu papel permite apenas consultar o perfil.</p>
       )}
     </ActionForm>
   );

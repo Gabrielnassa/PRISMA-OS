@@ -4,13 +4,25 @@ import { many, maybeOne, one, systemCtx, userCtx, withTx, type Queryable } from 
 import type { AuthContext } from "../auth/types";
 import { assertCan } from "../authz/permissions";
 import { env } from "../env";
-import { ConflictError, IntegrationError, IntegrationNotConfiguredError, NotFoundError, ValidationError } from "../errors";
+import {
+  ConflictError,
+  IntegrationError,
+  IntegrationNotConfiguredError,
+  NotFoundError,
+  ValidationError,
+} from "../errors";
 import { open, randomToken, seal, sha256 } from "../crypto/secrets";
 import { audit, userActor } from "./audit";
 import { requireClient } from "./clients";
 import { appCredentials, publicBase, redirectUri, type AppProvider } from "./integration-apps";
 import { exchangeMetaCode, listMetaPages, metaAuthUrl, type MetaPage } from "../integrations/social/meta";
-import { exchangeTikTokCode, refreshTikTok, tiktokAuthUrl, tiktokCreatorInfo, tiktokUser } from "../integrations/social/tiktok";
+import {
+  exchangeTikTokCode,
+  refreshTikTok,
+  tiktokAuthUrl,
+  tiktokCreatorInfo,
+  tiktokUser,
+} from "../integrations/social/tiktok";
 import { exchangeGoogleCode, refreshGoogle, youtubeAuthUrl, youtubeChannel } from "../integrations/social/youtube";
 
 /**
@@ -21,8 +33,18 @@ import { exchangeGoogleCode, refreshGoogle, youtubeAuthUrl, youtubeChannel } fro
 
 export const NETWORKS = ["instagram", "facebook", "tiktok", "youtube"] as const;
 export type Network = (typeof NETWORKS)[number];
-export const NETWORK_LABELS: Record<Network, string> = { instagram: "Instagram", facebook: "Facebook", tiktok: "TikTok", youtube: "YouTube" };
-export const NETWORK_PROVIDER: Record<Network, AppProvider> = { instagram: "meta", facebook: "meta", tiktok: "tiktok", youtube: "google" };
+export const NETWORK_LABELS: Record<Network, string> = {
+  instagram: "Instagram",
+  facebook: "Facebook",
+  tiktok: "TikTok",
+  youtube: "YouTube",
+};
+export const NETWORK_PROVIDER: Record<Network, AppProvider> = {
+  instagram: "meta",
+  facebook: "meta",
+  tiktok: "tiktok",
+  youtube: "google",
+};
 
 const STATE_TTL_MIN = 15;
 const tokenContext = (orgId: string, clientId: string, network: Network) => `acct:${orgId}:${clientId}:${network}`;
@@ -45,8 +67,19 @@ export interface SocialAccount {
 }
 
 type AccountRow = {
-  id: string; client_id: string; network: Network; external_id: string; username: string | null; display_name: string; avatar_url: string | null; profile_url: string | null;
-  status: "active" | "reconnect"; last_error: string | null; connected_by_name: string | null; connected_at: Date; details: Record<string, unknown>;
+  id: string;
+  client_id: string;
+  network: Network;
+  external_id: string;
+  username: string | null;
+  display_name: string;
+  avatar_url: string | null;
+  profile_url: string | null;
+  status: "active" | "reconnect";
+  last_error: string | null;
+  connected_by_name: string | null;
+  connected_at: Date;
+  details: Record<string, unknown>;
 };
 
 const mapAccount = (r: AccountRow): SocialAccount => ({
@@ -71,7 +104,11 @@ const ACCOUNT_SELECT = `SELECT a.id, a.client_id, a.network, a.external_id, a.us
 export async function listAccounts(auth: AuthContext, clientId: string): Promise<SocialAccount[]> {
   return withTx(userCtx(auth.userId), async (tx) => {
     await requireClient(tx, auth, clientId);
-    const rows = await many<AccountRow>(tx, `${ACCOUNT_SELECT} WHERE a.client_id = $1 ORDER BY array_position(ARRAY['instagram','facebook','tiktok','youtube'], a.network)`, [clientId]);
+    const rows = await many<AccountRow>(
+      tx,
+      `${ACCOUNT_SELECT} WHERE a.client_id = $1 ORDER BY array_position(ARRAY['instagram','facebook','tiktok','youtube'], a.network)`,
+      [clientId],
+    );
     return rows.map(mapAccount);
   });
 }
@@ -97,7 +134,9 @@ async function credentialsOrThrow(orgId: string, provider: AppProvider) {
   const creds = await appCredentials(orgId, provider);
   if (!creds) {
     const name = provider === "meta" ? "Meta" : provider === "tiktok" ? "TikTok" : "Google";
-    throw new IntegrationNotConfiguredError(`Cadastre as chaves do app da ${name} em Integrações antes de conectar contas.`);
+    throw new IntegrationNotConfiguredError(
+      `Cadastre as chaves do app da ${name} em Integrações antes de conectar contas.`,
+    );
   }
   return creds;
 }
@@ -105,8 +144,14 @@ async function credentialsOrThrow(orgId: string, provider: AppProvider) {
 function requireRedirect(provider: AppProvider): string {
   const base = publicBase();
   const uri = redirectUri(provider);
-  if (!uri) throw new IntegrationNotConfiguredError("Defina APP_URL (o endereço do sistema) na configuração do servidor para conectar contas.");
-  if (!base.https && !base.local) throw new IntegrationNotConfiguredError("Para conectar contas, o sistema precisa estar num endereço com HTTPS (APP_URL começando com https://).");
+  if (!uri)
+    throw new IntegrationNotConfiguredError(
+      "Defina APP_URL (o endereço do sistema) na configuração do servidor para conectar contas.",
+    );
+  if (!base.https && !base.local)
+    throw new IntegrationNotConfiguredError(
+      "Para conectar contas, o sistema precisa estar num endereço com HTTPS (APP_URL começando com https://).",
+    );
   return uri;
 }
 
@@ -120,14 +165,20 @@ export async function startConnection(auth: AuthContext, clientId: string, provi
   await withTx(userCtx(auth.userId), async (tx) => {
     const client = await requireClient(tx, auth, clientId);
     if (client.status === "archived") throw new ConflictError("Cliente arquivado.");
-    await tx.query("DELETE FROM oauth_states WHERE user_id = $1 AND (expires_at < now() OR used_at IS NOT NULL)", [auth.userId]);
+    await tx.query("DELETE FROM oauth_states WHERE user_id = $1 AND (expires_at < now() OR used_at IS NOT NULL)", [
+      auth.userId,
+    ]);
     const row = await one<{ id: string }>(
       tx,
       `INSERT INTO oauth_states (state_hash, organization_id, client_id, user_id, provider, expires_at)
        VALUES ($1, $2, $3, $4, $5, now() + make_interval(mins => $6)) RETURNING id`,
       [sha256(state), auth.organizationId, clientId, auth.userId, provider, STATE_TTL_MIN],
     );
-    if (verifier) await tx.query("UPDATE oauth_states SET verifier_sealed = $2 WHERE id = $1", [row.id, seal(verifier, stateContext(row.id))]);
+    if (verifier)
+      await tx.query("UPDATE oauth_states SET verifier_sealed = $2 WHERE id = $1", [
+        row.id,
+        seal(verifier, stateContext(row.id)),
+      ]);
   });
   const version = env().META_GRAPH_VERSION;
   if (provider === "meta") return metaAuthUrl({ appId: creds.publicId, redirectUri: uri, state, version });
@@ -143,43 +194,76 @@ export type ConnectionOutcome =
 type PendingPage = Omit<MetaPage, "pageToken"> & { pageToken: string };
 
 /** Volta do login: confere o pedido, troca o código pelo acesso e guarda a conta. */
-export async function finishConnection(auth: AuthContext, provider: AppProvider, input: { code?: string | null; state?: string | null; error?: string | null }): Promise<ConnectionOutcome> {
+export async function finishConnection(
+  auth: AuthContext,
+  provider: AppProvider,
+  input: { code?: string | null; state?: string | null; error?: string | null },
+): Promise<ConnectionOutcome> {
   assertCan(auth.role, "social.connect");
   if (!input.state) throw new ValidationError("Retorno do login sem identificação. Comece a conexão de novo.");
   const st = await withTx(userCtx(auth.userId), async (tx) => {
-    const row = await maybeOne<{ id: string; client_id: string; provider: string; verifier_sealed: string | null; expired: boolean; used: boolean }>(
+    const row = await maybeOne<{
+      id: string;
+      client_id: string;
+      provider: string;
+      verifier_sealed: string | null;
+      expired: boolean;
+      used: boolean;
+    }>(
       tx,
       "SELECT id, client_id, provider, verifier_sealed, expires_at < now() AS expired, used_at IS NOT NULL AS used FROM oauth_states WHERE state_hash = $1 FOR UPDATE",
       [sha256(input.state!)],
     );
-    if (!row || row.provider !== provider) throw new ValidationError("Este retorno de login não confere. Comece a conexão de novo pela página do cliente.");
+    if (!row || row.provider !== provider)
+      throw new ValidationError("Este retorno de login não confere. Comece a conexão de novo pela página do cliente.");
     if (row.used) throw new ConflictError("Este login já foi usado. Comece a conexão de novo.");
     if (row.expired) throw new ConflictError("O login demorou mais de 15 minutos. Comece a conexão de novo.");
     await tx.query("UPDATE oauth_states SET used_at = now() WHERE id = $1", [row.id]);
     return row;
   });
   if (input.error || !input.code) {
-    throw new ValidationError(input.error === "access_denied" || input.error === "user_denied" ? "A autorização foi cancelada na plataforma." : "A plataforma não autorizou a conexão. Tente de novo.");
+    throw new ValidationError(
+      input.error === "access_denied" || input.error === "user_denied"
+        ? "A autorização foi cancelada na plataforma."
+        : "A plataforma não autorizou a conexão. Tente de novo.",
+    );
   }
   const creds = await credentialsOrThrow(auth.organizationId, provider);
   const uri = requireRedirect(provider);
   const clientId = st.client_id;
 
   if (provider === "meta") {
-    const { userToken } = await exchangeMetaCode({ appId: creds.publicId, appSecret: creds.secret, redirectUri: uri, code: input.code, version: env().META_GRAPH_VERSION });
+    const { userToken } = await exchangeMetaCode({
+      appId: creds.publicId,
+      appSecret: creds.secret,
+      redirectUri: uri,
+      code: input.code,
+      version: env().META_GRAPH_VERSION,
+    });
     const pages = await listMetaPages(userToken, env().META_GRAPH_VERSION);
     if (pages.length === 0) {
-      throw new ValidationError("Nenhuma Página do Facebook foi liberada nesse login. Na janela da Meta, marque a Página do cliente (e a conta do Instagram ligada a ela).");
+      throw new ValidationError(
+        "Nenhuma Página do Facebook foi liberada nesse login. Na janela da Meta, marque a Página do cliente (e a conta do Instagram ligada a ela).",
+      );
     }
-    if (pages.length === 1) return { kind: "connected", clientId, ...(await connectMetaPage(auth, clientId, pages[0]!)) };
+    if (pages.length === 1)
+      return { kind: "connected", clientId, ...(await connectMetaPage(auth, clientId, pages[0]!)) };
     await withTx(userCtx(auth.userId), (tx) =>
-      tx.query("UPDATE oauth_states SET pending_sealed = $2, expires_at = now() + interval '15 minutes' WHERE id = $1", [st.id, seal(JSON.stringify(pages), stateContext(st.id))]),
+      tx.query(
+        "UPDATE oauth_states SET pending_sealed = $2, expires_at = now() + interval '15 minutes' WHERE id = $1",
+        [st.id, seal(JSON.stringify(pages), stateContext(st.id))],
+      ),
     );
     return { kind: "choose", clientId, stateId: st.id };
   }
 
   if (provider === "tiktok") {
-    const t = await exchangeTikTokCode({ clientKey: creds.publicId, clientSecret: creds.secret, code: input.code, redirectUri: uri });
+    const t = await exchangeTikTokCode({
+      clientKey: creds.publicId,
+      clientSecret: creds.secret,
+      code: input.code,
+      redirectUri: uri,
+    });
     const user = await tiktokUser(t.accessToken);
     const creator = await tiktokCreatorInfo(t.accessToken).catch(() => null);
     await saveAccount(auth, clientId, {
@@ -194,14 +278,36 @@ export async function finishConnection(auth: AuthContext, provider: AppProvider,
       expiresIn: t.expiresIn,
       refreshExpiresIn: t.refreshExpiresIn,
       scopes: t.scopes,
-      details: creator ? { privacyOptions: creator.privacyOptions, nickname: creator.nickname, commentDisabled: creator.commentDisabled, maxVideoSeconds: creator.maxVideoSeconds } : {},
+      details: creator
+        ? {
+            privacyOptions: creator.privacyOptions,
+            nickname: creator.nickname,
+            commentDisabled: creator.commentDisabled,
+            maxVideoSeconds: creator.maxVideoSeconds,
+          }
+        : {},
     });
-    return { kind: "connected", clientId, networks: ["tiktok"], message: `TikTok ${user.username ? `@${user.username}` : user.displayName} conectado.` };
+    return {
+      kind: "connected",
+      clientId,
+      networks: ["tiktok"],
+      message: `TikTok ${user.username ? `@${user.username}` : user.displayName} conectado.`,
+    };
   }
 
   const verifier = st.verifier_sealed ? open(st.verifier_sealed, stateContext(st.id)) : "";
-  const g = await exchangeGoogleCode({ clientId: creds.publicId, clientSecret: creds.secret, code: input.code, redirectUri: uri, codeVerifier: verifier });
-  if (!g.refreshToken) throw new IntegrationError("O Google não liberou o acesso contínuo. Remova o acesso do app na conta Google e conecte de novo.", false);
+  const g = await exchangeGoogleCode({
+    clientId: creds.publicId,
+    clientSecret: creds.secret,
+    code: input.code,
+    redirectUri: uri,
+    codeVerifier: verifier,
+  });
+  if (!g.refreshToken)
+    throw new IntegrationError(
+      "O Google não liberou o acesso contínuo. Remova o acesso do app na conta Google e conecte de novo.",
+      false,
+    );
   const ch = await youtubeChannel(g.accessToken);
   await saveAccount(auth, clientId, {
     network: "youtube",
@@ -221,22 +327,47 @@ export async function finishConnection(auth: AuthContext, provider: AppProvider,
 }
 
 /** Páginas encontradas no login da Meta, para a pessoa escolher a do cliente. */
-export async function pendingPages(auth: AuthContext, stateId: string): Promise<{ clientId: string; pages: Array<{ pageId: string; name: string; pictureUrl: string | null; instagram: string | null }> }> {
+export async function pendingPages(
+  auth: AuthContext,
+  stateId: string,
+): Promise<{
+  clientId: string;
+  pages: Array<{ pageId: string; name: string; pictureUrl: string | null; instagram: string | null }>;
+}> {
   const { clientId, pages } = await loadPending(auth, stateId);
-  return { clientId, pages: pages.map((p) => ({ pageId: p.pageId, name: p.name, pictureUrl: p.pictureUrl, instagram: p.instagram?.username ?? null })) };
+  return {
+    clientId,
+    pages: pages.map((p) => ({
+      pageId: p.pageId,
+      name: p.name,
+      pictureUrl: p.pictureUrl,
+      instagram: p.instagram?.username ?? null,
+    })),
+  };
 }
 
 async function loadPending(auth: AuthContext, stateId: string): Promise<{ clientId: string; pages: PendingPage[] }> {
   if (!z.string().uuid().safeParse(stateId).success) throw new NotFoundError("Escolha de Página não encontrada.");
   const row = await withTx(userCtx(auth.userId), (tx) =>
-    maybeOne<{ client_id: string; pending_sealed: string | null; expired: boolean }>(tx, "SELECT client_id, pending_sealed, expires_at < now() AS expired FROM oauth_states WHERE id = $1", [stateId]),
+    maybeOne<{ client_id: string; pending_sealed: string | null; expired: boolean }>(
+      tx,
+      "SELECT client_id, pending_sealed, expires_at < now() AS expired FROM oauth_states WHERE id = $1",
+      [stateId],
+    ),
   );
   if (!row?.pending_sealed) throw new NotFoundError("Escolha de Página não encontrada. Comece a conexão de novo.");
   if (row.expired) throw new ConflictError("A escolha expirou. Comece a conexão de novo.");
-  return { clientId: row.client_id, pages: JSON.parse(open(row.pending_sealed, stateContext(stateId))) as PendingPage[] };
+  return {
+    clientId: row.client_id,
+    pages: JSON.parse(open(row.pending_sealed, stateContext(stateId))) as PendingPage[],
+  };
 }
 
-export async function choosePage(auth: AuthContext, stateId: string, pageId: string): Promise<{ clientId: string; networks: Network[]; message: string }> {
+export async function choosePage(
+  auth: AuthContext,
+  stateId: string,
+  pageId: string,
+): Promise<{ clientId: string; networks: Network[]; message: string }> {
   assertCan(auth.role, "social.connect");
   const { clientId, pages } = await loadPending(auth, stateId);
   const page = pages.find((p) => p.pageId === pageId);
@@ -246,7 +377,11 @@ export async function choosePage(auth: AuthContext, stateId: string, pageId: str
   return { clientId, ...r };
 }
 
-async function connectMetaPage(auth: AuthContext, clientId: string, page: PendingPage): Promise<{ networks: Network[]; message: string }> {
+async function connectMetaPage(
+  auth: AuthContext,
+  clientId: string,
+  page: PendingPage,
+): Promise<{ networks: Network[]; message: string }> {
   await saveAccount(auth, clientId, {
     network: "facebook",
     externalId: page.pageId,
@@ -262,7 +397,10 @@ async function connectMetaPage(auth: AuthContext, clientId: string, page: Pendin
     details: { pageId: page.pageId },
   });
   if (!page.instagram) {
-    return { networks: ["facebook"], message: `Página ${page.name} conectada. Ela não tem conta profissional do Instagram ligada; ligue nas configurações da Página e conecte de novo para incluir o Instagram.` };
+    return {
+      networks: ["facebook"],
+      message: `Página ${page.name} conectada. Ela não tem conta profissional do Instagram ligada; ligue nas configurações da Página e conecte de novo para incluir o Instagram.`,
+    };
   }
   await saveAccount(auth, clientId, {
     network: "instagram",
@@ -278,7 +416,10 @@ async function connectMetaPage(auth: AuthContext, clientId: string, page: Pendin
     scopes: [],
     details: { pageId: page.pageId },
   });
-  return { networks: ["facebook", "instagram"], message: `Página ${page.name} e Instagram @${page.instagram.username} conectados.` };
+  return {
+    networks: ["facebook", "instagram"],
+    message: `Página ${page.name} e Instagram @${page.instagram.username} conectados.`,
+  };
 }
 
 interface SaveInput {
@@ -315,8 +456,21 @@ async function saveAccount(auth: AuthContext, clientId: string, a: SaveInput): P
          details = EXCLUDED.details, status = 'active', last_error = NULL, connected_by = EXCLUDED.connected_by, connected_at = now()
        RETURNING id`,
       [
-        auth.organizationId, clientId, a.network, a.externalId, a.username, a.displayName.slice(0, 300), a.avatarUrl, a.profileUrl,
-        seal(a.accessToken, ctx), a.refreshToken ? seal(a.refreshToken, ctx) : null, a.expiresIn, a.refreshExpiresIn, a.scopes, JSON.stringify(a.details), auth.userId,
+        auth.organizationId,
+        clientId,
+        a.network,
+        a.externalId,
+        a.username,
+        a.displayName.slice(0, 300),
+        a.avatarUrl,
+        a.profileUrl,
+        seal(a.accessToken, ctx),
+        a.refreshToken ? seal(a.refreshToken, ctx) : null,
+        a.expiresIn,
+        a.refreshExpiresIn,
+        a.scopes,
+        JSON.stringify(a.details),
+        auth.userId,
       ],
     );
     await audit(tx, userActor(auth), {
@@ -370,8 +524,18 @@ export interface AccountAccess {
 /** Token válido da conta, renovado quando está para vencer (TikTok e YouTube). */
 export async function accountAccess(tx: Queryable, accountId: string): Promise<AccountAccess> {
   const row = await maybeOne<{
-    id: string; organization_id: string; client_id: string; network: Network; external_id: string; username: string | null; display_name: string;
-    access_sealed: string; refresh_sealed: string | null; expiring: boolean; status: string; details: Record<string, unknown>;
+    id: string;
+    organization_id: string;
+    client_id: string;
+    network: Network;
+    external_id: string;
+    username: string | null;
+    display_name: string;
+    access_sealed: string;
+    refresh_sealed: string | null;
+    expiring: boolean;
+    status: string;
+    details: Record<string, unknown>;
   }>(
     tx,
     `SELECT id, organization_id, client_id, network, external_id, username, display_name, access_sealed, refresh_sealed, status, details,
@@ -379,8 +543,14 @@ export async function accountAccess(tx: Queryable, accountId: string): Promise<A
      FROM social_accounts WHERE id = $1 FOR UPDATE`,
     [accountId],
   );
-  if (!row) throw new IntegrationError("A conta foi desconectada. Conecte de novo e reagende.", false, { providerCode: "account_missing" });
-  if (row.status === "reconnect") throw new IntegrationError("A conta precisa ser conectada de novo na aba Redes do cliente.", false, { providerCode: "token_invalid" });
+  if (!row)
+    throw new IntegrationError("A conta foi desconectada. Conecte de novo e reagende.", false, {
+      providerCode: "account_missing",
+    });
+  if (row.status === "reconnect")
+    throw new IntegrationError("A conta precisa ser conectada de novo na aba Redes do cliente.", false, {
+      providerCode: "token_invalid",
+    });
   const ctx = tokenContext(row.organization_id, row.client_id, row.network);
   let token = open(row.access_sealed, ctx);
   if (row.expiring && row.refresh_sealed && (row.network === "tiktok" || row.network === "youtube")) {
@@ -412,20 +582,45 @@ export async function accountAccess(tx: Queryable, accountId: string): Promise<A
 
 /** Marca a conta para reconexão quando a plataforma recusa o token. */
 export async function markNeedsReconnect(accountId: string, message: string): Promise<void> {
-  await withTx(systemCtx("social.reconnect"), (tx) => tx.query("UPDATE social_accounts SET status = 'reconnect', last_error = $2 WHERE id = $1", [accountId, message.slice(0, 1000)]));
+  await withTx(systemCtx("social.reconnect"), (tx) =>
+    tx.query("UPDATE social_accounts SET status = 'reconnect', last_error = $2 WHERE id = $1", [
+      accountId,
+      message.slice(0, 1000),
+    ]),
+  );
 }
 
 /** Opções de privacidade da TikTok (consulta exigida antes de publicar). */
-export async function tiktokOptions(auth: AuthContext, accountId: string): Promise<{ privacyOptions: string[]; nickname: string; commentDisabled: boolean; maxVideoSeconds: number | null }> {
+export async function tiktokOptions(
+  auth: AuthContext,
+  accountId: string,
+): Promise<{ privacyOptions: string[]; nickname: string; commentDisabled: boolean; maxVideoSeconds: number | null }> {
   assertCan(auth.role, "social.publish");
   const access = await withTx(userCtx(auth.userId), async (tx) => {
-    const ok = await maybeOne(tx, "SELECT 1 FROM social_accounts WHERE id = $1 AND organization_id = $2 AND network = 'tiktok'", [accountId, auth.organizationId]);
+    const ok = await maybeOne(
+      tx,
+      "SELECT 1 FROM social_accounts WHERE id = $1 AND organization_id = $2 AND network = 'tiktok'",
+      [accountId, auth.organizationId],
+    );
     if (!ok) throw new NotFoundError("Conta não encontrada.");
     return withTx(systemCtx("social.tiktok_options"), (sys) => accountAccess(sys, accountId));
   });
   const info = await tiktokCreatorInfo(access.token);
   await withTx(systemCtx("social.tiktok_options"), (tx) =>
-    tx.query("UPDATE social_accounts SET details = details || $2::jsonb WHERE id = $1", [accountId, JSON.stringify({ privacyOptions: info.privacyOptions, nickname: info.nickname, commentDisabled: info.commentDisabled, maxVideoSeconds: info.maxVideoSeconds })]),
+    tx.query("UPDATE social_accounts SET details = details || $2::jsonb WHERE id = $1", [
+      accountId,
+      JSON.stringify({
+        privacyOptions: info.privacyOptions,
+        nickname: info.nickname,
+        commentDisabled: info.commentDisabled,
+        maxVideoSeconds: info.maxVideoSeconds,
+      }),
+    ]),
   );
-  return { privacyOptions: info.privacyOptions, nickname: info.nickname, commentDisabled: info.commentDisabled, maxVideoSeconds: info.maxVideoSeconds };
+  return {
+    privacyOptions: info.privacyOptions,
+    nickname: info.nickname,
+    commentDisabled: info.commentDisabled,
+    maxVideoSeconds: info.maxVideoSeconds,
+  };
 }

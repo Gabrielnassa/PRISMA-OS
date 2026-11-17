@@ -28,7 +28,8 @@ metadata:
   });
 
   it("aceita blocos YAML (| e >), aspas simples, CRLF e BOM", () => {
-    const md = "﻿---\r\nname: 'Roteiros da Ana'\r\ndescription: >\r\n  Primeira linha\r\n  segunda linha\r\n---\r\nCorpo";
+    const md =
+      "﻿---\r\nname: 'Roteiros da Ana'\r\ndescription: >\r\n  Primeira linha\r\n  segunda linha\r\n---\r\nCorpo";
     const r = parseSkillMd(md);
     expect(r.name).toBe("Roteiros da Ana");
     expect(r.description).toBe("Primeira linha segunda linha");
@@ -49,7 +50,9 @@ metadata:
   });
 
   it("corta campos acima do limite e avisa", () => {
-    const r = parseSkillMd(`---\nname: ${"n".repeat(100)}\ndescription: ${"d".repeat(600)}\n---\n${"i".repeat(SKILL_LIMITS.instructions + 10)}`);
+    const r = parseSkillMd(
+      `---\nname: ${"n".repeat(100)}\ndescription: ${"d".repeat(600)}\n---\n${"i".repeat(SKILL_LIMITS.instructions + 10)}`,
+    );
     expect(r.name).toHaveLength(SKILL_LIMITS.name);
     expect(r.description).toHaveLength(SKILL_LIMITS.description);
     expect(r.instructions).toHaveLength(SKILL_LIMITS.instructions);
@@ -57,7 +60,11 @@ metadata:
   });
 
   it("exporta e importa de volta sem perder o nome legível", () => {
-    const skill = { name: "Roteiro de Reels Ágil", description: "Roteiros curtos.\nCom gancho.", instructions: "Faça um roteiro com gancho forte." };
+    const skill = {
+      name: "Roteiro de Reels Ágil",
+      description: "Roteiros curtos.\nCom gancho.",
+      instructions: "Faça um roteiro com gancho forte.",
+    };
     const md = toSkillMd(skill);
     expect(md).toMatch(/^---\nname: roteiro-de-reels-agil\n/);
     const back = parseSkillMd(md);
@@ -69,7 +76,14 @@ metadata:
 
   it("os modelos de partida passam na validação de uma skill", () => {
     for (const ex of SKILL_EXAMPLES) {
-      expect(CustomSkillSchema.safeParse({ name: ex.name, description: ex.description, instructions: ex.instructions, effort: ex.effort }).success).toBe(true);
+      expect(
+        CustomSkillSchema.safeParse({
+          name: ex.name,
+          description: ex.description,
+          instructions: ex.instructions,
+          effort: ex.effort,
+        }).success,
+      ).toBe(true);
     }
   });
 });
@@ -108,10 +122,15 @@ describe("skill personalizada como skill de IA", () => {
 
 describe("origens aceitas (Server Actions e rotas de API)", () => {
   it("aceita o host de APP_URL", () => {
-    expect(extraAllowedHosts({ APP_URL: "https://prisma.minhaagencia.com.br" })).toEqual(["prisma.minhaagencia.com.br"]);
+    expect(extraAllowedHosts({ APP_URL: "https://prisma.minhaagencia.com.br" })).toEqual([
+      "prisma.minhaagencia.com.br",
+    ]);
   });
   it("no Codespace, aceita também localhost:3000 (o túnel troca o Origin)", () => {
-    expect(extraAllowedHosts({ APP_URL: "https://x-3000.app.github.dev", CODESPACE_NAME: "x" })).toEqual(["x-3000.app.github.dev", "localhost:3000"]);
+    expect(extraAllowedHosts({ APP_URL: "https://x-3000.app.github.dev", CODESPACE_NAME: "x" })).toEqual([
+      "x-3000.app.github.dev",
+      "localhost:3000",
+    ]);
   });
   it("fora do Codespace, localhost:3000 não entra; APP_URL inválida é ignorada", () => {
     expect(extraAllowedHosts({})).toEqual([]);

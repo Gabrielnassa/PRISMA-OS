@@ -16,7 +16,10 @@ import { notifyUsers } from "./inbox";
 const OPEN: ContentStatus[] = ["draft", "generating", "in_review", "awaiting_approval", "rejected", "failed"];
 
 /** Pessoas que podem cuidar de uma peça deste cliente (acesso ao cliente e papel que cria ou aprova). */
-export async function assignableMembers(auth: AuthContext, clientId: string): Promise<Array<{ id: string; name: string }>> {
+export async function assignableMembers(
+  auth: AuthContext,
+  clientId: string,
+): Promise<Array<{ id: string; name: string }>> {
   return withTx(userCtx(auth.userId), (tx) =>
     many<{ id: string; name: string }>(
       tx,
@@ -31,10 +34,17 @@ export async function assignableMembers(auth: AuthContext, clientId: string): Pr
 
 const AssignSchema = z.object({
   assigneeId: z.string().uuid().nullable(),
-  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida.").nullable(),
+  dueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida.")
+    .nullable(),
 });
 
-export async function setAssignment(auth: AuthContext, contentId: string, raw: { assigneeId: string | null; dueDate: string | null }): Promise<void> {
+export async function setAssignment(
+  auth: AuthContext,
+  contentId: string,
+  raw: { assigneeId: string | null; dueDate: string | null },
+): Promise<void> {
   assertCan(auth.role, "content.edit");
   if (!z.string().uuid().safeParse(contentId).success) throw new NotFoundError("Peça não encontrada.");
   const parsed = AssignSchema.safeParse(raw);
@@ -57,7 +67,11 @@ export async function setAssignment(auth: AuthContext, contentId: string, raw: {
       );
       if (!ok) throw new ValidationError("Essa pessoa não tem acesso a este cliente.");
     }
-    await tx.query("UPDATE content_items SET assignee_id = $2, due_date = $3 WHERE id = $1", [contentId, assigneeId, dueDate]);
+    await tx.query("UPDATE content_items SET assignee_id = $2, due_date = $3 WHERE id = $1", [
+      contentId,
+      assigneeId,
+      dueDate,
+    ]);
     await audit(tx, userActor(auth), {
       organizationId: auth.organizationId,
       clientId: item.client_id,
@@ -91,7 +105,14 @@ export interface MyTask {
 /** O que está com a pessoa agora, do prazo mais próximo para o mais distante. */
 export async function myTasks(auth: AuthContext, limit = 12): Promise<MyTask[]> {
   return withTx(userCtx(auth.userId), async (tx) => {
-    const pieces = await many<{ id: string; title: string; client_name: string; status: ContentStatus; due_date: Date | null; overdue: boolean }>(
+    const pieces = await many<{
+      id: string;
+      title: string;
+      client_name: string;
+      status: ContentStatus;
+      due_date: Date | null;
+      overdue: boolean;
+    }>(
       tx,
       `SELECT ci.id, ci.title, c.name AS client_name, ci.status, ci.due_date, (ci.due_date < (now() AT TIME ZONE 'America/Sao_Paulo')::date) AS overdue
        FROM content_items ci JOIN clients c ON c.id = ci.client_id
@@ -110,10 +131,26 @@ export async function myTasks(auth: AuthContext, limit = 12): Promise<MyTask[]> 
         )
       : [];
     const out: MyTask[] = [
-      ...approvals.map((a) => ({ kind: "approval" as const, contentId: a.id, title: a.title, clientName: a.client_name, status: "awaiting_approval" as ContentStatus, dueDate: a.due_date?.toISOString().slice(0, 10) ?? null, overdue: Boolean(a.overdue) })),
+      ...approvals.map((a) => ({
+        kind: "approval" as const,
+        contentId: a.id,
+        title: a.title,
+        clientName: a.client_name,
+        status: "awaiting_approval" as ContentStatus,
+        dueDate: a.due_date?.toISOString().slice(0, 10) ?? null,
+        overdue: Boolean(a.overdue),
+      })),
       ...pieces
         .filter((p) => !approvals.some((a) => a.id === p.id))
-        .map((p) => ({ kind: "piece" as const, contentId: p.id, title: p.title, clientName: p.client_name, status: p.status, dueDate: p.due_date?.toISOString().slice(0, 10) ?? null, overdue: Boolean(p.overdue) })),
+        .map((p) => ({
+          kind: "piece" as const,
+          contentId: p.id,
+          title: p.title,
+          clientName: p.client_name,
+          status: p.status,
+          dueDate: p.due_date?.toISOString().slice(0, 10) ?? null,
+          overdue: Boolean(p.overdue),
+        })),
     ];
     return out.sort((a, b) => (a.dueDate ?? "9999").localeCompare(b.dueDate ?? "9999")).slice(0, limit);
   });

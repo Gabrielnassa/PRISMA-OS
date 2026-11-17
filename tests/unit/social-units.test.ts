@@ -75,15 +75,29 @@ describe("regras das redes", () => {
 
   it("webhooks só em endereços públicos com HTTPS", () => {
     expect(isAllowedWebhookUrl("https://n8n.agencia.com.br/webhook/abc")).toBe(true);
-    for (const bad of ["http://n8n.agencia.com.br", "https://localhost/x", "https://10.0.0.5/x", "https://192.168.1.10/x", "https://169.254.169.254/latest", "https://[::1]/x", "https://user:pw@site.com", "https://intranet/x"]) {
+    for (const bad of [
+      "http://n8n.agencia.com.br",
+      "https://localhost/x",
+      "https://10.0.0.5/x",
+      "https://192.168.1.10/x",
+      "https://169.254.169.254/latest",
+      "https://[::1]/x",
+      "https://user:pw@site.com",
+      "https://intranet/x",
+    ]) {
       expect(isAllowedWebhookUrl(bad)).toBe(false);
     }
   });
 
   it("erros da Meta: token inválido pede reconexão; limite tenta de novo", () => {
-    expect(metaError(400, { error: { code: 190 } }, "publicar")).toMatchObject({ code: "token_invalid", retryable: false });
+    expect(metaError(400, { error: { code: 190 } }, "publicar")).toMatchObject({
+      code: "token_invalid",
+      retryable: false,
+    });
     expect(metaError(400, { error: { code: 4 } }, "publicar")).toMatchObject({ code: "rate_limit", retryable: true });
-    expect(metaError(500, { error: { code: 1, message: "Unknown" } }, "publicar").message).toContain("Mensagem da Meta: Unknown");
+    expect(metaError(500, { error: { code: 1, message: "Unknown" } }, "publicar").message).toContain(
+      "Mensagem da Meta: Unknown",
+    );
   });
 
   it("plural sem parênteses", () => {

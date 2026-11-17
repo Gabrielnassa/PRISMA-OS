@@ -36,37 +36,71 @@ export function openAiUsage(u: ResponseUsage | null | undefined): TokenUsage {
 export function mapOpenAiError(err: unknown): IntegrationError {
   if (err instanceof IntegrationError) return err;
   if (err instanceof OpenAI.AuthenticationError) {
-    return new IntegrationError("A chave da API OpenAI foi recusada. Verifique OPENAI_API_KEY.", false, { cause: err, providerCode: "auth_failed" });
+    return new IntegrationError("A chave da API OpenAI foi recusada. Verifique OPENAI_API_KEY.", false, {
+      cause: err,
+      providerCode: "auth_failed",
+    });
   }
   if (err instanceof OpenAI.PermissionDeniedError) {
-    return new IntegrationError("A conta OpenAI não tem permissão para este modelo ou recurso.", false, { cause: err, providerCode: "permission_denied" });
+    return new IntegrationError("A conta OpenAI não tem permissão para este modelo ou recurso.", false, {
+      cause: err,
+      providerCode: "permission_denied",
+    });
   }
   if (err instanceof OpenAI.NotFoundError) {
-    return new IntegrationError("Modelo não encontrado na API OpenAI. Verifique OPENAI_MODEL.", false, { cause: err, providerCode: "not_found" });
+    return new IntegrationError("Modelo não encontrado na API OpenAI. Verifique OPENAI_MODEL.", false, {
+      cause: err,
+      providerCode: "not_found",
+    });
   }
   if (err instanceof OpenAI.RateLimitError) {
     const code = (err as { code?: string | null }).code;
     if (code === "insufficient_quota") {
-      return new IntegrationError("A conta OpenAI está sem crédito. Adicione saldo em platform.openai.com (Billing).", false, { cause: err, providerCode: "insufficient_quota" });
+      return new IntegrationError(
+        "A conta OpenAI está sem crédito. Adicione saldo em platform.openai.com (Billing).",
+        false,
+        { cause: err, providerCode: "insufficient_quota" },
+      );
     }
-    return new IntegrationError("Limite de requisições da API OpenAI atingido. Nova tentativa automática.", true, { cause: err, providerCode: "rate_limited" });
+    return new IntegrationError("Limite de requisições da API OpenAI atingido. Nova tentativa automática.", true, {
+      cause: err,
+      providerCode: "rate_limited",
+    });
   }
   if (err instanceof OpenAI.BadRequestError) {
-    return new IntegrationError(`Requisição recusada pela API OpenAI: ${err.message}`, false, { cause: err, providerCode: "bad_request" });
+    return new IntegrationError(`Requisição recusada pela API OpenAI: ${err.message}`, false, {
+      cause: err,
+      providerCode: "bad_request",
+    });
   }
   if (err instanceof OpenAI.InternalServerError) {
-    return new IntegrationError("A API OpenAI está temporariamente indisponível ou sobrecarregada.", true, { cause: err, providerCode: "provider_unavailable" });
+    return new IntegrationError("A API OpenAI está temporariamente indisponível ou sobrecarregada.", true, {
+      cause: err,
+      providerCode: "provider_unavailable",
+    });
   }
   if (err instanceof OpenAI.APIConnectionTimeoutError) {
-    return new IntegrationError("Tempo limite excedido na chamada à API OpenAI.", true, { cause: err, providerCode: "timeout" });
+    return new IntegrationError("Tempo limite excedido na chamada à API OpenAI.", true, {
+      cause: err,
+      providerCode: "timeout",
+    });
   }
   if (err instanceof OpenAI.APIConnectionError) {
-    return new IntegrationError("Falha de conexão com a API OpenAI.", true, { cause: err, providerCode: "connection_error" });
+    return new IntegrationError("Falha de conexão com a API OpenAI.", true, {
+      cause: err,
+      providerCode: "connection_error",
+    });
   }
   if (err instanceof OpenAI.APIError) {
-    return new IntegrationError(`Erro da API OpenAI (${err.status ?? "?"}).`, (err.status ?? 0) >= 500, { cause: err, providerCode: "api_error" });
+    return new IntegrationError(`Erro da API OpenAI (${err.status ?? "?"}).`, (err.status ?? 0) >= 500, {
+      cause: err,
+      providerCode: "api_error",
+    });
   }
-  return new IntegrationError(`Falha inesperada ao chamar a IA: ${(err as Error)?.message ?? String(err)}`, false, { cause: err, providerCode: "unexpected" });
+  return new IntegrationError(`Falha inesperada ao chamar a IA: ${(err as Error)?.message ?? String(err)}`, false, {
+    cause: err,
+    providerCode: "unexpected",
+  });
 }
 
 function refusalOf(res: OpenAiResponse): string | null {
@@ -100,7 +134,10 @@ export class OpenAiProvider implements AiProvider {
     });
   }
 
-  async generateStructured<T>(req: StructuredRequest<T>, opts?: { signal?: AbortSignal }): Promise<StructuredResult<T>> {
+  async generateStructured<T>(
+    req: StructuredRequest<T>,
+    opts?: { signal?: AbortSignal },
+  ): Promise<StructuredResult<T>> {
     const started = Date.now();
     try {
       const response = await this.client.responses.create(
@@ -118,7 +155,9 @@ export class OpenAiProvider implements AiProvider {
           ],
           max_output_tokens: req.maxTokens ?? 16000,
           reasoning: { effort: this.opts.effort ?? req.effort ?? "medium" },
-          text: { format: { type: "json_schema", name: "resultado", schema: toOpenAiJsonSchema(req.schema), strict: true } },
+          text: {
+            format: { type: "json_schema", name: "resultado", schema: toOpenAiJsonSchema(req.schema), strict: true },
+          },
           store: false,
         },
         { signal: opts?.signal },
@@ -132,15 +171,25 @@ export class OpenAiProvider implements AiProvider {
       const refusal = refusalOf(response);
       if (refusal !== null || response.incomplete_details?.reason === "content_filter") {
         throw Object.assign(
-          new IntegrationError("O modelo recusou a solicitação por política de uso. Revise o briefing.", false, { providerCode: "refused" }),
+          new IntegrationError("O modelo recusou a solicitação por política de uso. Revise o briefing.", false, {
+            providerCode: "refused",
+          }),
           billing,
         );
       }
       if (response.status === "incomplete" && response.incomplete_details?.reason === "max_output_tokens") {
-        throw Object.assign(new IntegrationError("A resposta da IA foi interrompida pelo limite de tokens.", false, { providerCode: "max_tokens" }), billing);
+        throw Object.assign(
+          new IntegrationError("A resposta da IA foi interrompida pelo limite de tokens.", false, {
+            providerCode: "max_tokens",
+          }),
+          billing,
+        );
       }
       if (response.status === "failed") {
-        throw Object.assign(new IntegrationError("A API OpenAI não conseguiu concluir a resposta.", true, { providerCode: "failed" }), billing);
+        throw Object.assign(
+          new IntegrationError("A API OpenAI não conseguiu concluir a resposta.", true, { providerCode: "failed" }),
+          billing,
+        );
       }
       let parsed: unknown = null;
       try {
@@ -152,7 +201,12 @@ export class OpenAiProvider implements AiProvider {
       // Campos opcionais chegam como null no modo estrito.
       if (validated && !validated.success) validated = req.schema.safeParse(nullsToUndefined(parsed));
       if (!validated || !validated.success) {
-        throw Object.assign(new IntegrationError("A IA retornou um formato inválido para esta tarefa.", true, { providerCode: "invalid_output" }), billing);
+        throw Object.assign(
+          new IntegrationError("A IA retornou um formato inválido para esta tarefa.", true, {
+            providerCode: "invalid_output",
+          }),
+          billing,
+        );
       }
       return {
         data: validated.data,
@@ -180,7 +234,12 @@ export class OpenAiProvider implements AiProvider {
         maxTokens: 2000,
         effort: "low",
       });
-      return { ok: res.data.ok === true, detail: `Resposta recebida do modelo ${res.model}.`, usage: res.usage, model: res.model };
+      return {
+        ok: res.data.ok === true,
+        detail: `Resposta recebida do modelo ${res.model}.`,
+        usage: res.usage,
+        model: res.model,
+      };
     } catch (err) {
       return { ok: false, detail: (err as Error).message };
     }

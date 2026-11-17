@@ -29,10 +29,14 @@ test("skills da agência: importar, executar, histórico, versão e virar peça"
   await page.goto("/skills");
   await page.getByRole("link", { name: "Nova skill" }).first().click();
   await expect(page).toHaveURL(/\/skills\/nova$/);
-  await page.locator("#skill-file").setInputFiles({ name: "SKILL.md", mimeType: "text/markdown", buffer: Buffer.from(SKILL_MD) });
+  await page
+    .locator("#skill-file")
+    .setInputFiles({ name: "SKILL.md", mimeType: "text/markdown", buffer: Buffer.from(SKILL_MD) });
   await expect(page.getByText("SKILL.md importado. Revise os campos abaixo e salve.")).toBeVisible();
   await expect(page.getByLabel("Nome", { exact: true })).toHaveValue("Legendas da padaria");
-  await expect(page.getByLabel("Descrição")).toHaveValue("Três legendas para posts de padaria, com chamada para pedido.");
+  await expect(page.getByLabel("Descrição")).toHaveValue(
+    "Três legendas para posts de padaria, com chamada para pedido.",
+  );
   await expect(page.getByLabel("Instruções")).toHaveValue(/chamada para encomenda pelo WhatsApp/);
   await page.getByRole("button", { name: "Criar skill" }).click();
   await expect(page).toHaveURL(/\/skills\/[0-9a-f-]+\?nova=1$/);
@@ -67,7 +71,9 @@ test("skills da agência: importar, executar, histórico, versão e virar peça"
 
   // Editar cria a versão 2; a 1 continua guardada.
   await page.goto(`${skillUrl}?aba=editar`);
-  await page.getByLabel("Instruções").fill("Escreva 3 opções de legenda curtas, com chamada para encomenda pelo WhatsApp. Use no máximo 2 emojis.");
+  await page
+    .getByLabel("Instruções")
+    .fill("Escreva 3 opções de legenda curtas, com chamada para encomenda pelo WhatsApp. Use no máximo 2 emojis.");
   await page.getByRole("button", { name: "Salvar alterações" }).click();
   await expect(page.getByText("Skill salva (versão 2).")).toBeVisible();
   await page.goto(`${skillUrl}?aba=versoes`);

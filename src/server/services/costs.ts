@@ -21,7 +21,12 @@ export interface PriceRow {
 }
 
 /** Tarifa vigente (a mais recente com início no passado) para o modelo. */
-export async function currentPrice(tx: Queryable, organizationId: string, provider: string, model: string): Promise<PriceRow | null> {
+export async function currentPrice(
+  tx: Queryable,
+  organizationId: string,
+  provider: string,
+  model: string,
+): Promise<PriceRow | null> {
   return maybeOne<PriceRow>(
     tx,
     `SELECT id, provider, model, input_usd_per_mtok, output_usd_per_mtok, cache_read_usd_per_mtok, cache_write_usd_per_mtok, source, effective_from
@@ -38,7 +43,9 @@ export function computeCostUsd(usage: TokenUsage, price: PriceRow): number {
   const outP = Number(price.output_usd_per_mtok);
   const crP = price.cache_read_usd_per_mtok === null ? inP : Number(price.cache_read_usd_per_mtok);
   const cwP = price.cache_write_usd_per_mtok === null ? inP : Number(price.cache_write_usd_per_mtok);
-  const usd = (usage.inputTokens * inP + usage.outputTokens * outP + usage.cacheReadTokens * crP + usage.cacheWriteTokens * cwP) / 1_000_000;
+  const usd =
+    (usage.inputTokens * inP + usage.outputTokens * outP + usage.cacheReadTokens * crP + usage.cacheWriteTokens * cwP) /
+    1_000_000;
   return Math.round(usd * 1_000_000) / 1_000_000;
 }
 
@@ -54,7 +61,10 @@ export async function monthToDateSpend(tx: Queryable, clientId: string): Promise
 }
 
 /** Interrompe operações de IA quando o teto mensal do cliente foi atingido. */
-export async function assertWithinBudget(tx: Queryable, clientId: string): Promise<{ spent: number; limit: number | null; alert: boolean }> {
+export async function assertWithinBudget(
+  tx: Queryable,
+  clientId: string,
+): Promise<{ spent: number; limit: number | null; alert: boolean }> {
   const budget = await maybeOne<{ monthly_limit_usd: string; alert_threshold_pct: number; hard_stop: boolean }>(
     tx,
     "SELECT monthly_limit_usd, alert_threshold_pct, hard_stop FROM client_budgets WHERE client_id = $1",
@@ -73,11 +83,54 @@ export async function assertWithinBudget(tx: Queryable, clientId: string): Promi
 
 export interface CostSummary {
   month: string;
-  totals: { runs: number; failed: number; costUsd: number; unpricedRuns: number; unpricedEstimateUsd: number; inputTokens: number; outputTokens: number; demoRuns: number };
-  byClient: Array<{ clientId: string | null; clientName: string; runs: number; costUsd: number; budgetSpendUsd: number; limitUsd: number | null; alertPct: number | null; hardStop: boolean | null }>;
+  totals: {
+    runs: number;
+    failed: number;
+    costUsd: number;
+    unpricedRuns: number;
+    unpricedEstimateUsd: number;
+    inputTokens: number;
+    outputTokens: number;
+    demoRuns: number;
+  };
+  byClient: Array<{
+    clientId: string | null;
+    clientName: string;
+    runs: number;
+    costUsd: number;
+    budgetSpendUsd: number;
+    limitUsd: number | null;
+    alertPct: number | null;
+    hardStop: boolean | null;
+  }>;
   bySkill: Array<{ skillId: string; skillName: string; runs: number; costUsd: number; avgDurationMs: number | null }>;
-  recent: Array<{ id: string; createdAt: string; clientName: string | null; skillId: string; skillName: string; model: string; status: string; isDemo: boolean; inputTokens: number; outputTokens: number; costUsd: number | null; estimatedCostUsd: number | null; durationMs: number | null; errorMessage: string | null }>;
-  prices: Array<{ id: string; provider: string; model: string; input: string; output: string; cacheRead: string | null; cacheWrite: string | null; source: string; effectiveFrom: string }>;
+  recent: Array<{
+    id: string;
+    createdAt: string;
+    clientName: string | null;
+    skillId: string;
+    skillName: string;
+    model: string;
+    status: string;
+    isDemo: boolean;
+    inputTokens: number;
+    outputTokens: number;
+    costUsd: number | null;
+    estimatedCostUsd: number | null;
+    durationMs: number | null;
+    errorMessage: string | null;
+  }>;
+  prices: Array<{
+    id: string;
+    provider: string;
+    model: string;
+    input: string;
+    output: string;
+    cacheRead: string | null;
+    cacheWrite: string | null;
+    source: string;
+    effectiveFrom: string;
+  }>;
 }
 
 /** Nome legível da skill: personalizada (pelo cadastro), do sistema (pelo registro) ou o próprio id. */
@@ -91,7 +144,16 @@ export async function getCostSummary(auth: AuthContext): Promise<CostSummary> {
   assertCan(auth.role, "costs.view");
   return withTx(userCtx(auth.userId), async (tx) => {
     const org = auth.organizationId;
-    const totals = await one<{ runs: number; failed: number; cost: string; unpriced: number; unpriced_est: string; input: string; output: string; demo: number }>(
+    const totals = await one<{
+      runs: number;
+      failed: number;
+      cost: string;
+      unpriced: number;
+      unpriced_est: string;
+      input: string;
+      output: string;
+      demo: number;
+    }>(
       tx,
       `SELECT count(*)::int AS runs, count(*) FILTER (WHERE status <> 'succeeded')::int AS failed,
               coalesce(sum(cost_usd), 0)::text AS cost,
@@ -103,7 +165,16 @@ export async function getCostSummary(auth: AuthContext): Promise<CostSummary> {
        FROM ai_runs WHERE organization_id = $1 AND created_at >= date_trunc('month', now())`,
       [org],
     );
-    const byClient = await many<{ client_id: string | null; name: string | null; runs: number; cost: string; spend: string; limit_usd: string | null; alert: number | null; hard_stop: boolean | null }>(
+    const byClient = await many<{
+      client_id: string | null;
+      name: string | null;
+      runs: number;
+      cost: string;
+      spend: string;
+      limit_usd: string | null;
+      alert: number | null;
+      hard_stop: boolean | null;
+    }>(
       tx,
       `SELECT c.id AS client_id, c.name, count(r.id)::int AS runs, coalesce(sum(r.cost_usd), 0)::text AS cost,
               coalesce(sum(coalesce(r.cost_usd, r.estimated_cost_usd)), 0)::text AS spend,
@@ -116,7 +187,13 @@ export async function getCostSummary(auth: AuthContext): Promise<CostSummary> {
        ORDER BY coalesce(sum(r.cost_usd), 0) DESC, c.name`,
       [org],
     );
-    const bySkill = await many<{ skill_id: string; custom_name: string | null; runs: number; cost: string; avg_ms: string | null }>(
+    const bySkill = await many<{
+      skill_id: string;
+      custom_name: string | null;
+      runs: number;
+      cost: string;
+      avg_ms: string | null;
+    }>(
       tx,
       `SELECT r.skill_id, cs.name AS custom_name, count(*)::int AS runs, coalesce(sum(r.cost_usd), 0)::text AS cost, avg(r.duration_ms)::text AS avg_ms
        FROM ai_runs r LEFT JOIN custom_skills cs ON 'custom:' || cs.id::text = r.skill_id
@@ -125,8 +202,20 @@ export async function getCostSummary(auth: AuthContext): Promise<CostSummary> {
       [org],
     );
     const recent = await many<{
-      id: string; created_at: Date; client_name: string | null; skill_id: string; custom_name: string | null; model: string; status: string; is_demo: boolean;
-      input_tokens: number; output_tokens: number; cost_usd: string | null; estimated_cost_usd: string | null; duration_ms: number | null; error_message: string | null;
+      id: string;
+      created_at: Date;
+      client_name: string | null;
+      skill_id: string;
+      custom_name: string | null;
+      model: string;
+      status: string;
+      is_demo: boolean;
+      input_tokens: number;
+      output_tokens: number;
+      cost_usd: string | null;
+      estimated_cost_usd: string | null;
+      duration_ms: number | null;
+      error_message: string | null;
     }>(
       tx,
       `SELECT r.id, r.created_at, coalesce(c.name, (r.input_summary->>'deletedClient') || ' (excluído)') AS client_name, r.skill_id, cs.name AS custom_name, r.model, r.status, r.is_demo, r.input_tokens, r.output_tokens,
@@ -164,7 +253,13 @@ export async function getCostSummary(auth: AuthContext): Promise<CostSummary> {
         alertPct: r.alert,
         hardStop: r.hard_stop,
       })),
-      bySkill: bySkill.map((r) => ({ skillId: r.skill_id, skillName: skillLabel(r.skill_id, r.custom_name), runs: r.runs, costUsd: Number(r.cost), avgDurationMs: r.avg_ms === null ? null : Math.round(Number(r.avg_ms)) })),
+      bySkill: bySkill.map((r) => ({
+        skillId: r.skill_id,
+        skillName: skillLabel(r.skill_id, r.custom_name),
+        runs: r.runs,
+        costUsd: Number(r.cost),
+        avgDurationMs: r.avg_ms === null ? null : Math.round(Number(r.avg_ms)),
+      })),
       recent: recent.map((r) => ({
         id: r.id,
         createdAt: r.created_at.toISOString(),
@@ -216,7 +311,17 @@ export async function addPrice(auth: AuthContext, input: z.input<typeof AddPrice
       tx,
       `INSERT INTO provider_prices (organization_id, provider, model, input_usd_per_mtok, output_usd_per_mtok, cache_read_usd_per_mtok, cache_write_usd_per_mtok, source, created_by)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
-      [auth.organizationId, data.provider, data.model, data.input, data.output, data.cacheRead ?? null, data.cacheWrite ?? null, data.source, auth.userId],
+      [
+        auth.organizationId,
+        data.provider,
+        data.model,
+        data.input,
+        data.output,
+        data.cacheRead ?? null,
+        data.cacheWrite ?? null,
+        data.source,
+        auth.userId,
+      ],
     );
     await audit(tx, userActor(auth), {
       organizationId: auth.organizationId,
@@ -234,7 +339,11 @@ export const BudgetSchema = z.object({
   hardStop: z.boolean().default(true),
 });
 
-export async function setClientBudget(auth: AuthContext, clientId: string, input: z.input<typeof BudgetSchema> | null): Promise<void> {
+export async function setClientBudget(
+  auth: AuthContext,
+  clientId: string,
+  input: z.input<typeof BudgetSchema> | null,
+): Promise<void> {
   assertCan(auth.role, "costs.manage");
   await withTx(userCtx(auth.userId), async (tx) => {
     await requireClient(tx, auth, clientId);
@@ -249,7 +358,14 @@ export async function setClientBudget(auth: AuthContext, clientId: string, input
          ON CONFLICT (client_id) DO UPDATE SET monthly_limit_usd = EXCLUDED.monthly_limit_usd,
            alert_threshold_pct = EXCLUDED.alert_threshold_pct, hard_stop = EXCLUDED.hard_stop,
            updated_by = EXCLUDED.updated_by, updated_at = now()`,
-        [clientId, auth.organizationId, data.data.monthlyLimitUsd, data.data.alertThresholdPct, data.data.hardStop, auth.userId],
+        [
+          clientId,
+          auth.organizationId,
+          data.data.monthlyLimitUsd,
+          data.data.alertThresholdPct,
+          data.data.hardStop,
+          auth.userId,
+        ],
       );
     }
     await audit(tx, userActor(auth), {

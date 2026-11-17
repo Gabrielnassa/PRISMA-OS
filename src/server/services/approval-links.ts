@@ -4,7 +4,14 @@ import type { AuthContext } from "../auth/types";
 import { assertCan } from "../authz/permissions";
 import { ConflictError, NotFoundError, ValidationError } from "../errors";
 import { randomToken, sha256 } from "../crypto/secrets";
-import { ASPECTS, ContentDocumentSchema, FORMAT_LABELS, referencedAssetIds, type ContentDocument, type ContentFormat } from "@/lib/content/document";
+import {
+  ASPECTS,
+  ContentDocumentSchema,
+  FORMAT_LABELS,
+  referencedAssetIds,
+  type ContentDocument,
+  type ContentFormat,
+} from "@/lib/content/document";
 import { renderSlide, svgToPng } from "../render/engine";
 import { audit, userActor } from "./audit";
 import { documentHash } from "./content";
@@ -25,33 +32,52 @@ import { notifyApprovalDecided } from "./notifications";
 const LINK_DAYS = 14;
 const linkUrl = (token: string) => `${publicBase().url ?? ""}/aprovar/${token}`;
 
-export async function createApprovalLink(auth: AuthContext, approvalId: string): Promise<{ url: string; expiresAt: string; clientName: string; title: string }> {
+export async function createApprovalLink(
+  auth: AuthContext,
+  approvalId: string,
+): Promise<{ url: string; expiresAt: string; clientName: string; title: string }> {
   assertCan(auth.role, "approval.share");
   if (!z.string().uuid().safeParse(approvalId).success) throw new NotFoundError("Pedido de aprovação não encontrado.");
   if (!publicBase().url) throw new ValidationError("Defina APP_URL (o endereço do sistema) para gerar links.");
   const token = randomToken(24);
   return withTx(userCtx(auth.userId), async (tx) => {
-    const a = await maybeOne<{ client_id: string; content_item_id: string; status: string; client_name: string; title: string }>(
+    const a = await maybeOne<{
+      client_id: string;
+      content_item_id: string;
+      status: string;
+      client_name: string;
+      title: string;
+    }>(
       tx,
       `SELECT a.client_id, a.content_item_id, a.status, c.name AS client_name, ci.title FROM approvals a JOIN clients c ON c.id = a.client_id JOIN content_items ci ON ci.id = a.content_item_id
        WHERE a.id = $1 AND a.organization_id = $2`,
       [approvalId, auth.organizationId],
     );
     if (!a) throw new NotFoundError("Pedido de aprovação não encontrado.");
-    if (a.status !== "pending") throw new ConflictError("Este pedido já foi decidido. Envie a versão atual para aprovação de novo.");
+    if (a.status !== "pending")
+      throw new ConflictError("Este pedido já foi decidido. Envie a versão atual para aprovação de novo.");
     const r = await one<{ expires_at: Date }>(
       tx,
       `INSERT INTO approval_links (organization_id, client_id, content_item_id, approval_id, token_hash, expires_at, created_by)
        VALUES ($1, $2, $3, $4, $5, now() + make_interval(days => $6), $7) RETURNING expires_at`,
       [auth.organizationId, a.client_id, a.content_item_id, approvalId, sha256(token), LINK_DAYS, auth.userId],
     );
-    await audit(tx, userActor(auth), { organizationId: auth.organizationId, clientId: a.client_id, action: "approval.link_created", entityType: "approval", entityId: approvalId });
+    await audit(tx, userActor(auth), {
+      organizationId: auth.organizationId,
+      clientId: a.client_id,
+      action: "approval.link_created",
+      entityType: "approval",
+      entityId: approvalId,
+    });
     return { url: linkUrl(token), expiresAt: r.expires_at.toISOString(), clientName: a.client_name, title: a.title };
   });
 }
 
 /** Link do mês: tudo o que estiver aguardando aprovação deste cliente. */
-export async function createClientApprovalLink(auth: AuthContext, clientId: string): Promise<{ url: string; expiresAt: string; clientName: string; pending: number }> {
+export async function createClientApprovalLink(
+  auth: AuthContext,
+  clientId: string,
+): Promise<{ url: string; expiresAt: string; clientName: string; pending: number }> {
   assertCan(auth.role, "approval.share");
   if (!z.string().uuid().safeParse(clientId).success) throw new NotFoundError("Cliente não encontrado.");
   if (!publicBase().url) throw new ValidationError("Defina APP_URL (o endereço do sistema) para gerar links.");
@@ -63,14 +89,22 @@ export async function createClientApprovalLink(auth: AuthContext, clientId: stri
       [clientId, auth.organizationId],
     );
     if (!c) throw new NotFoundError("Cliente não encontrado.");
-    if (c.pending === 0) throw new ConflictError("Nada deste cliente está aguardando aprovação. Envie as peças para aprovação primeiro.");
+    if (c.pending === 0)
+      throw new ConflictError("Nada deste cliente está aguardando aprovação. Envie as peças para aprovação primeiro.");
     const r = await one<{ expires_at: Date }>(
       tx,
       `INSERT INTO approval_links (organization_id, client_id, scope, token_hash, expires_at, created_by)
        VALUES ($1, $2, 'client', $3, now() + make_interval(days => $4), $5) RETURNING expires_at`,
       [auth.organizationId, clientId, sha256(token), LINK_DAYS, auth.userId],
     );
-    await audit(tx, userActor(auth), { organizationId: auth.organizationId, clientId, action: "approval.client_link_created", entityType: "client", entityId: clientId, metadata: { pending: c.pending } });
+    await audit(tx, userActor(auth), {
+      organizationId: auth.organizationId,
+      clientId,
+      action: "approval.client_link_created",
+      entityType: "client",
+      entityId: clientId,
+      metadata: { pending: c.pending },
+    });
     return { url: linkUrl(token), expiresAt: r.expires_at.toISOString(), clientName: c.name, pending: c.pending };
   });
 }
@@ -101,8 +135,18 @@ export interface PublicApproval {
 }
 
 type LinkRow = {
-  link_id: string; organization_id: string; client_id: string; scope: "single" | "client"; approval_id: string | null; content_item_id: string | null;
-  expired: boolean; revoked: boolean; expires_at: Date; client_name: string; org_name: string; created_at: Date;
+  link_id: string;
+  organization_id: string;
+  client_id: string;
+  scope: "single" | "client";
+  approval_id: string | null;
+  content_item_id: string | null;
+  expired: boolean;
+  revoked: boolean;
+  expires_at: Date;
+  client_name: string;
+  org_name: string;
+  created_at: Date;
 };
 
 async function loadLink(token: string): Promise<LinkRow | null> {
@@ -120,9 +164,21 @@ async function loadLink(token: string): Promise<LinkRow | null> {
 }
 
 type ApprovalRow = {
-  id: string; status: PublicApprovalItem["status"]; client_id: string; content_item_id: string; content_version_id: string; document: unknown; document_hash: string;
-  version_number: number; request_note: string; decided_by_name: string | null; team_name: string | null; decided_at: Date | null; decision_note: string | null;
-  title: string; format: ContentFormat;
+  id: string;
+  status: PublicApprovalItem["status"];
+  client_id: string;
+  content_item_id: string;
+  content_version_id: string;
+  document: unknown;
+  document_hash: string;
+  version_number: number;
+  request_note: string;
+  decided_by_name: string | null;
+  team_name: string | null;
+  decided_at: Date | null;
+  decision_note: string | null;
+  title: string;
+  format: ContentFormat;
 };
 
 const APPROVAL_SELECT = `SELECT a.id, a.status, a.client_id, a.content_item_id, a.content_version_id, v.document, a.document_hash, v.version_number, a.request_note,
@@ -150,7 +206,11 @@ function toItem(r: ApprovalRow): PublicApprovalItem {
 }
 
 /** Pedido de aprovação dentro do alcance do link (o do pedido ou um do cliente do link). */
-async function approvalInScope(tx: Queryable, link: LinkRow, approvalId: string | null | undefined): Promise<ApprovalRow | null> {
+async function approvalInScope(
+  tx: Queryable,
+  link: LinkRow,
+  approvalId: string | null | undefined,
+): Promise<ApprovalRow | null> {
   const id = link.scope === "single" ? link.approval_id : approvalId;
   if (!id || !z.string().uuid().safeParse(id).success) return null;
   return maybeOne<ApprovalRow>(tx, `${APPROVAL_SELECT} WHERE a.id = $1 AND a.client_id = $2`, [id, link.client_id]);
@@ -175,19 +235,33 @@ export async function getPublicApproval(token: string): Promise<PublicApproval |
   });
   const items = rows.map(toItem);
   if (link.expired && (link.scope === "client" || items.some((i) => i.status === "pending"))) return null;
-  await withTx(systemCtx("approval_link.opened"), (tx) => tx.query("UPDATE approval_links SET opened_at = coalesce(opened_at, now()) WHERE id = $1", [link.link_id]));
-  return { scope: link.scope, organizationName: link.org_name, clientName: link.client_name, expiresAt: link.expires_at.toISOString(), items };
+  await withTx(systemCtx("approval_link.opened"), (tx) =>
+    tx.query("UPDATE approval_links SET opened_at = coalesce(opened_at, now()) WHERE id = $1", [link.link_id]),
+  );
+  return {
+    scope: link.scope,
+    organizationName: link.org_name,
+    clientName: link.client_name,
+    expiresAt: link.expires_at.toISOString(),
+    items,
+  };
 }
 
 /** PNG de uma lâmina da versão enviada (só com o link válido e dentro do alcance dele). */
-export async function renderPublicSlide(token: string, index: number, approvalId?: string | null): Promise<Buffer | null> {
+export async function renderPublicSlide(
+  token: string,
+  index: number,
+  approvalId?: string | null,
+): Promise<Buffer | null> {
   const link = await loadLink(token);
   if (!link || link.revoked || link.expired) return null;
   const r = await withTx(systemCtx("approval_link.render"), (tx) => approvalInScope(tx, link, approvalId));
   if (!r) return null;
   const doc: ContentDocument = ContentDocumentSchema.parse(r.document);
   if (!Number.isInteger(index) || index < 0 || index >= doc.slides.length) return null;
-  const images = await withTx(systemCtx("approval_link.render"), (tx) => loadImagesForRender(tx, r.client_id, referencedAssetIds(doc)));
+  const images = await withTx(systemCtx("approval_link.render"), (tx) =>
+    loadImagesForRender(tx, r.client_id, referencedAssetIds(doc)),
+  );
   const slide = await renderSlide(doc, index, { images });
   return svgToPng(slide.svg, Math.min(slide.width, 1080));
 }
@@ -199,52 +273,113 @@ const DecisionSchema = z.object({
   note: z.string().trim().max(2000).default(""),
 });
 
-export async function decideByLink(token: string, raw: { approvalId?: string; decision: string; name: string; note?: string }): Promise<{ status: "approved" | "rejected" }> {
+export async function decideByLink(
+  token: string,
+  raw: { approvalId?: string; decision: string; name: string; note?: string },
+): Promise<{ status: "approved" | "rejected" }> {
   const parsed = DecisionSchema.safeParse({ ...raw, approvalId: raw.approvalId || undefined });
-  if (!parsed.success) throw new ValidationError(parsed.error.issues[0]!.message, { [String(parsed.error.issues[0]!.path[0])]: parsed.error.issues[0]!.message });
+  if (!parsed.success)
+    throw new ValidationError(parsed.error.issues[0]!.message, {
+      [String(parsed.error.issues[0]!.path[0])]: parsed.error.issues[0]!.message,
+    });
   const { decision, name, note } = parsed.data;
-  if (decision === "rejected" && note.length < 3) throw new ValidationError("Conte o que precisa mudar para a equipe ajustar.", { note: "Explique o ajuste." });
+  if (decision === "rejected" && note.length < 3)
+    throw new ValidationError("Conte o que precisa mudar para a equipe ajustar.", { note: "Explique o ajuste." });
   const link = await loadLink(token);
-  if (!link || link.revoked || link.expired) throw new NotFoundError("Este link não vale mais. Peça um novo à agência.");
+  if (!link || link.revoked || link.expired)
+    throw new NotFoundError("Este link não vale mais. Peça um novo à agência.");
   const result = await withTx(systemCtx("approval_link.decide"), async (tx) => {
     const target = await approvalInScope(tx, link, parsed.data.approvalId);
     if (!target) throw new NotFoundError("Peça não encontrada neste link.");
-    const item = await one<{ id: string; current_version_id: string | null; title: string }>(tx, "SELECT id, current_version_id, title FROM content_items WHERE id = $1 FOR UPDATE", [target.content_item_id]);
-    const a = await one<{ status: string; content_version_id: string; document_hash: string; requested_by: string | null }>(
+    const item = await one<{ id: string; current_version_id: string | null; title: string }>(
       tx,
-      "SELECT status, content_version_id, document_hash, requested_by FROM approvals WHERE id = $1 FOR UPDATE",
-      [target.id],
+      "SELECT id, current_version_id, title FROM content_items WHERE id = $1 FOR UPDATE",
+      [target.content_item_id],
     );
+    const a = await one<{
+      status: string;
+      content_version_id: string;
+      document_hash: string;
+      requested_by: string | null;
+    }>(tx, "SELECT status, content_version_id, document_hash, requested_by FROM approvals WHERE id = $1 FOR UPDATE", [
+      target.id,
+    ]);
     if (a.status !== "pending") throw new ConflictError("Este pedido já foi respondido.");
     if (item.current_version_id !== a.content_version_id) {
       await tx.query("UPDATE approvals SET status = 'superseded' WHERE id = $1", [target.id]);
-      throw new ConflictError("A agência alterou a peça depois do envio. Ela volta para você quando a nova versão for enviada.");
+      throw new ConflictError(
+        "A agência alterou a peça depois do envio. Ela volta para você quando a nova versão for enviada.",
+      );
     }
-    const v = await one<{ document: unknown; document_hash: string; version_number: number }>(tx, "SELECT document, document_hash, version_number FROM content_versions WHERE id = $1", [a.content_version_id]);
-    if (documentHash(ContentDocumentSchema.parse(v.document)) !== a.document_hash || v.document_hash !== a.document_hash) {
+    const v = await one<{ document: unknown; document_hash: string; version_number: number }>(
+      tx,
+      "SELECT document, document_hash, version_number FROM content_versions WHERE id = $1",
+      [a.content_version_id],
+    );
+    if (
+      documentHash(ContentDocumentSchema.parse(v.document)) !== a.document_hash ||
+      v.document_hash !== a.document_hash
+    ) {
       throw new ConflictError("A versão não confere com o pedido de aprovação. Peça um novo link à agência.");
     }
-    await tx.query("UPDATE approvals SET status = $2, decided_at = now(), decided_via = 'client_link', decided_by_name = $3, decision_note = $4 WHERE id = $1", [target.id, decision, name, note]);
+    await tx.query(
+      "UPDATE approvals SET status = $2, decided_at = now(), decided_via = 'client_link', decided_by_name = $3, decision_note = $4 WHERE id = $1",
+      [target.id, decision, name, note],
+    );
     if (decision === "approved") {
-      await tx.query("UPDATE content_items SET status = 'approved', approved_version_id = $2 WHERE id = $1", [item.id, a.content_version_id]);
+      await tx.query("UPDATE content_items SET status = 'approved', approved_version_id = $2 WHERE id = $1", [
+        item.id,
+        a.content_version_id,
+      ]);
     } else {
       await tx.query("UPDATE content_items SET status = 'rejected' WHERE id = $1", [item.id]);
       await tx.query(
         `INSERT INTO client_memories (organization_id, client_id, kind, content, source) VALUES ($1, $2, 'suggestion', $3, 'approval_feedback')`,
-        [link.organization_id, link.client_id, `Ajuste pedido pelo cliente (${name}) em "${item.title}" (v${v.version_number}): ${note}`.slice(0, 2000)],
+        [
+          link.organization_id,
+          link.client_id,
+          `Ajuste pedido pelo cliente (${name}) em "${item.title}" (v${v.version_number}): ${note}`.slice(0, 2000),
+        ],
       );
     }
-    await audit(tx, { type: "system" }, {
-      organizationId: link.organization_id,
-      clientId: link.client_id,
-      action: decision === "approved" ? "approval.approved" : "approval.rejected",
-      entityType: "approval",
-      entityId: target.id,
-      metadata: { contentId: item.id, version: v.version_number, hash: a.document_hash, note, via: "client_link", name },
-    });
+    await audit(
+      tx,
+      { type: "system" },
+      {
+        organizationId: link.organization_id,
+        clientId: link.client_id,
+        action: decision === "approved" ? "approval.approved" : "approval.rejected",
+        entityType: "approval",
+        entityId: target.id,
+        metadata: {
+          contentId: item.id,
+          version: v.version_number,
+          hash: a.document_hash,
+          note,
+          via: "client_link",
+          name,
+        },
+      },
+    );
     return { approvalId: target.id, contentId: item.id, requestedBy: a.requested_by, title: item.title };
   });
-  await emitEvent(link.organization_id, "approval.decided", { approvalId: result.approvalId, contentId: result.contentId, clientId: link.client_id, decision, by: name, via: "client_link", note });
-  await notifyApprovalDecided(link.organization_id, { requestedBy: result.requestedBy, contentId: result.contentId, title: result.title, clientName: link.client_name, decision, by: `${name} (cliente)`, note });
+  await emitEvent(link.organization_id, "approval.decided", {
+    approvalId: result.approvalId,
+    contentId: result.contentId,
+    clientId: link.client_id,
+    decision,
+    by: name,
+    via: "client_link",
+    note,
+  });
+  await notifyApprovalDecided(link.organization_id, {
+    requestedBy: result.requestedBy,
+    contentId: result.contentId,
+    title: result.title,
+    clientName: link.client_name,
+    decision,
+    by: `${name} (cliente)`,
+    note,
+  });
   return { status: decision };
 }

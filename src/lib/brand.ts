@@ -37,7 +37,10 @@ export const BrandVisualSchema = z.object({
   titleCtaStyle: text(1000),
   approvedReferences: text(2000),
   restrictedElements: text(2000),
-  preferredFamilies: z.array(z.enum(["editorial", "natural", "educativo", "produto", "video", "tech"])).max(6).default([]),
+  preferredFamilies: z
+    .array(z.enum(["editorial", "natural", "educativo", "produto", "video", "tech"]))
+    .max(6)
+    .default([]),
   configured: z.boolean().default(false),
 });
 
@@ -79,7 +82,15 @@ export const BrandProfileSchema = z.object({
       frequency: text(500),
       confirmedOffers: text(3000),
     })
-    .default({ instagram: "", facebook: "", linkedin: "", tiktok: "", website: "", frequency: "", confirmedOffers: "" }),
+    .default({
+      instagram: "",
+      facebook: "",
+      linkedin: "",
+      tiktok: "",
+      website: "",
+      frequency: "",
+      confirmedOffers: "",
+    }),
   references: z
     .object({
       competitors: text(3000),

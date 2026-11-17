@@ -102,10 +102,10 @@ export function CommandPalette() {
       aria-label="Busca rápida"
       onClose={() => setQ("")}
       onClick={(e) => e.target === ref.current && close()}
-      className="mx-auto mt-[12vh] w-[min(560px,calc(100vw-32px))] overflow-hidden rounded-[14px] border border-ink-700 bg-ink-900 p-0 text-ink-100 shadow-[0_16px_48px_rgb(0_0_0/0.55)] backdrop:bg-black/60"
+      className="mx-auto mt-[12vh] w-[min(560px,calc(100vw-32px))] overflow-hidden rounded-md border border-line bg-surface p-0 text-fg shadow-[0_16px_48px_rgb(0_0_0/0.55)] backdrop:bg-black/60"
     >
-      <div className="flex items-center gap-2.5 border-b border-ink-800 px-4">
-        <Icon.search width={16} height={16} className="text-ink-400" />
+      <div className="flex items-center gap-2.5 border-b border-line px-4">
+        <Icon.search width={16} height={16} className="text-muted" />
         <input
           ref={input}
           value={q}
@@ -124,24 +124,26 @@ export function CommandPalette() {
           }}
           placeholder="Buscar clientes, peças ou páginas"
           aria-label="Buscar"
-          className="h-12 flex-1 bg-transparent text-[15px] text-ink-50 placeholder:text-ink-500 focus:outline-none"
+          className="h-12 flex-1 bg-transparent text-md text-fg placeholder:text-faint focus:outline-none"
         />
-        <kbd className="rounded border border-ink-700 px-1.5 text-[11px] text-ink-400">Esc</kbd>
+        <kbd className="rounded border border-line px-1.5 text-xs text-muted">Esc</kbd>
       </div>
       <ul role="listbox" aria-label="Resultados" className="max-h-[50vh] overflow-y-auto py-1.5">
-        {hits.length === 0 ? <li className="px-4 py-3 text-[13.5px] text-ink-400">Nada encontrado.</li> : null}
+        {hits.length === 0 ? <li className="px-4 py-3 text-base text-muted">Nada encontrado.</li> : null}
         {hits.map((h, i) => (
           <li key={`${h.kind}-${h.id}`} role="option" aria-selected={i === active}>
             <button
               type="button"
               onMouseEnter={() => setActive(i)}
               onClick={() => go(h)}
-              className={cx("flex w-full items-center gap-3 px-4 py-2 text-left", i === active ? "bg-white/[0.06]" : "")}
+              className={cx("flex w-full items-center gap-3 px-4 py-2 text-left", i === active ? "bg-surface-2" : "")}
             >
-              <span className="w-16 shrink-0 text-[11.5px] text-ink-400">{h.kind === "client" ? "Cliente" : h.kind === "content" ? "Peça" : "Página"}</span>
+              <span className="w-16 shrink-0 text-xs text-muted">
+                {h.kind === "client" ? "Cliente" : h.kind === "content" ? "Peça" : "Página"}
+              </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[14px] text-ink-50">{h.title}</span>
-                {h.kind !== "page" ? <span className="block truncate text-[12px] text-ink-400">{h.detail}</span> : null}
+                <span className="block truncate text-base text-fg">{h.title}</span>
+                {h.kind !== "page" ? <span className="block truncate text-sm text-muted">{h.detail}</span> : null}
               </span>
             </button>
           </li>
@@ -157,11 +159,14 @@ export function SearchButton({ className }: { className?: string }) {
     <button
       type="button"
       onClick={() => window.dispatchEvent(new Event("prisma:busca"))}
-      className={cx("flex h-9 w-full items-center gap-2.5 rounded-full border border-ink-800 px-3 text-[13px] text-ink-400 hover:border-ink-700 hover:text-ink-200", className)}
+      className={cx(
+        "flex h-9 w-full items-center gap-2.5 rounded-sm border border-line px-3 text-base text-muted hover:border-line hover:text-fg",
+        className,
+      )}
     >
       <Icon.search width={15} height={15} />
       <span className="flex-1 text-left">Buscar</span>
-      <kbd className="text-[11px] text-ink-500">Ctrl K</kbd>
+      <kbd className="text-xs text-faint">Ctrl K</kbd>
     </button>
   );
 }

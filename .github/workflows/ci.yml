@@ -1,0 +1,97 @@
+# Rede de proteção: roda em todo PR e em cada envio para main.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  verificacao:
+    name: Formatação, lint, tipos, testes e build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16.4
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Formatação
+        run: npm run format:check
+      - name: Lint
+        run: npm run lint
+      - name: Tipos
+        run: npm run typecheck
+      - name: Arquivos e dependências sem uso
+        run: npm run knip
+      - name: Vulnerabilidades em dependências de produção
+        run: npm audit --omit=dev --audit-level=high
+      - name: Banco de testes
+        run: node scripts/setup-ci-db.mjs
+      - name: Testes (unidade e integração)
+        run: npm test
+      - name: Build
+        run: npm run build
+
+  navegador:
+    name: Testes de navegador e comparação visual
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # A mesma imagem que gera as referências (npm run capturas): fontes e navegador idênticos.
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
+      options: --ipc=host
+    services:
+      postgres:
+        image: postgres:16.4
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      HOME: /root
+      PGSUPERUSER_URL: postgres://postgres:postgres@postgres:5432/postgres
+      E2E_DATABASE_URL: postgres://prisma_app_login:prisma_app_dev@postgres:5432/prisma_os_e2e
+      E2E_MIGRATION_DATABASE_URL: postgres://prisma_owner:prisma_owner_dev@postgres:5432/prisma_os_e2e
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci --no-audit --no-fund
+      - name: Banco de testes
+        run: node scripts/setup-ci-db.mjs
+      - name: Build
+        run: npm run build
+      - name: Testes de navegador (build de produção)
+        run: npm run test:e2e:prod
+      - name: Comparação visual (dados de demonstração)
+        run: npm run test:visual
+      - name: Relatório do Playwright
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright
+          path: |
+            playwright-report/
+            playwright-report-visual/
+            test-results/
+          retention-days: 14
+          if-no-files-found: ignore

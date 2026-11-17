@@ -52,7 +52,15 @@ export interface MonthlyReport {
   videosDone: number;
   pieces: ReportPiece[];
   posts: ReportPost[];
-  totals: { likes: number; comments: number; shares: number; saves: number; reach: number; views: number; withMetrics: number };
+  totals: {
+    likes: number;
+    comments: number;
+    shares: number;
+    saves: number;
+    reach: number;
+    views: number;
+    withMetrics: number;
+  };
   approvals: { approved: number; adjustments: number; avgHours: number | null; byClient: number };
   editorial: { planned: number; done: number; approved: boolean };
 }
@@ -65,7 +73,14 @@ async function buildReport(tx: Queryable, clientId: string, month: string): Prom
      FROM clients c JOIN organizations o ON o.id = c.organization_id WHERE c.id = $1`,
     [clientId],
   );
-  const pieces = await many<{ id: string; title: string; format: ContentFormat; planned_date: Date | null; approved_at: Date; version_id: string }>(
+  const pieces = await many<{
+    id: string;
+    title: string;
+    format: ContentFormat;
+    planned_date: Date | null;
+    approved_at: Date;
+    version_id: string;
+  }>(
     tx,
     `SELECT ci.id, ci.title, ci.format, (SELECT i.planned_date FROM editorial_items i WHERE i.content_item_id = ci.id LIMIT 1) AS planned_date,
             max(a.decided_at) AS approved_at, ci.approved_version_id AS version_id
@@ -74,7 +89,17 @@ async function buildReport(tx: Queryable, clientId: string, month: string): Prom
      GROUP BY ci.id ORDER BY coalesce((SELECT i.planned_date FROM editorial_items i WHERE i.content_item_id = ci.id LIMIT 1), max(a.decided_at)::date), ci.title`,
     [clientId, start],
   );
-  const posts = await many<{ id: string; network: Network; account_label: string; title: string; content_title: string | null; kind: string; published_at: Date; external_url: string | null; metrics: PostMetrics | null }>(
+  const posts = await many<{
+    id: string;
+    network: Network;
+    account_label: string;
+    title: string;
+    content_title: string | null;
+    kind: string;
+    published_at: Date;
+    external_url: string | null;
+    metrics: PostMetrics | null;
+  }>(
     tx,
     `SELECT p.id, p.network, p.account_label, p.title, ci.title AS content_title, p.kind, p.published_at, p.external_url, p.metrics
      FROM publications p LEFT JOIN content_items ci ON ci.id = p.content_item_id
@@ -126,9 +151,23 @@ async function buildReport(tx: Queryable, clientId: string, month: string): Prom
       approvedAt: p.approved_at.toISOString(),
       versionId: p.version_id,
     })),
-    posts: posts.map((p) => ({ id: p.id, network: p.network, account: p.account_label, title: p.content_title ?? p.title, kind: p.kind, publishedAt: p.published_at.toISOString(), url: p.external_url, metrics: p.metrics })),
+    posts: posts.map((p) => ({
+      id: p.id,
+      network: p.network,
+      account: p.account_label,
+      title: p.content_title ?? p.title,
+      kind: p.kind,
+      publishedAt: p.published_at.toISOString(),
+      url: p.external_url,
+      metrics: p.metrics,
+    })),
     totals,
-    approvals: { approved: ap.approved, adjustments: ap.adjustments, avgHours: ap.avg_hours === null ? null : Number(ap.avg_hours), byClient: ap.by_client },
+    approvals: {
+      approved: ap.approved,
+      adjustments: ap.adjustments,
+      avgHours: ap.avg_hours === null ? null : Number(ap.avg_hours),
+      byClient: ap.by_client,
+    },
     editorial: { planned: ed?.planned ?? 0, done: ed?.done ?? 0, approved: ed?.status === "approved" },
   };
 }
@@ -141,7 +180,11 @@ export async function monthlyReport(auth: AuthContext, clientId: string, month: 
   });
 }
 
-export async function createReportLink(auth: AuthContext, clientId: string, month: string): Promise<{ url: string; expiresAt: string }> {
+export async function createReportLink(
+  auth: AuthContext,
+  clientId: string,
+  month: string,
+): Promise<{ url: string; expiresAt: string }> {
   assertCan(auth.role, "approval.share");
   const m = MonthSchema.safeParse(month);
   if (!m.success) throw new ValidationError("Mês inválido.");
@@ -155,7 +198,14 @@ export async function createReportLink(auth: AuthContext, clientId: string, mont
        VALUES ($1, $2, $3::date, $4, now() + make_interval(days => $5), $6) RETURNING expires_at`,
       [auth.organizationId, clientId, `${m.data}-01`, sha256(token), LINK_DAYS, auth.userId],
     );
-    await audit(tx, userActor(auth), { organizationId: auth.organizationId, clientId, action: "report.link_created", entityType: "client", entityId: clientId, metadata: { month: m.data } });
+    await audit(tx, userActor(auth), {
+      organizationId: auth.organizationId,
+      clientId,
+      action: "report.link_created",
+      entityType: "client",
+      entityId: clientId,
+      metadata: { month: m.data },
+    });
     return { url: `${publicBase().url}/relatorio/${token}`, expiresAt: r.expires_at.toISOString() };
   });
 }
@@ -197,7 +247,9 @@ export async function publicReportCover(token: string, contentId: string): Promi
   );
   if (!row) return null;
   const doc = ContentDocumentSchema.parse(row.document);
-  const images = await withTx(systemCtx("report_link.cover"), (tx) => loadImagesForRender(tx, link.client_id, referencedAssetIds(doc)));
+  const images = await withTx(systemCtx("report_link.cover"), (tx) =>
+    loadImagesForRender(tx, link.client_id, referencedAssetIds(doc)),
+  );
   const slide = await renderSlide(doc, 0, { images });
   return svgToPng(slide.svg, 540);
 }
@@ -205,4 +257,3 @@ export async function publicReportCover(token: string, contentId: string): Promi
 export function assertMonth(month: string | undefined, fallback: string): string {
   return month && MonthSchema.safeParse(month).success ? month : fallback;
 }
-

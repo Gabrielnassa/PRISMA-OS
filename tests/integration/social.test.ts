@@ -5,8 +5,21 @@ import { ForbiddenError, ValidationError } from "../../src/server/errors";
 import { createClient } from "../../src/server/services/clients";
 import { createContent, decideApproval, getContent, submitForApproval } from "../../src/server/services/content";
 import { appCredentials, listAppStatus, saveAppCredentials } from "../../src/server/services/integration-apps";
-import { choosePage, disconnectAccount, finishConnection, listAccounts, pendingPages, startConnection } from "../../src/server/services/social-accounts";
-import { cancelPublication, listPublications, readSignedFile, refreshMetrics, schedulePublications } from "../../src/server/services/publications";
+import {
+  choosePage,
+  disconnectAccount,
+  finishConnection,
+  listAccounts,
+  pendingPages,
+  startConnection,
+} from "../../src/server/services/social-accounts";
+import {
+  cancelPublication,
+  listPublications,
+  readSignedFile,
+  refreshMetrics,
+  schedulePublications,
+} from "../../src/server/services/publications";
 import { processNextJob } from "../../src/server/jobs/worker";
 import { setSocialFetch } from "../../src/server/integrations/social/http";
 import { addMember, newOrg } from "./helpers";
@@ -28,7 +41,10 @@ async function approvedCarousel(owner: AuthContext, clientId: string) {
     channel: "instagram",
     format: "carousel",
     objective: "conversion",
-    briefing: { text: "Explicar como entrar no bolão da loja, com horário de atendimento e endereço.", cta: "Fale com a gente" },
+    briefing: {
+      text: "Explicar como entrar no bolão da loja, com horário de atendimento e endereço.",
+      cta: "Fale com a gente",
+    },
     slideCount: 3,
     mode: "ai",
     requestId: crypto.randomUUID(),
@@ -41,14 +57,30 @@ async function approvedCarousel(owner: AuthContext, clientId: string) {
 }
 
 const PAGES = [
-  { id: "111", name: "Coli Loterias", access_token: "page-token-111", picture: { data: { url: "https://scontent.example/p.jpg" } }, instagram_business_account: { id: "17841400000000001", username: "coliloterias", profile_picture_url: "https://scontent.example/ig.jpg" } },
+  {
+    id: "111",
+    name: "Coli Loterias",
+    access_token: "page-token-111",
+    picture: { data: { url: "https://scontent.example/p.jpg" } },
+    instagram_business_account: {
+      id: "17841400000000001",
+      username: "coliloterias",
+      profile_picture_url: "https://scontent.example/ig.jpg",
+    },
+  },
   { id: "222", name: "Outra Página", access_token: "page-token-222" },
 ];
 
 function metaLogin(pages = PAGES) {
   return fakeFetch([
-    { match: /graph\.facebook\.com\/v23\.0\/oauth\/access_token\?.*code=/, reply: () => ({ json: { access_token: "short-token" } }) },
-    { match: /graph\.facebook\.com\/v23\.0\/oauth\/access_token\?.*fb_exchange_token/, reply: () => ({ json: { access_token: "long-user-token", expires_in: 5_184_000 } }) },
+    {
+      match: /graph\.facebook\.com\/v23\.0\/oauth\/access_token\?.*code=/,
+      reply: () => ({ json: { access_token: "short-token" } }),
+    },
+    {
+      match: /graph\.facebook\.com\/v23\.0\/oauth\/access_token\?.*fb_exchange_token/,
+      reply: () => ({ json: { access_token: "long-user-token", expires_in: 5_184_000 } }),
+    },
     { match: /graph\.facebook\.com\/v23\.0\/me\/accounts/, reply: () => ({ json: { data: pages } }) },
   ]);
 }
@@ -66,17 +98,36 @@ describe("chaves dos apps", () => {
     const { owner } = await newOrg();
     await saveAppCredentials(owner, "tiktok", { publicId: "awabcdef123", secret: "segredo-tiktok-1234" });
     const status = await listAppStatus(owner);
-    expect(status.find((s) => s.provider === "tiktok")).toMatchObject({ configured: true, source: "saved", publicId: "awabcdef123", secretHint: "••••1234" });
-    expect(status.find((s) => s.provider === "tiktok")!.redirectUri).toBe("https://prisma.teste.example/api/conexoes/tiktok/retorno");
-    const raw = await withTx(systemCtx("teste"), (tx) => many<{ secret_sealed: string }>(tx, "SELECT secret_sealed FROM integration_apps WHERE organization_id = $1", [owner.organizationId]));
+    expect(status.find((s) => s.provider === "tiktok")).toMatchObject({
+      configured: true,
+      source: "saved",
+      publicId: "awabcdef123",
+      secretHint: "••••1234",
+    });
+    expect(status.find((s) => s.provider === "tiktok")!.redirectUri).toBe(
+      "https://prisma.teste.example/api/conexoes/tiktok/retorno",
+    );
+    const raw = await withTx(systemCtx("teste"), (tx) =>
+      many<{ secret_sealed: string }>(tx, "SELECT secret_sealed FROM integration_apps WHERE organization_id = $1", [
+        owner.organizationId,
+      ]),
+    );
     expect(raw[0]!.secret_sealed).not.toContain("segredo");
-    expect(await appCredentials(owner.organizationId, "tiktok")).toEqual({ publicId: "awabcdef123", secret: "segredo-tiktok-1234" });
+    expect(await appCredentials(owner.organizationId, "tiktok")).toEqual({
+      publicId: "awabcdef123",
+      secret: "segredo-tiktok-1234",
+    });
     // Atualizar sem a chave secreta mantém a anterior.
     await saveAppCredentials(owner, "tiktok", { publicId: "awnovo456" });
-    expect(await appCredentials(owner.organizationId, "tiktok")).toEqual({ publicId: "awnovo456", secret: "segredo-tiktok-1234" });
+    expect(await appCredentials(owner.organizationId, "tiktok")).toEqual({
+      publicId: "awnovo456",
+      secret: "segredo-tiktok-1234",
+    });
 
     const editor = await addMember(owner, "editor");
-    await expect(saveAppCredentials(editor, "meta", { publicId: "123", secret: "x".repeat(12) })).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(
+      saveAppCredentials(editor, "meta", { publicId: "123", secret: "x".repeat(12) }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
     const other = await newOrg("Outra");
     expect(await appCredentials(other.owner.organizationId, "tiktok")).toBeNull();
   });
@@ -93,7 +144,9 @@ describe("conexão das contas", () => {
       ["instagram", "coliloterias"],
       ["facebook", "Coli Loterias"],
     ]);
-    const sealed = await withTx(systemCtx("teste"), (tx) => many<{ access_sealed: string }>(tx, "SELECT access_sealed FROM social_accounts WHERE client_id = $1", [clientId]));
+    const sealed = await withTx(systemCtx("teste"), (tx) =>
+      many<{ access_sealed: string }>(tx, "SELECT access_sealed FROM social_accounts WHERE client_id = $1", [clientId]),
+    );
     expect(sealed.every((s) => !s.access_sealed.includes("page-token"))).toBe(true);
     await expect(finishConnection(owner, "meta", { code: "codigo", state })).rejects.toThrow(/já foi usado/);
 
@@ -124,26 +177,93 @@ describe("conexão das contas", () => {
     const { owner } = await newOrg();
     const { id: clientId } = await createClient(owner, { name: "Coli Loterias" });
     await saveAppCredentials(owner, "tiktok", { publicId: "awclientkey", secret: "segredo-tiktok-1234" });
-    await saveAppCredentials(owner, "google", { publicId: "123-abc.apps.googleusercontent.com", secret: "GOCSPX-segredo" });
+    await saveAppCredentials(owner, "google", {
+      publicId: "123-abc.apps.googleusercontent.com",
+      secret: "GOCSPX-segredo",
+    });
 
     const tt = new URL(await startConnection(owner, clientId, "tiktok"));
     expect(tt.origin + tt.pathname).toBe("https://www.tiktok.com/v2/auth/authorize/");
     expect(tt.searchParams.get("scope")).toBe("user.info.basic,video.publish,video.upload");
     setSocialFetch(
       fakeFetch([
-        { method: "POST", match: /open\.tiktokapis\.com\/v2\/oauth\/token\//, reply: () => ({ json: { access_token: "tt-access", refresh_token: "tt-refresh", expires_in: 86400, refresh_expires_in: 31536000, open_id: "open-1", scope: "user.info.basic,video.publish" } }) },
-        { match: /open\.tiktokapis\.com\/v2\/user\/info\//, reply: () => ({ json: { data: { user: { open_id: "open-1", display_name: "Coli", username: "coli.loterias", avatar_url: "https://p16.example/a.jpg" } }, error: { code: "ok" } } }) },
-        { method: "POST", match: /creator_info\/query/, reply: () => ({ json: { data: { creator_nickname: "Coli", privacy_level_options: ["SELF_ONLY", "PUBLIC_TO_EVERYONE"] }, error: { code: "ok" } } }) },
+        {
+          method: "POST",
+          match: /open\.tiktokapis\.com\/v2\/oauth\/token\//,
+          reply: () => ({
+            json: {
+              access_token: "tt-access",
+              refresh_token: "tt-refresh",
+              expires_in: 86400,
+              refresh_expires_in: 31536000,
+              open_id: "open-1",
+              scope: "user.info.basic,video.publish",
+            },
+          }),
+        },
+        {
+          match: /open\.tiktokapis\.com\/v2\/user\/info\//,
+          reply: () => ({
+            json: {
+              data: {
+                user: {
+                  open_id: "open-1",
+                  display_name: "Coli",
+                  username: "coli.loterias",
+                  avatar_url: "https://p16.example/a.jpg",
+                },
+              },
+              error: { code: "ok" },
+            },
+          }),
+        },
+        {
+          method: "POST",
+          match: /creator_info\/query/,
+          reply: () => ({
+            json: {
+              data: { creator_nickname: "Coli", privacy_level_options: ["SELF_ONLY", "PUBLIC_TO_EVERYONE"] },
+              error: { code: "ok" },
+            },
+          }),
+        },
       ]).fn,
     );
-    expect(await finishConnection(owner, "tiktok", { code: "c", state: tt.searchParams.get("state") })).toMatchObject({ kind: "connected", networks: ["tiktok"] });
+    expect(await finishConnection(owner, "tiktok", { code: "c", state: tt.searchParams.get("state") })).toMatchObject({
+      kind: "connected",
+      networks: ["tiktok"],
+    });
 
     const g = new URL(await startConnection(owner, clientId, "google"));
     expect(g.searchParams.get("code_challenge_method")).toBe("S256");
     expect(g.searchParams.get("access_type")).toBe("offline");
     const google = fakeFetch([
-      { method: "POST", match: /oauth2\.googleapis\.com\/token/, reply: () => ({ json: { access_token: "ya29.x", refresh_token: "1//refresh", expires_in: 3599, scope: "https://www.googleapis.com/auth/youtube.upload" } }) },
-      { match: /youtube\/v3\/channels/, reply: () => ({ json: { items: [{ id: "UC123", snippet: { title: "Coli Loterias", customUrl: "@coli" }, statistics: { subscriberCount: "120" } }] } }) },
+      {
+        method: "POST",
+        match: /oauth2\.googleapis\.com\/token/,
+        reply: () => ({
+          json: {
+            access_token: "ya29.x",
+            refresh_token: "1//refresh",
+            expires_in: 3599,
+            scope: "https://www.googleapis.com/auth/youtube.upload",
+          },
+        }),
+      },
+      {
+        match: /youtube\/v3\/channels/,
+        reply: () => ({
+          json: {
+            items: [
+              {
+                id: "UC123",
+                snippet: { title: "Coli Loterias", customUrl: "@coli" },
+                statistics: { subscriberCount: "120" },
+              },
+            ],
+          },
+        }),
+      },
     ]);
     setSocialFetch(google.fn);
     await finishConnection(owner, "google", { code: "c", state: g.searchParams.get("state") });
@@ -174,8 +294,20 @@ describe("publicação", () => {
     const fb = accounts.find((a) => a.network === "facebook")!;
 
     // Rascunho não publica.
-    const { contentId: draftId } = await createContent(owner, { clientId, title: "Rascunho", channel: "instagram", format: "post", objective: "education", briefing: { text: "Texto do rascunho com mais de dez letras." }, slideCount: 1, mode: "manual", requestId: crypto.randomUUID() });
-    await expect(schedulePublications(owner, { contentId: draftId, accountIds: [ig.id], when: "now", caption: "x" })).rejects.toThrow(/aprovadas/);
+    const { contentId: draftId } = await createContent(owner, {
+      clientId,
+      title: "Rascunho",
+      channel: "instagram",
+      format: "post",
+      objective: "education",
+      briefing: { text: "Texto do rascunho com mais de dez letras." },
+      slideCount: 1,
+      mode: "manual",
+      requestId: crypto.randomUUID(),
+    });
+    await expect(
+      schedulePublications(owner, { contentId: draftId, accountIds: [ig.id], when: "now", caption: "x" }),
+    ).rejects.toThrow(/aprovadas/);
 
     const contentId = await approvedCarousel(owner, clientId);
     const fetched: Array<{ ok: boolean; jpeg: boolean }> = [];
@@ -196,17 +328,34 @@ describe("publicação", () => {
           return { json: { id: `container-${++media}` } };
         },
       },
-      { match: /graph\.facebook\.com\/v23\.0\/container-\d+\?fields=status_code/, reply: () => ({ json: { status_code: "FINISHED" } }) },
+      {
+        match: /graph\.facebook\.com\/v23\.0\/container-\d+\?fields=status_code/,
+        reply: () => ({ json: { status_code: "FINISHED" } }),
+      },
       { method: "POST", match: /17841400000000001\/media_publish/, reply: () => ({ json: { id: "ig-media-1" } }) },
-      { match: /ig-media-1\?fields=permalink$/, reply: () => ({ json: { permalink: "https://www.instagram.com/p/abc/" } }) },
+      {
+        match: /ig-media-1\?fields=permalink$/,
+        reply: () => ({ json: { permalink: "https://www.instagram.com/p/abc/" } }),
+      },
       { method: "POST", match: /v23\.0\/111\/photos/, reply: (_u, _i, n) => ({ json: { id: `photo-${n}` } }) },
       { method: "POST", match: /v23\.0\/111\/feed/, reply: () => ({ json: { id: "111_999" } }) },
-      { match: /111_999\?fields=permalink_url/, reply: () => ({ json: { permalink_url: "https://www.facebook.com/111/posts/999" } }) },
+      {
+        match: /111_999\?fields=permalink_url/,
+        reply: () => ({ json: { permalink_url: "https://www.facebook.com/111/posts/999" } }),
+      },
       { match: /ig-media-1\?fields=like_count/, reply: () => ({ json: { like_count: 12, comments_count: 3 } }) },
-      { match: /ig-media-1\/insights/, reply: () => ({ json: { data: [{ name: "reach", values: [{ value: 340 }] }] } }) },
+      {
+        match: /ig-media-1\/insights/,
+        reply: () => ({ json: { data: [{ name: "reach", values: [{ value: 340 }] }] } }),
+      },
     ]);
     setSocialFetch(meta.fn);
-    const r = await schedulePublications(owner, { contentId, accountIds: [ig.id, fb.id], when: "now", caption: "Legenda #bolao" });
+    const r = await schedulePublications(owner, {
+      contentId,
+      accountIds: [ig.id, fb.id],
+      when: "now",
+      caption: "Legenda #bolao",
+    });
     expect(r.ids).toHaveLength(2);
     await drain();
 
@@ -220,7 +369,10 @@ describe("publicação", () => {
     expect(fetched).toHaveLength(3);
     expect(fetched.every((f) => f.ok && f.jpeg)).toBe(true);
     const carousel = meta.calls.find((c) => c.method === "POST" && bodyOf(c.init).media_type === "CAROUSEL")!;
-    expect(bodyOf(carousel.init)).toMatchObject({ children: "container-1,container-2,container-3", caption: "Legenda #bolao" });
+    expect(bodyOf(carousel.init)).toMatchObject({
+      children: "container-1,container-2,container-3",
+      caption: "Legenda #bolao",
+    });
     const feed = meta.calls.find((c) => c.url.pathname.endsWith("/111/feed"))!;
     expect(Object.keys(bodyOf(feed.init)).filter((k) => k.startsWith("attached_media"))).toHaveLength(3);
 
@@ -239,7 +391,9 @@ describe("publicação", () => {
     const ig = accounts.find((a) => a.network === "instagram")!;
     const contentId = await approvedCarousel(owner, clientId);
 
-    await expect(schedulePublications(owner, { contentId, accountIds: [ig.id], when: "2020-01-01T10:00:00-03:00", caption: "" })).rejects.toBeInstanceOf(ValidationError);
+    await expect(
+      schedulePublications(owner, { contentId, accountIds: [ig.id], when: "2020-01-01T10:00:00-03:00", caption: "" }),
+    ).rejects.toBeInstanceOf(ValidationError);
     const later = new Date(Date.now() + 3 * 86_400_000).toISOString();
     const { ids } = await schedulePublications(owner, { contentId, accountIds: [ig.id], when: later, caption: "" });
     expect(await processNextJob("teste-agenda")).toBe(false); // ainda não é a hora
@@ -247,14 +401,26 @@ describe("publicação", () => {
     expect((await listPublications(owner, { contentId }))[0]).toMatchObject({ status: "cancelled" });
 
     const viewer = await addMember(owner, "viewer");
-    await expect(schedulePublications(viewer, { contentId, accountIds: [ig.id], when: "now", caption: "" })).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(
+      schedulePublications(viewer, { contentId, accountIds: [ig.id], when: "now", caption: "" }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
 
-    setSocialFetch(fakeFetch([{ method: "POST", match: /\/media$/, reply: () => ({ status: 400, json: { error: { code: 190, message: "Error validating access token" } } }) }]).fn);
+    setSocialFetch(
+      fakeFetch([
+        {
+          method: "POST",
+          match: /\/media$/,
+          reply: () => ({ status: 400, json: { error: { code: 190, message: "Error validating access token" } } }),
+        },
+      ]).fn,
+    );
     await schedulePublications(owner, { contentId, accountIds: [ig.id], when: "now", caption: "" });
     await drain();
     const failed = (await listPublications(owner, { contentId, status: "failed" }))[0]!;
     expect(failed.error).toMatch(/Conecte a conta de novo/);
     expect((await listAccounts(owner, clientId)).find((a) => a.id === ig.id)!.status).toBe("reconnect");
-    await expect(schedulePublications(owner, { contentId, accountIds: [ig.id], when: "now", caption: "" })).rejects.toThrow(/conecte a conta de novo/);
+    await expect(
+      schedulePublications(owner, { contentId, accountIds: [ig.id], when: "now", caption: "" }),
+    ).rejects.toThrow(/conecte a conta de novo/);
   });
 });

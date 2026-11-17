@@ -31,16 +31,27 @@ export const videoCapaImpacto: TemplateDef = {
   defaultTheme: { cover: "dark", content: "dark", cta: "brand" },
   defaultAlign: "center",
   fieldLimits: VIDEO_LIMITS,
-  compositionRules: ["Título centralizado dentro da área segura do aplicativo", "Película escura uniforme (62%) sobre o frame", "Poucas palavras, leitura em 2 segundos"],
+  compositionRules: [
+    "Título centralizado dentro da área segura do aplicativo",
+    "Película escura uniforme (62%) sobre o frame",
+    "Poucas palavras, leitura em 2 segundos",
+  ],
   qualityCriteria: ["Legível em miniatura", "Texto fora das áreas da interface do app", "Frame real do vídeo"],
   render(ctx) {
     const side = ctx.safe.side;
     const hasImage = ctx.image !== null;
     const fg = hasImage ? "#ffffff" : ctx.palette.fg;
     const accent = hasImage ? "#ffffff" : ctx.palette.accent;
-    const background = hasImage ? ({ kind: "overlay", color: "#000000", alpha: 0.62 } as const) : ({ kind: "solid", color: ctx.palette.bg } as const);
+    const background = hasImage
+      ? ({ kind: "overlay", color: "#000000", alpha: 0.62 } as const)
+      : ({ kind: "solid", color: ctx.palette.bg } as const);
     const s = typeScale(ctx);
-    const box = { x: side, y: ctx.safe.top + 120, w: ctx.W - side * 2, h: ctx.H - ctx.safe.top - ctx.safe.bottom - 240 };
+    const box = {
+      x: side,
+      y: ctx.safe.top + 120,
+      w: ctx.W - side * 2,
+      h: ctx.H - ctx.safe.top - ctx.safe.bottom - 240,
+    };
     return (
       <Root ctx={ctx}>
         <Photo ctx={ctx} box={{ x: 0, y: 0, w: ctx.W, h: ctx.H }} fallback={ctx.palette.bg} />
@@ -53,9 +64,39 @@ export const videoCapaImpacto: TemplateDef = {
           justify: "center",
           align: "center",
           items: [
-            { field: "kicker", font: "body", weight: 700, maxSize: 34, minSize: 24, lineHeight: 1.2, uppercase: true, letterSpacingEm: 0.14, color: accent, gapAfter: 28 },
-            { field: "title", font: "heading", weight: 800, maxSize: Math.round(124 * s), minSize: 52, lineHeight: 1.02, uppercase: true, color: fg, gapAfter: 32 },
-            { field: "body", font: "body", weight: 600, maxSize: Math.round(40 * s), minSize: 28, lineHeight: 1.3, color: fg, gapAfter: 0 },
+            {
+              field: "kicker",
+              font: "body",
+              weight: 700,
+              maxSize: 34,
+              minSize: 24,
+              lineHeight: 1.2,
+              uppercase: true,
+              letterSpacingEm: 0.14,
+              color: accent,
+              gapAfter: 28,
+            },
+            {
+              field: "title",
+              font: "heading",
+              weight: 800,
+              maxSize: Math.round(124 * s),
+              minSize: 52,
+              lineHeight: 1.02,
+              uppercase: true,
+              color: fg,
+              gapAfter: 32,
+            },
+            {
+              field: "body",
+              font: "body",
+              weight: 600,
+              maxSize: Math.round(40 * s),
+              minSize: 28,
+              lineHeight: 1.3,
+              color: fg,
+              gapAfter: 0,
+            },
           ],
           background,
         })}
@@ -89,7 +130,11 @@ export const videoDepoimento: TemplateDef = {
     "1:1": { content: { plain: 1, photo: 0.9 } },
   },
   compositionRules: ["Foto circular da pessoa (opcional)", "Aspas na cor de destaque", "Nome e contexto no rodapé"],
-  qualityCriteria: ["Depoimento real, literal e autorizado", "Nome/identificação com consentimento", "Sem edição que altere o sentido"],
+  qualityCriteria: [
+    "Depoimento real, literal e autorizado",
+    "Nome/identificação com consentimento",
+    "Sem edição que altere o sentido",
+  ],
   render(ctx) {
     const side = ctx.safe.side;
     const s = typeScale(ctx);
@@ -102,7 +147,9 @@ export const videoDepoimento: TemplateDef = {
       <Root ctx={ctx}>
         <Brandmark ctx={ctx} x={side} y={ctx.safe.top - 10} maxW={220} maxH={64} />
         <Counter ctx={ctx} x={ctx.W - side - 200} y={ctx.safe.top} />
-        {hasImage ? <Photo ctx={ctx} box={{ x: (ctx.W - avatar) / 2, y: top, w: avatar, h: avatar }} radius={avatar / 2} /> : null}
+        {hasImage ? (
+          <Photo ctx={ctx} box={{ x: (ctx.W - avatar) / 2, y: top, w: avatar, h: avatar }} radius={avatar / 2} />
+        ) : null}
         <div
           style={{
             position: "absolute",
@@ -126,9 +173,36 @@ export const videoDepoimento: TemplateDef = {
           justify: "start",
           align: "center",
           items: [
-            { field: "kicker", font: "body", weight: 600, maxSize: 30, minSize: 22, lineHeight: 1.25, uppercase: true, letterSpacingEm: 0.12, color: ctx.palette.accentText, gapAfter: 24 },
-            { field: "title", font: "heading", weight: 600, maxSize: Math.round((ctx.kind === "cta" ? 84 : 64) * s), minSize: 36, lineHeight: 1.2, gapAfter: 28 },
-            { field: "body", font: "body", weight: 400, maxSize: Math.round(36 * s), minSize: 26, lineHeight: 1.4, gapAfter: 0 },
+            {
+              field: "kicker",
+              font: "body",
+              weight: 600,
+              maxSize: 30,
+              minSize: 22,
+              lineHeight: 1.25,
+              uppercase: true,
+              letterSpacingEm: 0.12,
+              color: ctx.palette.accentText,
+              gapAfter: 24,
+            },
+            {
+              field: "title",
+              font: "heading",
+              weight: 600,
+              maxSize: Math.round((ctx.kind === "cta" ? 84 : 64) * s),
+              minSize: 36,
+              lineHeight: 1.2,
+              gapAfter: 28,
+            },
+            {
+              field: "body",
+              font: "body",
+              weight: 400,
+              maxSize: Math.round(36 * s),
+              minSize: 26,
+              lineHeight: 1.4,
+              gapAfter: 0,
+            },
           ],
           background: { kind: "solid", color: ctx.palette.bg },
         })}
@@ -137,7 +211,18 @@ export const videoDepoimento: TemplateDef = {
           key: "footer",
           box: { x: side, y: bottom + 56, w: ctx.W - side * 2, h: 70 },
           align: "center",
-          items: [{ field: "footer", font: "body", weight: 700, maxSize: 32, minSize: 22, lineHeight: 1.3, color: ctx.palette.fg, gapAfter: 0 }],
+          items: [
+            {
+              field: "footer",
+              font: "body",
+              weight: 700,
+              maxSize: 32,
+              minSize: 22,
+              lineHeight: 1.3,
+              color: ctx.palette.fg,
+              gapAfter: 0,
+            },
+          ],
           background: { kind: "solid", color: ctx.palette.bg },
         })}
       </Root>
@@ -162,7 +247,11 @@ export const videoLegenda: TemplateDef = {
   capacity: {
     "1:1": { content: { plain: 0.9, photo: 0.9 } },
   },
-  compositionRules: ["Frame em tela cheia", "Faixa sólida na cor da marca no terço inferior", "Sobretítulo em etiqueta acima da faixa"],
+  compositionRules: [
+    "Frame em tela cheia",
+    "Faixa sólida na cor da marca no terço inferior",
+    "Sobretítulo em etiqueta acima da faixa",
+  ],
   qualityCriteria: ["Rosto/assunto fora da faixa", "Texto curto na faixa", "Contraste AA na faixa"],
   render(ctx) {
     const side = ctx.safe.side;
@@ -173,18 +262,40 @@ export const videoLegenda: TemplateDef = {
     return (
       <Root ctx={ctx}>
         <Photo ctx={ctx} box={{ x: 0, y: 0, w: ctx.W, h: ctx.H }} />
-        <Overlay box={{ x: 0, y: 0, w: ctx.W, h: ctx.safe.top + 170 }} color="#000000" alpha={0.55} solidFrom="top" solidFraction={0.7} />
+        <Overlay
+          box={{ x: 0, y: 0, w: ctx.W, h: ctx.safe.top + 170 }}
+          color="#000000"
+          alpha={0.55}
+          solidFrom="top"
+          solidFraction={0.7}
+        />
         <Brandmark ctx={ctx} x={side} y={ctx.safe.top - 10} maxW={220} maxH={64} color="#ffffff" />
         <Counter ctx={ctx} x={ctx.W - side - 200} y={ctx.safe.top} color="#ffffff" />
         <Rect box={{ x: 0, y: bandY, w: ctx.W, h: bandH }} color={ctx.palette.bg} />
         {kicker ? (
           <>
-            <Rect box={{ x: side, y: bandY - 64, w: Math.min(ctx.W - side * 2, 520), h: 64 }} color={ctx.palette.accent} />
+            <Rect
+              box={{ x: side, y: bandY - 64, w: Math.min(ctx.W - side * 2, 520), h: 64 }}
+              color={ctx.palette.accent}
+            />
             {ctx.textStack({
               key: "tag",
               box: { x: side + 24, y: bandY - 56, w: Math.min(ctx.W - side * 2, 520) - 48, h: 48 },
               justify: "center",
-              items: [{ field: "kicker", font: "body", weight: 700, maxSize: 28, minSize: 20, lineHeight: 1.2, uppercase: true, letterSpacingEm: 0.1, color: ctx.palette.accentFg, gapAfter: 0 }],
+              items: [
+                {
+                  field: "kicker",
+                  font: "body",
+                  weight: 700,
+                  maxSize: 28,
+                  minSize: 20,
+                  lineHeight: 1.2,
+                  uppercase: true,
+                  letterSpacingEm: 0.1,
+                  color: ctx.palette.accentFg,
+                  gapAfter: 0,
+                },
+              ],
               background: { kind: "solid", color: ctx.palette.accent },
             })}
           </>
@@ -194,8 +305,24 @@ export const videoLegenda: TemplateDef = {
           box: { x: side, y: bandY + 40, w: ctx.W - side * 2, h: bandH - 80 },
           justify: "center",
           items: [
-            { field: "title", font: "heading", weight: 800, maxSize: Math.round(72 * s), minSize: 36, lineHeight: 1.08, gapAfter: 18 },
-            { field: "body", font: "body", weight: 400, maxSize: Math.round(34 * s), minSize: 24, lineHeight: 1.35, gapAfter: 0 },
+            {
+              field: "title",
+              font: "heading",
+              weight: 800,
+              maxSize: Math.round(72 * s),
+              minSize: 36,
+              lineHeight: 1.08,
+              gapAfter: 18,
+            },
+            {
+              field: "body",
+              font: "body",
+              weight: 400,
+              maxSize: Math.round(34 * s),
+              minSize: 24,
+              lineHeight: 1.35,
+              gapAfter: 0,
+            },
           ],
           background: { kind: "solid", color: ctx.palette.bg },
         })}

@@ -37,7 +37,10 @@ export const CopyInputSchema = z.object({
   }),
   templateName: z.string(),
   templateDescription: z.string(),
-  slidePlan: z.array(z.object({ kind: z.enum(SLIDE_KINDS), limits: LimitsSchema })).min(1).max(10),
+  slidePlan: z
+    .array(z.object({ kind: z.enum(SLIDE_KINDS), limits: LimitsSchema }))
+    .min(1)
+    .max(10),
   companyName: z.string().max(200).default(""),
   handle: z.string().max(60).default(""),
 });
@@ -82,7 +85,8 @@ export const copywriterSkill: AiSkill<CopyInput, CopyOutput, z.input<typeof Copy
   version: "1.1.0",
   name: "Copywriter e criador de posts/carrosséis",
   specSection: "9.3 e 9.5",
-  description: "Cria o conceito, os textos de cada lâmina, a legenda, as hashtags e o CTA respeitando os limites do template e a voz da marca.",
+  description:
+    "Cria o conceito, os textos de cada lâmina, a legenda, as hashtags e o CTA respeitando os limites do template e a voz da marca.",
   kind: "ai",
   allowedTools: [],
   qualityCriteria: [
@@ -142,7 +146,10 @@ ${briefingBlock(input.briefing)}`;
           kind: s.kind,
           kicker: fit(OBJECTIVE_LABELS[input.objective], lim.kicker),
           title: fit(input.title || firstSentence(input.briefing.text), lim.title),
-          body: offer && !highlight && whole(offerStatement, lim.body) ? offerStatement : fit(firstSentence(input.briefing.text), lim.body),
+          body:
+            offer && !highlight && whole(offerStatement, lim.body)
+              ? offerStatement
+              : fit(firstSentence(input.briefing.text), lim.body),
           highlight,
           footer: fit(input.companyName, lim.footer),
           visualDirection: "Foto real do cliente relacionada ao tema (demonstração).",
@@ -174,7 +181,14 @@ ${briefingBlock(input.briefing)}`;
       };
     });
     const hashtags = [input.companyName, OBJECTIVE_LABELS[input.objective]]
-      .map((t) => normalizeHashtag(t.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\p{L}\p{N}]/gu, "")))
+      .map((t) =>
+        normalizeHashtag(
+          t
+            .normalize("NFD")
+            .replace(/[̀-ͯ]/g, "")
+            .replace(/[^\p{L}\p{N}]/gu, ""),
+        ),
+      )
       .filter((h): h is string => Boolean(h));
     return {
       concept: `Rascunho montado a partir do briefing: ${clipWords(input.briefing.text, 160)}`,
@@ -187,7 +201,10 @@ ${briefingBlock(input.briefing)}`;
     };
   },
   postProcess(output, input) {
-    const hashtags = [...new Set(output.hashtags.map(normalizeHashtag).filter((h): h is string => Boolean(h)))].slice(0, 30);
+    const hashtags = [...new Set(output.hashtags.map(normalizeHashtag).filter((h): h is string => Boolean(h)))].slice(
+      0,
+      30,
+    );
     // Garante uma lâmina por item do plano. Com a quantidade certa, alinha pela
     // posição; senão, pelo tipo (capa, conteúdos em ordem, CTA), deixando em
     // branco o que faltar, sem repetir o texto de outra lâmina.
@@ -200,14 +217,26 @@ ${briefingBlock(input.briefing)}`;
     };
     const slides = plan.map((p, i) => {
       const s = sameLength ? output.slides[i] : pools[p.kind].shift();
-      const blank = { kind: p.kind, kicker: "", title: "", body: "", highlight: "", footer: "", visualDirection: "", alt: "" };
+      const blank = {
+        kind: p.kind,
+        kicker: "",
+        title: "",
+        body: "",
+        highlight: "",
+        footer: "",
+        visualDirection: "",
+        alt: "",
+      };
       const merged = { ...blank, ...(s ?? {}), kind: p.kind };
       for (const key of FIELD_KEYS) if (p.limits[key] === undefined) merged[key] = "";
       return merged;
     });
     const assumptions = sameLength
       ? output.assumptions
-      : [...output.assumptions, `A IA devolveu ${output.slides.length} de ${plan.length} lâminas; as que ficaram sem texto estão em branco para revisão.`];
+      : [
+          ...output.assumptions,
+          `A IA devolveu ${output.slides.length} de ${plan.length} lâminas; as que ficaram sem texto estão em branco para revisão.`,
+        ];
     return { ...output, slides, assumptions, hashtags, caption: output.caption.slice(0, 2200) };
   },
 };

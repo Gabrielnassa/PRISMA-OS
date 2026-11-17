@@ -24,7 +24,11 @@ export interface ClientPackage {
   updatedAt: string | null;
 }
 
-const count = z.coerce.number().int("Use números inteiros.").min(0, "Não pode ser negativo.").max(200, "Máximo de 200 por mês.");
+const count = z.coerce
+  .number()
+  .int("Use números inteiros.")
+  .min(0, "Não pode ser negativo.")
+  .max(200, "Máximo de 200 por mês.");
 export const PackageSchema = z.object({
   posts: count,
   carousels: count,
@@ -33,15 +37,36 @@ export const PackageSchema = z.object({
   notes: z.string().trim().max(1000).default(""),
 });
 
-export const EMPTY_PACKAGE: ClientPackage = { posts: 0, carousels: 0, stories: 0, videos: 0, notes: "", updatedAt: null };
+export const EMPTY_PACKAGE: ClientPackage = {
+  posts: 0,
+  carousels: 0,
+  stories: 0,
+  videos: 0,
+  notes: "",
+  updatedAt: null,
+};
 
 export async function loadPackage(tx: Queryable, clientId: string): Promise<ClientPackage> {
-  const r = await maybeOne<{ posts: number; carousels: number; stories: number; videos: number; notes: string; updated_at: Date }>(
-    tx,
-    "SELECT posts, carousels, stories, videos, notes, updated_at FROM client_packages WHERE client_id = $1",
-    [clientId],
-  );
-  return r ? { posts: r.posts, carousels: r.carousels, stories: r.stories, videos: r.videos, notes: r.notes, updatedAt: r.updated_at.toISOString() } : EMPTY_PACKAGE;
+  const r = await maybeOne<{
+    posts: number;
+    carousels: number;
+    stories: number;
+    videos: number;
+    notes: string;
+    updated_at: Date;
+  }>(tx, "SELECT posts, carousels, stories, videos, notes, updated_at FROM client_packages WHERE client_id = $1", [
+    clientId,
+  ]);
+  return r
+    ? {
+        posts: r.posts,
+        carousels: r.carousels,
+        stories: r.stories,
+        videos: r.videos,
+        notes: r.notes,
+        updatedAt: r.updated_at.toISOString(),
+      }
+    : EMPTY_PACKAGE;
 }
 
 export async function getPackage(auth: AuthContext, clientId: string): Promise<ClientPackage> {
@@ -51,7 +76,11 @@ export async function getPackage(auth: AuthContext, clientId: string): Promise<C
   });
 }
 
-export async function setPackage(auth: AuthContext, clientId: string, input: z.input<typeof PackageSchema>): Promise<void> {
+export async function setPackage(
+  auth: AuthContext,
+  clientId: string,
+  input: z.input<typeof PackageSchema>,
+): Promise<void> {
   assertCan(auth.role, "client.package");
   const parsed = PackageSchema.safeParse(input);
   if (!parsed.success) {
@@ -98,7 +127,11 @@ export interface PackageEstimate {
 }
 
 /** Custo médio real por peça (todas as execuções ligadas a peças, últimos 90 dias, sem demonstração). */
-async function measuredPerPiece(tx: Queryable, organizationId: string, clientId: string): Promise<{ usd: number; pieces: number } | null> {
+async function measuredPerPiece(
+  tx: Queryable,
+  organizationId: string,
+  clientId: string,
+): Promise<{ usd: number; pieces: number } | null> {
   const scoped = async (clientOnly: boolean) =>
     one<{ total: string | null; pieces: number }>(
       tx,
@@ -111,15 +144,22 @@ async function measuredPerPiece(tx: Queryable, organizationId: string, clientId:
   // Primeiro o próprio cliente (com amostra mínima); senão, a média da agência.
   for (const clientOnly of [true, false]) {
     const r = await scoped(clientOnly);
-    if (r.pieces >= (clientOnly ? 3 : 1) && r.total !== null) return { usd: Number(r.total) / r.pieces, pieces: r.pieces };
+    if (r.pieces >= (clientOnly ? 3 : 1) && r.total !== null)
+      return { usd: Number(r.total) / r.pieces, pieces: r.pieces };
   }
   return null;
 }
 
-export async function estimatePackageCost(tx: Queryable, organizationId: string, clientId: string, pkg: ClientPackage): Promise<PackageEstimate> {
+export async function estimatePackageCost(
+  tx: Queryable,
+  organizationId: string,
+  clientId: string,
+  pkg: ClientPackage,
+): Promise<PackageEstimate> {
   const aiPieces = pkg.posts + pkg.carousels + pkg.stories;
   const provider = getProvider();
-  const price = provider && !provider.isDemo ? await currentPrice(tx, organizationId, provider.id, provider.model) : null;
+  const price =
+    provider && !provider.isDemo ? await currentPrice(tx, organizationId, provider.id, provider.model) : null;
   const planUsd = price ? computeCostUsd(TYPICAL_PLAN_TOKENS, price) : null;
   const measured = await measuredPerPiece(tx, organizationId, clientId);
   const round = (v: number) => Math.round(v * 10000) / 10000;
@@ -191,6 +231,11 @@ export async function getPackageOverview(auth: AuthContext, clientId: string): P
        WHERE client_id = $1 AND status <> 'archived' AND created_at >= date_trunc('month', now())`,
       [clientId],
     );
-    return { pkg, estimate, produced: { posts: p.posts, carousels: p.carousels, stories: p.stories, videos: p.videos }, monthSpendUsd: Number(p.spend) };
+    return {
+      pkg,
+      estimate,
+      produced: { posts: p.posts, carousels: p.carousels, stories: p.stories, videos: p.videos },
+      monthSpendUsd: Number(p.spend),
+    };
   });
 }

@@ -20,7 +20,9 @@ function strict(node: unknown): unknown {
     if (!KEEP.has(key)) continue;
     if (key === "format" && !FORMATS.has(String(value))) continue;
     if (key === "properties") {
-      out.properties = Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, strict(v)]));
+      out.properties = Object.fromEntries(
+        Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, strict(v)]),
+      );
     } else if (key === "items" || key === "anyOf") {
       out[key] = strict(value);
     } else {

@@ -29,7 +29,11 @@ export const produtoVitrine: TemplateDef = {
     "1:1": { content: { plain: 0.7, photo: 0.7 } },
     "4:5": { content: { plain: 0.95, photo: 0.95 } },
   },
-  compositionRules: ["Foto fiel do produto em cartão central", "Selo com a condição comercial confirmada", "Título e CTA centralizados"],
+  compositionRules: [
+    "Foto fiel do produto em cartão central",
+    "Selo com a condição comercial confirmada",
+    "Título e CTA centralizados",
+  ],
   qualityCriteria: ["Foto fiel ao produto real", "Preço/condição confirmados pelo cliente", "CTA visível"],
   render(ctx) {
     const side = ctx.safe.side;
@@ -47,13 +51,28 @@ export const produtoVitrine: TemplateDef = {
         <Counter ctx={ctx} x={ctx.W - side - 200} y={ctx.safe.top} />
         {badgeText ? (
           <>
-            <Rect box={{ x: card.x + card.w - 380, y: card.y + 32, w: 348, h: 96 }} color={ctx.palette.accent} radius={48} />
+            <Rect
+              box={{ x: card.x + card.w - 380, y: card.y + 32, w: 348, h: 96 }}
+              color={ctx.palette.accent}
+              radius={48}
+            />
             {ctx.textStack({
               key: "badge",
               box: { x: card.x + card.w - 360, y: card.y + 40, w: 308, h: 80 },
               justify: "center",
               align: "center",
-              items: [{ field: "highlight", font: "heading", weight: 800, maxSize: 44, minSize: 24, lineHeight: 1.1, color: ctx.palette.accentFg, gapAfter: 0 }],
+              items: [
+                {
+                  field: "highlight",
+                  font: "heading",
+                  weight: 800,
+                  maxSize: 44,
+                  minSize: 24,
+                  lineHeight: 1.1,
+                  color: ctx.palette.accentFg,
+                  gapAfter: 0,
+                },
+              ],
               background: { kind: "solid", color: ctx.palette.accent },
             })}
           </>
@@ -92,7 +111,11 @@ export const produtoOferta: TemplateDef = {
     "4:5": { content: { plain: 1, photo: 0.9 }, cta: { plain: 1, photo: 0.95 } },
     "9:16": { content: { plain: 1, photo: 0.9 } },
   },
-  compositionRules: ["Título em caixa alta", "Bloco de condição na cor de destaque", "Foto opcional à direita (posts) ou ao topo (Story)"],
+  compositionRules: [
+    "Título em caixa alta",
+    "Bloco de condição na cor de destaque",
+    "Foto opcional à direita (posts) ou ao topo (Story)",
+  ],
   qualityCriteria: ["Condições e prazos confirmados", "Sem promessas exageradas", "CTA explícito"],
   render(ctx) {
     const side = ctx.safe.side;
@@ -117,7 +140,11 @@ export const produtoOferta: TemplateDef = {
           key: "main",
           box: { x: textX, y: textTop, w: textW, h: bottom - textTop },
           justify: "end",
-          items: standardItems(ctx, { title: { cover: 120, content: 84, cta: 100 }, titleUppercase: true, titleLineHeight: 1.0 }),
+          items: standardItems(ctx, {
+            title: { cover: 120, content: 84, cta: 100 },
+            titleUppercase: true,
+            titleLineHeight: 1.0,
+          }),
           background: { kind: "solid", color: ctx.palette.bg },
         })}
         {highlight ? (
@@ -127,7 +154,19 @@ export const produtoOferta: TemplateDef = {
               key: "offer",
               box: { x: textX + 36, y: bottom + 40 + 20, w: textW - 72, h: blockH - 40 },
               justify: "center",
-              items: [{ field: "highlight", font: "heading", weight: 800, maxSize: Math.round(84 * s), minSize: 32, lineHeight: 1.05, uppercase: true, color: ctx.palette.accentFg, gapAfter: 0 }],
+              items: [
+                {
+                  field: "highlight",
+                  font: "heading",
+                  weight: 800,
+                  maxSize: Math.round(84 * s),
+                  minSize: 32,
+                  lineHeight: 1.05,
+                  uppercase: true,
+                  color: ctx.palette.accentFg,
+                  gapAfter: 0,
+                },
+              ],
               background: { kind: "solid", color: ctx.palette.accent },
             })}
           </>
@@ -155,10 +194,22 @@ export const produtoDividido: TemplateDef = {
   defaultAlign: "left",
   fieldLimits: PRODUCT_LIMITS,
   capacity: {
-    "1:1": { cover: { plain: 0.85, photo: 0.85 }, content: { plain: 0.75, photo: 0.75 }, cta: { plain: 0.85, photo: 0.85 } },
-    "4:5": { cover: { plain: 0.85, photo: 0.85 }, content: { plain: 0.85, photo: 0.85 }, cta: { plain: 0.85, photo: 0.85 } },
+    "1:1": {
+      cover: { plain: 0.85, photo: 0.85 },
+      content: { plain: 0.75, photo: 0.75 },
+      cta: { plain: 0.85, photo: 0.85 },
+    },
+    "4:5": {
+      cover: { plain: 0.85, photo: 0.85 },
+      content: { plain: 0.85, photo: 0.85 },
+      cta: { plain: 0.85, photo: 0.85 },
+    },
   },
-  compositionRules: ["Divisão vertical 50/50 (horizontal em Story)", "Texto com margem interna constante", "Destaque opcional acima do título"],
+  compositionRules: [
+    "Divisão vertical 50/50 (horizontal em Story)",
+    "Texto com margem interna constante",
+    "Destaque opcional acima do título",
+  ],
   qualityCriteria: ["Foto nítida com o produto inteiro visível", "Benefício concreto no título"],
   render(ctx) {
     const story = ctx.doc.aspect === "9:16";
@@ -168,7 +219,12 @@ export const produtoDividido: TemplateDef = {
     // Em Story o logotipo fica acima do painel de texto, sem sobrepor o sobretítulo.
     const panel = story
       ? { x: side, y: half + 100, w: ctx.W - side * 2, h: ctx.H - half - 100 - ctx.safe.bottom - 70 }
-      : { x: half + 64, y: ctx.safe.top + 100, w: ctx.W - half - 64 - side, h: ctx.H - ctx.safe.top - 100 - ctx.safe.bottom - 70 };
+      : {
+          x: half + 64,
+          y: ctx.safe.top + 100,
+          w: ctx.W - half - 64 - side,
+          h: ctx.H - ctx.safe.top - 100 - ctx.safe.bottom - 70,
+        };
     return (
       <Root ctx={ctx}>
         <Photo ctx={ctx} box={imgBox} />

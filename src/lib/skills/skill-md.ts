@@ -76,13 +76,19 @@ export function parseSkillMd(text: string): ParsedSkillMd {
       warnings.push("O bloco de metadados (---) não foi fechado; o arquivo inteiro virou instruções.");
     }
   } else {
-    warnings.push("O arquivo não tem o bloco de metadados (---) com name e description; preencha o nome e a descrição.");
+    warnings.push(
+      "O arquivo não tem o bloco de metadados (---) com name e description; preencha o nome e a descrição.",
+    );
   }
   body = body.trim();
   const heading = /^#\s+(.+)$/m.exec(body)?.[1]?.trim() ?? "";
   // `name` no padrão do Claude é um identificador (minúsculas e hífens); se o
   // título do corpo corresponde a ele, o título é o nome legível original.
-  let name = meta.name ? (heading && skillSlug(heading) === meta.name.trim().toLowerCase() ? heading : humanizeName(meta.name)) : "";
+  let name = meta.name
+    ? heading && skillSlug(heading) === meta.name.trim().toLowerCase()
+      ? heading
+      : humanizeName(meta.name)
+    : "";
   if (!name) name = heading;
   return {
     name: clip(name, SKILL_LIMITS.name, "O nome", warnings),

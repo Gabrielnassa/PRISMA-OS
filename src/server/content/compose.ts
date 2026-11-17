@@ -27,9 +27,17 @@ export function slideKinds(format: ContentFormat, slideCount: number): SlideKind
  * Limites de caracteres de cada lâmina já ajustados ao espaço real do layout
  * (proporção e presença de foto), para a IA escrever textos que cabem.
  */
-export function slidePlan(template: TemplateDef, kinds: SlideKind[], aspect: Aspect, imageIds: string[]): CopyInput["slidePlan"] {
+export function slidePlan(
+  template: TemplateDef,
+  kinds: SlideKind[],
+  aspect: Aspect,
+  imageIds: string[],
+): CopyInput["slidePlan"] {
   const images = assignImages(template, kinds, imageIds);
-  return kinds.map((kind, i) => ({ kind, limits: effectiveLimits(template.fieldLimits[kind], template.capacity, aspect, kind, images[i] != null) }));
+  return kinds.map((kind, i) => ({
+    kind,
+    limits: effectiveLimits(template.fieldLimits[kind], template.capacity, aspect, kind, images[i] != null),
+  }));
 }
 
 /** Distribui as fotos selecionadas pelas lâminas (abertura primeiro). */
@@ -56,7 +64,10 @@ export function composeDocument(opts: {
   const images = assignImages(art.template, kinds, opts.imageIds);
   const slides = kinds.map((kind, i) => {
     const source = opts.copy?.slides[i];
-    const fields = Object.fromEntries(FIELD_KEYS.map((k) => [k, clipField(k, source?.[k] ?? "")])) as Record<FieldKey, string>;
+    const fields = Object.fromEntries(FIELD_KEYS.map((k) => [k, clipField(k, source?.[k] ?? "")])) as Record<
+      FieldKey,
+      string
+    >;
     if (!opts.copy && kind === "cover") fields.title = clipField("title", opts.fallbackTitle);
     return {
       id: newSlideId(i),
@@ -91,15 +102,23 @@ export function productionNotes(copy: CopyOutput | null, art: ArtDirection, isDe
   if (isDemo) parts.push("Modo de demonstração: textos extraídos do briefing, sem IA.");
   if (copy?.concept) parts.push(`Conceito: ${copy.concept}`);
   if (copy?.assumptions.length) parts.push(`Premissas:\n${copy.assumptions.map((a) => `- ${a}`).join("\n")}`);
-  if (copy?.claimsToConfirm.length) parts.push(`Confirmar com o cliente:\n${copy.claimsToConfirm.map((a) => `- ${a}`).join("\n")}`);
-  const visual = copy?.slides.map((s, i) => (s.visualDirection ? `${i + 1}. ${s.visualDirection}` : "")).filter(Boolean) ?? [];
+  if (copy?.claimsToConfirm.length)
+    parts.push(`Confirmar com o cliente:\n${copy.claimsToConfirm.map((a) => `- ${a}`).join("\n")}`);
+  const visual =
+    copy?.slides.map((s, i) => (s.visualDirection ? `${i + 1}. ${s.visualDirection}` : "")).filter(Boolean) ?? [];
   if (visual.length) parts.push(`Direção visual sugerida:\n${visual.join("\n")}`);
   parts.push(`Direção de arte: ${art.rationale.join(" ")}`);
   return parts.join("\n\n");
 }
 
 /** Diferenças legíveis entre duas versões (para histórico e comparação). */
-const FIELD_SHORT: Record<(typeof FIELD_KEYS)[number], string> = { kicker: "sobretítulo", title: "título", body: "texto", highlight: "destaque", footer: "rodapé" };
+const FIELD_SHORT: Record<(typeof FIELD_KEYS)[number], string> = {
+  kicker: "sobretítulo",
+  title: "título",
+  body: "texto",
+  highlight: "destaque",
+  footer: "rodapé",
+};
 
 export function diffDocuments(a: ContentDocument, b: ContentDocument): string[] {
   const changes: string[] = [];
@@ -113,8 +132,10 @@ export function diffDocuments(a: ContentDocument, b: ContentDocument): string[] 
     const sb = b.slides[i]!;
     for (const k of FIELD_KEYS) if (sa.fields[k] !== sb.fields[k]) changes.push(`Lâmina ${i + 1}: ${FIELD_SHORT[k]}`);
     if (sa.imageAssetId !== sb.imageAssetId) changes.push(`Lâmina ${i + 1}: imagem`);
-    if (JSON.stringify(sa.imageFocus) !== JSON.stringify(sb.imageFocus) || sa.imageZoom !== sb.imageZoom) changes.push(`Lâmina ${i + 1}: recorte da imagem`);
-    if (sa.theme !== sb.theme || sa.align !== sb.align || sa.textScale !== sb.textScale) changes.push(`Lâmina ${i + 1}: aparência`);
+    if (JSON.stringify(sa.imageFocus) !== JSON.stringify(sb.imageFocus) || sa.imageZoom !== sb.imageZoom)
+      changes.push(`Lâmina ${i + 1}: recorte da imagem`);
+    if (sa.theme !== sb.theme || sa.align !== sb.align || sa.textScale !== sb.textScale)
+      changes.push(`Lâmina ${i + 1}: aparência`);
   }
   if (a.caption !== b.caption) changes.push("Legenda");
   if (a.hashtags.join(" ") !== b.hashtags.join(" ")) changes.push("Hashtags");

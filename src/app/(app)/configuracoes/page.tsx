@@ -15,7 +15,14 @@ export default async function SettingsPage() {
       <PageHeader title="Configurações" />
       <Card className="mb-6">
         <CardHeader title="Organização" />
-        <OrgSettingsForm org={{ name: org.name, globalContext: org.globalContext, requireDistinctApprover: org.settings.requireDistinctApprover }} canEdit={can(auth.role, "org.manage")} />
+        <OrgSettingsForm
+          org={{
+            name: org.name,
+            globalContext: org.globalContext,
+            requireDistinctApprover: org.settings.requireDistinctApprover,
+          }}
+          canEdit={can(auth.role, "org.manage")}
+        />
       </Card>
       <Card id="senha">
         <CardHeader title="Minha senha" description={auth.email} />

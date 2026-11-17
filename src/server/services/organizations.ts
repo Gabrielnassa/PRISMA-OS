@@ -39,32 +39,47 @@ export async function createOrganizationWithOwner(input: {
     let slug = slugify(input.organizationName);
     const taken = await maybeOne(tx, "SELECT 1 FROM organizations WHERE slug = $1", [slug]);
     if (taken) slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
-    const org = await one<{ id: string }>(
-      tx,
-      "INSERT INTO organizations (name, slug) VALUES ($1, $2) RETURNING id",
-      [input.organizationName.trim(), slug],
-    );
+    const org = await one<{ id: string }>(tx, "INSERT INTO organizations (name, slug) VALUES ($1, $2) RETURNING id", [
+      input.organizationName.trim(),
+      slug,
+    ]);
     const user = await one<{ id: string }>(
       tx,
       "INSERT INTO users (email, name, password_hash) VALUES ($1, $2, $3) RETURNING id",
       [email, input.ownerName.trim(), passwordHash],
     );
-    await tx.query("INSERT INTO memberships (organization_id, user_id, role) VALUES ($1, $2, 'owner')", [org.id, user.id]);
+    await tx.query("INSERT INTO memberships (organization_id, user_id, role) VALUES ($1, $2, 'owner')", [
+      org.id,
+      user.id,
+    ]);
     for (const p of DEFAULT_PRICES) {
       await tx.query(
         `INSERT INTO provider_prices (organization_id, provider, model, input_usd_per_mtok, output_usd_per_mtok,
            cache_read_usd_per_mtok, cache_write_usd_per_mtok, source)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-        [org.id, p.provider, p.model, p.inputUsdPerMtok, p.outputUsdPerMtok, p.cacheReadUsdPerMtok, p.cacheWriteUsdPerMtok, p.source],
+        [
+          org.id,
+          p.provider,
+          p.model,
+          p.inputUsdPerMtok,
+          p.outputUsdPerMtok,
+          p.cacheReadUsdPerMtok,
+          p.cacheWriteUsdPerMtok,
+          p.source,
+        ],
       );
     }
-    await audit(tx, { type: "system", userId: user.id }, {
-      organizationId: org.id,
-      action: "organization.created",
-      entityType: "organization",
-      entityId: org.id,
-      metadata: { ownerEmail: email },
-    });
+    await audit(
+      tx,
+      { type: "system", userId: user.id },
+      {
+        organizationId: org.id,
+        action: "organization.created",
+        entityType: "organization",
+        entityId: org.id,
+        metadata: { ownerEmail: email },
+      },
+    );
     return { organizationId: org.id, userId: user.id };
   });
 }
@@ -92,7 +107,10 @@ export const UpdateOrganizationSchema = z.object({
   requireDistinctApprover: z.boolean(),
 });
 
-export async function updateOrganization(auth: AuthContext, input: z.infer<typeof UpdateOrganizationSchema>): Promise<void> {
+export async function updateOrganization(
+  auth: AuthContext,
+  input: z.infer<typeof UpdateOrganizationSchema>,
+): Promise<void> {
   assertCan(auth.role, "org.manage");
   const data = UpdateOrganizationSchema.parse(input);
   await withTx(userCtx(auth.userId), async (tx) => {
@@ -107,7 +125,11 @@ export async function updateOrganization(auth: AuthContext, input: z.infer<typeo
       action: "organization.updated",
       entityType: "organization",
       entityId: auth.organizationId,
-      metadata: { name: data.name, globalContextLength: data.globalContext.length, requireDistinctApprover: data.requireDistinctApprover },
+      metadata: {
+        name: data.name,
+        globalContextLength: data.globalContext.length,
+        requireDistinctApprover: data.requireDistinctApprover,
+      },
     });
   });
 }

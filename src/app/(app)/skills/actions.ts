@@ -33,7 +33,12 @@ export async function saveSkillAction(_prev: ActionState, form: FormData): Promi
       return;
     }
     const expected = Number(str(form, "version"));
-    const r = await updateCustomSkill(auth, skillId, skillInput(form), Number.isInteger(expected) && expected > 0 ? expected : undefined);
+    const r = await updateCustomSkill(
+      auth,
+      skillId,
+      skillInput(form),
+      Number.isInteger(expected) && expected > 0 ? expected : undefined,
+    );
     refresh();
     return { message: r.changed ? `Skill salva (versão ${r.version}).` : "Nada mudou desde a última versão." };
   });
@@ -58,7 +63,10 @@ export interface RunSkillData {
   costUsd: number | null;
 }
 
-export async function runSkillAction(_prev: ActionState<RunSkillData>, form: FormData): Promise<ActionState<RunSkillData>> {
+export async function runSkillAction(
+  _prev: ActionState<RunSkillData>,
+  form: FormData,
+): Promise<ActionState<RunSkillData>> {
   const auth = await requireAuth();
   return runAction(async () => {
     const clientId = str(form, "clientId");
@@ -71,8 +79,19 @@ export async function runSkillAction(_prev: ActionState<RunSkillData>, form: For
     // Atualiza o histórico e gera uma chave nova (executar de novo cria outra execução).
     refresh();
     return {
-      data: { runId: out.runId, clientId, result: out.output.result, assumptions: out.output.assumptions, isDemo: out.isDemo, costUsd: out.costUsd },
-      message: out.isDemo ? "Resultado de demonstração." : out.reused ? "Pedido já executado antes. Mostrando o mesmo resultado, sem nova cobrança." : undefined,
+      data: {
+        runId: out.runId,
+        clientId,
+        result: out.output.result,
+        assumptions: out.output.assumptions,
+        isDemo: out.isDemo,
+        costUsd: out.costUsd,
+      },
+      message: out.isDemo
+        ? "Resultado de demonstração."
+        : out.reused
+          ? "Pedido já executado antes. Mostrando o mesmo resultado, sem nova cobrança."
+          : undefined,
     };
   });
 }

@@ -18,7 +18,10 @@ export function parseHex(hex: string): Rgb {
 }
 
 export function toHex({ r, g, b }: Rgb): string {
-  const c = (n: number) => Math.round(Math.min(255, Math.max(0, n))).toString(16).padStart(2, "0");
+  const c = (n: number) =>
+    Math.round(Math.min(255, Math.max(0, n)))
+      .toString(16)
+      .padStart(2, "0");
   return `#${c(r)}${c(g)}${c(b)}`;
 }
 
@@ -55,7 +58,10 @@ export function blend(top: string, alpha: number, bottom: string): string {
  * como a foto é desconhecida, considera-se fundo preto e branco puros.
  */
 export function worstCaseOverlayContrast(text: string, overlay: string, alpha: number): number {
-  return Math.min(contrastRatio(text, blend(overlay, alpha, "#000000")), contrastRatio(text, blend(overlay, alpha, "#ffffff")));
+  return Math.min(
+    contrastRatio(text, blend(overlay, alpha, "#000000")),
+    contrastRatio(text, blend(overlay, alpha, "#ffffff")),
+  );
 }
 
 /** Escolhe preto/branco (ou as cores fornecidas) com melhor contraste sobre `bg`. */

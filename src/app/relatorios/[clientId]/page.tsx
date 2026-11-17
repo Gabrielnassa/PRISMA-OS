@@ -10,7 +10,13 @@ import { ReportToolbar } from "./toolbar";
 
 export const metadata: Metadata = { title: "Relatório" };
 
-export default async function ReportPage({ params, searchParams }: { params: Promise<{ clientId: string }>; searchParams: Promise<{ mes?: string }> }) {
+export default async function ReportPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ clientId: string }>;
+  searchParams: Promise<{ mes?: string }>;
+}) {
   const auth = await requireAuth();
   const { clientId } = await params;
   const month = assertMonth((await searchParams).mes, currentMonth());
@@ -20,7 +26,7 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
   });
   const href = (m: string) => `/relatorios/${clientId}?mes=${m}`;
   return (
-    <div className="min-h-dvh bg-white print:bg-white">
+    <div data-theme="light" className="min-h-dvh">
       <ReportToolbar
         clientId={clientId}
         clientName={r.clientName}

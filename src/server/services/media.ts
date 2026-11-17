@@ -45,7 +45,10 @@ export const UploadMediaSchema = z.object({
 });
 
 function safeFilename(name: string): string {
-  const cleaned = name.normalize("NFC").replace(/[\\/\0<>:"|?*\u0000-\u001f]/g, "_").trim();
+  const cleaned = name
+    .normalize("NFC")
+    .replace(/[\\/\0<>:"|?*\u0000-\u001f]/g, "_")
+    .trim();
   return (cleaned || "arquivo").slice(0, 200);
 }
 
@@ -66,7 +69,10 @@ export async function uploadMedia(
   const type = sniffType(file.data);
   if (!type) throw new ValidationError("Formato não suportado. Envie PNG, JPEG, GIF, SVG, PDF, MP4 ou MOV.");
   // O renderizador final (resvg) não decodifica WebP: a foto sumiria da peça exportada.
-  if (type.mime === "image/webp") throw new ValidationError("WebP ainda não é suportado nas peças exportadas. Converta para JPEG ou PNG e envie novamente.");
+  if (type.mime === "image/webp")
+    throw new ValidationError(
+      "WebP ainda não é suportado nas peças exportadas. Converta para JPEG ou PNG e envie novamente.",
+    );
   if (type.mime === "image/svg+xml" && isUnsafeSvg(file.data)) {
     throw new ValidationError("SVG recusado: contém scripts, eventos ou referências externas.");
   }
@@ -75,8 +81,10 @@ export async function uploadMedia(
   if ((kind === "image" || kind === "logo") && type.category !== "image") kind = type.category;
   const size = type.category === "image" ? imageSize(file.data, type.mime) : null;
   const orientation = type.mime === "image/jpeg" ? jpegOrientation(file.data) : 1;
-  if (type.category === "image" && !size) throw new ValidationError("Não foi possível ler as dimensões da imagem. O arquivo pode estar corrompido.");
-  if (size && (size.width > 12000 || size.height > 12000)) throw new ValidationError("Imagem grande demais (máximo 12.000 px por lado).");
+  if (type.category === "image" && !size)
+    throw new ValidationError("Não foi possível ler as dimensões da imagem. O arquivo pode estar corrompido.");
+  if (size && (size.width > 12000 || size.height > 12000))
+    throw new ValidationError("Imagem grande demais (máximo 12.000 px por lado).");
   const sha256 = crypto.createHash("sha256").update(file.data).digest("hex");
 
   return withTx(userCtx(auth.userId), async (tx) => {
@@ -123,7 +131,9 @@ export async function uploadMedia(
         metadata: { filename: safeFilename(file.filename), mime: type.mime, size: file.data.length, kind },
       });
     } catch (err) {
-      await storage().delete(key).catch(() => undefined);
+      await storage()
+        .delete(key)
+        .catch(() => undefined);
       throw err;
     }
     return { id, duplicate: false };
@@ -175,7 +185,10 @@ export interface MediaFilter {
   offset?: number;
 }
 
-export async function listMedia(auth: AuthContext, filter: MediaFilter = {}): Promise<{ items: MediaAsset[]; total: number }> {
+export async function listMedia(
+  auth: AuthContext,
+  filter: MediaFilter = {},
+): Promise<{ items: MediaAsset[]; total: number }> {
   return withTx(userCtx(auth.userId), async (tx) => {
     if (filter.clientId) await requireClient(tx, auth, filter.clientId);
     const where = [
@@ -186,7 +199,13 @@ export async function listMedia(auth: AuthContext, filter: MediaFilter = {}): Pr
       "($4::text IS NULL OR m.filename ILIKE '%' || $4 || '%' OR m.alt_text ILIKE '%' || $4 || '%' OR $4 = ANY (m.tags))",
       "(NOT $5::boolean OR m.mime_type LIKE 'image/%')",
     ].join(" AND ");
-    const params = [auth.organizationId, filter.clientId ?? null, filter.kind ?? null, filter.search?.trim() || null, filter.imagesOnly ?? false];
+    const params = [
+      auth.organizationId,
+      filter.clientId ?? null,
+      filter.kind ?? null,
+      filter.search?.trim() || null,
+      filter.imagesOnly ?? false,
+    ];
     const total = await one<{ n: number }>(tx, `SELECT count(*)::int AS n FROM media_assets m WHERE ${where}`, params);
     const rows = await many<MediaRow>(
       tx,
@@ -204,7 +223,10 @@ export async function listMedia(auth: AuthContext, filter: MediaFilter = {}): Pr
   });
 }
 
-export async function getMediaFile(auth: AuthContext, mediaId: string): Promise<{ data: Buffer; mimeType: string; filename: string }> {
+export async function getMediaFile(
+  auth: AuthContext,
+  mediaId: string,
+): Promise<{ data: Buffer; mimeType: string; filename: string }> {
   if (!z.string().uuid().safeParse(mediaId).success) throw new NotFoundError("Arquivo não encontrado.");
   const row = await withTx(userCtx(auth.userId), (tx) =>
     maybeOne<{ storage_key: string; mime_type: string; filename: string }>(
@@ -226,8 +248,13 @@ export async function deleteMedia(auth: AuthContext, mediaId: string): Promise<v
       [mediaId, auth.organizationId],
     );
     if (!row) throw new NotFoundError("Arquivo não encontrado.");
-    const usedAsLogo = await maybeOne(tx, "SELECT 1 FROM brand_profiles WHERE client_id = $1 AND visual->>'logoAssetId' = $2", [row.client_id, mediaId]);
-    if (usedAsLogo) throw new ConflictError("Este arquivo é o logotipo da marca. Troque o logotipo antes de removê-lo.");
+    const usedAsLogo = await maybeOne(
+      tx,
+      "SELECT 1 FROM brand_profiles WHERE client_id = $1 AND visual->>'logoAssetId' = $2",
+      [row.client_id, mediaId],
+    );
+    if (usedAsLogo)
+      throw new ConflictError("Este arquivo é o logotipo da marca. Troque o logotipo antes de removê-lo.");
     // Exclusão lógica: versões antigas de conteúdo podem referenciar a imagem e precisam continuar reproduzíveis.
     await tx.query("UPDATE media_assets SET deleted_at = now() WHERE id = $1", [mediaId]);
     await audit(tx, userActor(auth), {
@@ -254,7 +281,14 @@ export async function loadImagesForRender(
   const out = new Map<string, { dataUri: string; width: number; height: number; orientation: number }>();
   if (unique.length === 0) return out;
   // Somente formatos que o renderizador final decodifica (resvg: PNG, JPEG, GIF e SVG).
-  const rows = await many<{ id: string; storage_key: string; mime_type: string; width: number | null; height: number | null; orientation: number }>(
+  const rows = await many<{
+    id: string;
+    storage_key: string;
+    mime_type: string;
+    width: number | null;
+    height: number | null;
+    orientation: number;
+  }>(
     tx,
     `SELECT id, storage_key, mime_type, width, height, orientation FROM media_assets
      WHERE client_id = $1 AND id = ANY($2::uuid[]) AND mime_type IN ('image/png', 'image/jpeg', 'image/gif', 'image/svg+xml')`,

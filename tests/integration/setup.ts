@@ -8,7 +8,8 @@ import { setProviderOverride } from "../../src/server/ai/gateway";
 import { setStorageDriver } from "../../src/server/storage";
 
 const storageDir = fs.mkdtempSync(path.join(os.tmpdir(), "prisma-os-test-"));
-process.env.DATABASE_URL = process.env.TEST_DATABASE_URL ?? "postgres://prisma_app_login:prisma_app_dev@localhost:5432/prisma_os_test";
+process.env.DATABASE_URL =
+  process.env.TEST_DATABASE_URL ?? "postgres://prisma_app_login:prisma_app_dev@localhost:5432/prisma_os_test";
 process.env.STORAGE_LOCAL_DIR = storageDir;
 process.env.AI_PROVIDER = "demo";
 process.env.APP_SECRET_KEY = "chave-de-teste-com-mais-de-32-caracteres-0123456789";

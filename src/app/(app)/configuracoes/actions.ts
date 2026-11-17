@@ -11,7 +11,11 @@ import { ValidationError } from "@/server/errors";
 export async function orgSettingsAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const auth = await requireAuth();
   return runAction(async () => {
-    await updateOrganization(auth, { name: str(form, "name"), globalContext: str(form, "globalContext"), requireDistinctApprover: bool(form, "requireDistinctApprover") });
+    await updateOrganization(auth, {
+      name: str(form, "name"),
+      globalContext: str(form, "globalContext"),
+      requireDistinctApprover: bool(form, "requireDistinctApprover"),
+    });
     refresh();
     return { message: "Configurações salvas." };
   });
@@ -20,7 +24,8 @@ export async function orgSettingsAction(_prev: ActionState, form: FormData): Pro
 export async function passwordAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const auth = await requireAuth({ allowPasswordChange: true });
   const result = await runAction<undefined>(async () => {
-    if (str(form, "next") !== str(form, "confirm")) throw new ValidationError("A confirmação não confere com a nova senha.");
+    if (str(form, "next") !== str(form, "confirm"))
+      throw new ValidationError("A confirmação não confere com a nova senha.");
     await changeOwnPassword(auth, { current: str(form, "current"), next: str(form, "next") });
     return { message: "Senha alterada. Outras sessões foram encerradas." };
   });

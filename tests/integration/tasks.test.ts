@@ -22,29 +22,49 @@ describe("responsável, prazo e avisos", () => {
     const viewer = await addMember(owner, "viewer");
     const { id: clientId } = await createClient(owner, { name: "Coli Loterias" });
     const { contentId } = await createContent(owner, {
-      clientId, title: "Bolão de Natal", channel: "instagram", format: "post", objective: "conversion",
-      briefing: { text: "Bolão de Natal na loja, cotas a partir de dez reais." }, slideCount: 1, mode: "ai", requestId: crypto.randomUUID(),
+      clientId,
+      title: "Bolão de Natal",
+      channel: "instagram",
+      format: "post",
+      objective: "conversion",
+      briefing: { text: "Bolão de Natal na loja, cotas a partir de dez reais." },
+      slideCount: 1,
+      mode: "ai",
+      requestId: crypto.randomUUID(),
     });
     await drain();
 
     // Sem acesso ao cliente, não pode ser responsável.
-    await expect(setAssignment(owner, contentId, { assigneeId: editor.userId, dueDate: null })).rejects.toBeInstanceOf(ValidationError);
+    await expect(setAssignment(owner, contentId, { assigneeId: editor.userId, dueDate: null })).rejects.toBeInstanceOf(
+      ValidationError,
+    );
     await updateMember(owner, editor.userId, { role: "editor", isActive: true, clientIds: [clientId] });
     await updateMember(owner, reviewer.userId, { role: "reviewer", isActive: true, clientIds: [clientId] });
-    expect((await assignableMembers(owner, clientId)).map((m) => m.id)).toEqual(expect.arrayContaining([owner.userId, editor.userId, reviewer.userId]));
+    expect((await assignableMembers(owner, clientId)).map((m) => m.id)).toEqual(
+      expect.arrayContaining([owner.userId, editor.userId, reviewer.userId]),
+    );
     expect((await assignableMembers(owner, clientId)).map((m) => m.id)).not.toContain(viewer.userId);
 
     await setAssignment(owner, contentId, { assigneeId: editor.userId, dueDate: "2020-01-10" });
     const piece = await getContent(owner, contentId);
     expect(piece.assignee).toMatchObject({ id: editor.userId });
     expect(piece.dueDate).toBe("2020-01-10");
-    await expect(setAssignment(viewer, contentId, { assigneeId: null, dueDate: null })).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(setAssignment(viewer, contentId, { assigneeId: null, dueDate: null })).rejects.toBeInstanceOf(
+      ForbiddenError,
+    );
 
     const tasks = await myTasks(editor);
-    expect(tasks).toEqual([expect.objectContaining({ kind: "piece", contentId, overdue: true, dueDate: "2020-01-10" })]);
+    expect(tasks).toEqual([
+      expect.objectContaining({ kind: "piece", contentId, overdue: true, dueDate: "2020-01-10" }),
+    ]);
     expect(await unreadCount(editor)).toBe(1);
     const inbox = await listInbox(editor);
-    expect(inbox.items[0]).toMatchObject({ kind: "content.assigned", title: "Nova peça para você: Bolão de Natal", href: `/conteudos/${contentId}`, read: false });
+    expect(inbox.items[0]).toMatchObject({
+      kind: "content.assigned",
+      title: "Nova peça para você: Bolão de Natal",
+      href: `/conteudos/${contentId}`,
+      read: false,
+    });
     expect(await openInboxItem(editor, inbox.items[0]!.id)).toBe(`/conteudos/${contentId}`);
     expect(await unreadCount(editor)).toBe(0);
     // Ninguém lê os avisos de outra pessoa.
@@ -67,13 +87,21 @@ describe("limpeza periódica", () => {
     const { id: clientId } = await createClient(owner, { name: "Cliente" });
     const { systemCtx, withTx, one } = await import("../../src/server/db");
     await withTx(systemCtx("teste"), async (tx) => {
-      await tx.query("INSERT INTO oauth_states (state_hash, organization_id, client_id, user_id, provider, expires_at) VALUES ('velho-' || gen_random_uuid(), $1, $2, $3, 'meta', now() - interval '3 days')", [owner.organizationId, clientId, owner.userId]);
-      await tx.query("INSERT INTO notifications (organization_id, user_id, kind, title, read_at, created_at) VALUES ($1, $2, 'x', 'antigo', now(), now() - interval '120 days'), ($1, $2, 'x', 'novo', NULL, now())", [owner.organizationId, owner.userId]);
+      await tx.query(
+        "INSERT INTO oauth_states (state_hash, organization_id, client_id, user_id, provider, expires_at) VALUES ('velho-' || gen_random_uuid(), $1, $2, $3, 'meta', now() - interval '3 days')",
+        [owner.organizationId, clientId, owner.userId],
+      );
+      await tx.query(
+        "INSERT INTO notifications (organization_id, user_id, kind, title, read_at, created_at) VALUES ($1, $2, 'x', 'antigo', now(), now() - interval '120 days'), ($1, $2, 'x', 'novo', NULL, now())",
+        [owner.organizationId, owner.userId],
+      );
     });
     const r = await runMaintenance();
     expect(r.oauthStates).toBeGreaterThanOrEqual(1);
     expect(r.notifications).toBeGreaterThanOrEqual(1);
-    const left = await withTx(systemCtx("teste"), (tx) => one<{ n: number }>(tx, "SELECT count(*)::int AS n FROM notifications WHERE user_id = $1", [owner.userId]));
+    const left = await withTx(systemCtx("teste"), (tx) =>
+      one<{ n: number }>(tx, "SELECT count(*)::int AS n FROM notifications WHERE user_id = $1", [owner.userId]),
+    );
     expect(left.n).toBe(1);
   });
 });

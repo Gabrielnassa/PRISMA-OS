@@ -1,7 +1,9 @@
 import type { Queryable } from "../db";
 import type { AuthContext } from "../auth/types";
 
-export type AuditActor = { type: "user"; auth: Pick<AuthContext, "userId" | "organizationId"> } | { type: "system" | "worker"; userId?: string | null };
+export type AuditActor =
+  | { type: "user"; auth: Pick<AuthContext, "userId" | "organizationId"> }
+  | { type: "system" | "worker"; userId?: string | null };
 
 export interface AuditEntry {
   organizationId: string | null;

@@ -48,10 +48,10 @@ export function ConfirmDialog({
         // Clique fora do conteúdo (no fundo) cancela.
         if (e.target === ref.current) onCancel();
       }}
-      className="m-auto w-[min(440px,calc(100vw-32px))] rounded-[var(--radius-card)] border border-ink-700 bg-ink-900 p-0 text-ink-100 shadow-[0_6px_25px_rgb(0_0_0/0.5)] backdrop:bg-black/60 backdrop:backdrop-blur-[2px]"
+      className="m-auto w-[min(440px,calc(100vw-32px))] rounded-md border border-line bg-surface p-0 text-fg shadow-[0_6px_25px_rgb(0_0_0/0.5)] backdrop:bg-black/60 backdrop:backdrop-blur-[2px]"
     >
       <div className="p-5">
-        <p className="text-[14.5px] leading-relaxed text-ink-100">{message}</p>
+        <p className="text-md leading-relaxed text-fg">{message}</p>
         <div className="mt-5 flex flex-wrap justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onCancel}>
             Cancelar

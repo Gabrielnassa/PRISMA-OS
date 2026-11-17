@@ -41,7 +41,12 @@ function fakeMeta(profile: Buffer, posts: Buffer[]): { fetchImpl: typeof fetch; 
             username: "cafe.daesquina",
             name: "Café da Esquina",
             profile_picture_url: "https://scontent.cdninstagram.com/perfil.png",
-            media: { data: posts.map((_, i) => ({ media_type: "IMAGE", media_url: `https://scontent.cdninstagram.com/p${i}.png` })) },
+            media: {
+              data: posts.map((_, i) => ({
+                media_type: "IMAGE",
+                media_url: `https://scontent.cdninstagram.com/p${i}.png`,
+              })),
+            },
           },
         }),
         { status: 200, headers: { "content-type": "application/json" } },
@@ -61,7 +66,12 @@ describe("sugestão de cores da marca", () => {
   it("extrai as cores das imagens escolhidas, com o logotipo pesando mais", async () => {
     const { owner } = await newOrg();
     const { id: clientId } = await createClient(owner, { name: "Café da Esquina" });
-    const l = await uploadMedia(owner, clientId, { filename: "logo.png", data: logo("#c2410c", "#0f766e") }, { kind: "logo" });
+    const l = await uploadMedia(
+      owner,
+      clientId,
+      { filename: "logo.png", data: logo("#c2410c", "#0f766e") },
+      { kind: "logo" },
+    );
     const p = await uploadMedia(owner, clientId, { filename: "foto.png", data: logo("#1d4ed8") }, {});
 
     const s = await suggestColorsFromMedia(owner, clientId, [l.id, p.id]);
@@ -102,7 +112,9 @@ describe("sugestão de cores da marca", () => {
     const { owner } = await newOrg();
     const { id: clientId } = await createClient(owner, { name: "Cliente" });
     const { fetchImpl, urls } = fakeMeta(logo("#000000"), []);
-    await expect(suggestColorsFromInstagram(owner, clientId, "@cafe", { fetchImpl })).rejects.toBeInstanceOf(IntegrationNotConfiguredError);
+    await expect(suggestColorsFromInstagram(owner, clientId, "@cafe", { fetchImpl })).rejects.toBeInstanceOf(
+      IntegrationNotConfiguredError,
+    );
     expect(urls).toEqual([]);
   });
 
@@ -112,7 +124,10 @@ describe("sugestão de cores da marca", () => {
     const { id: clientId } = await createClient(owner, { name: "Café da Esquina" });
     const { fetchImpl, urls } = fakeMeta(logo("#c2410c"), [logo("#0f766e"), logo("#c2410c", "#facc15")]);
 
-    const r = await suggestColorsFromInstagram(owner, clientId, "https://www.instagram.com/Cafe.DaEsquina/", { fetchImpl, saveProfilePicture: true });
+    const r = await suggestColorsFromInstagram(owner, clientId, "https://www.instagram.com/Cafe.DaEsquina/", {
+      fetchImpl,
+      saveProfilePicture: true,
+    });
     expect(r.username).toBe("cafe.daesquina");
     expect(r.name).toBe("Café da Esquina");
     expect(r.postsRead).toBe(2);
@@ -122,13 +137,21 @@ describe("sugestão de cores da marca", () => {
     expect(r.savedLogoId).toBeTruthy();
 
     const rows = await withTx(systemCtx("teste"), (tx) =>
-      many<{ kind: string; filename: string; license_note: string | null }>(tx, "SELECT kind, filename, license_note FROM media_assets WHERE id = $1", [r.savedLogoId]),
+      many<{ kind: string; filename: string; license_note: string | null }>(
+        tx,
+        "SELECT kind, filename, license_note FROM media_assets WHERE id = $1",
+        [r.savedLogoId],
+      ),
     );
     expect(rows[0]).toMatchObject({ kind: "logo", filename: "instagram-cafe.daesquina.png" });
     expect(rows[0]!.license_note).toContain("API oficial da Meta");
 
     const logs = await withTx(systemCtx("teste"), (tx) =>
-      many<{ metadata: Record<string, unknown> }>(tx, "SELECT metadata FROM audit_logs WHERE client_id = $1 AND action = 'brand.colors_from_instagram'", [clientId]),
+      many<{ metadata: Record<string, unknown> }>(
+        tx,
+        "SELECT metadata FROM audit_logs WHERE client_id = $1 AND action = 'brand.colors_from_instagram'",
+        [clientId],
+      ),
     );
     expect(logs).toHaveLength(1);
     expect(logs[0]!.metadata).toMatchObject({ username: "cafe.daesquina", postsRead: 2, savedLogo: true });
@@ -150,6 +173,8 @@ describe("sugestão de cores da marca", () => {
 
     const r = await suggestColorsFromInstagram(editor, clientId, "@marca", { fetchImpl, saveProfilePicture: true });
     expect(r.savedLogoId).toBeTruthy();
-    await expect(suggestColorsFromInstagram(reviewer, clientId, "@marca", { fetchImpl })).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(suggestColorsFromInstagram(reviewer, clientId, "@marca", { fetchImpl })).rejects.toBeInstanceOf(
+      ForbiddenError,
+    );
   });
 });

@@ -28,7 +28,7 @@ export default async function SkillsPage({ searchParams }: { searchParams: Promi
       <section className="mb-12">
         <SectionTitle
           aside={
-            <Link href={showArchived ? "/skills" : "/skills?arquivadas=1"} className="hover:text-ink-100">
+            <Link href={showArchived ? "/skills" : "/skills?arquivadas=1"} className="hover:text-fg">
               {showArchived ? "Ocultar arquivadas" : "Mostrar arquivadas"}
             </Link>
           }
@@ -45,13 +45,13 @@ export default async function SkillsPage({ searchParams }: { searchParams: Promi
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {custom.map((s) => (
               <Link key={s.id} href={`/skills/${s.id}`} className="group">
-                <Card className="h-full transition-colors group-hover:border-ink-600 group-hover:bg-ink-850/40">
+                <Card className="h-full transition-colors group-hover:border-control group-hover:bg-surface/40">
                   <div className="space-y-3 p-5">
                     <div className="flex items-start justify-between gap-3">
-                      <h3 className="font-semibold text-ink-50">{s.name}</h3>
+                      <h3 className="font-semibold text-fg">{s.name}</h3>
                       <Badge tone="accent">v{s.version}</Badge>
                     </div>
-                    <p className="line-clamp-3 text-sm text-ink-300">{s.description || "Sem descrição."}</p>
+                    <p className="line-clamp-3 text-base text-muted">{s.description || "Sem descrição."}</p>
                     <div className="flex flex-wrap gap-1.5">
                       <Badge>{s.clientName ? `Só ${s.clientName}` : "Todos os clientes"}</Badge>
                       {s.source === "skill_md" ? <Badge tone="ember">SKILL.md</Badge> : null}
@@ -77,18 +77,18 @@ export default async function SkillsPage({ searchParams }: { searchParams: Promi
                 description={`Versão ${s.version}`}
                 actions={<Badge tone={s.kind === "ai" ? "accent" : "ember"}>{s.kind === "ai" ? "IA" : "Regras"}</Badge>}
               />
-              <div className="space-y-3 p-5 text-sm">
-                <p className="text-ink-200">{s.description}</p>
+              <div className="space-y-3 p-5 text-base">
+                <p className="text-fg">{s.description}</p>
                 <div>
-                  <div className="text-[12px] font-medium text-ink-400">Critérios de qualidade</div>
-                  <ul className="mt-1 list-disc space-y-0.5 pl-5 text-ink-300">
+                  <div className="text-sm font-medium text-muted">Critérios de qualidade</div>
+                  <ul className="mt-1 list-disc space-y-0.5 pl-5 text-muted">
                     {s.qualityCriteria.map((c) => (
                       <li key={c}>{c}</li>
                     ))}
                   </ul>
                 </div>
                 {u ? (
-                  <p className="text-xs text-ink-400">
+                  <p className="text-sm text-muted">
                     Este mês: {plural(u.runs, "execução", "execuções")} · {formatUsd(u.costUsd, 2)}
                     {u.avgDurationMs ? ` · média ${(u.avgDurationMs / 1000).toFixed(1)} s` : ""}
                   </p>

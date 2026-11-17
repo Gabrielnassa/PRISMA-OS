@@ -16,7 +16,19 @@ export default async function ApprovalsPage({ searchParams }: { searchParams: Pr
   const clients = await listClients(auth);
   const client = clients.find((c) => c.id === cliente);
   const items = await listPendingApprovals(auth, client?.id);
-  const byClient = [...items.reduce((m, a) => m.set(a.clientId, { clientId: a.clientId, clientName: a.clientName, count: (m.get(a.clientId)?.count ?? 0) + 1 }), new Map<string, { clientId: string; clientName: string; count: number }>()).values()];
+  const byClient = [
+    ...items
+      .reduce(
+        (m, a) =>
+          m.set(a.clientId, {
+            clientId: a.clientId,
+            clientName: a.clientName,
+            count: (m.get(a.clientId)?.count ?? 0) + 1,
+          }),
+        new Map<string, { clientId: string; clientName: string; count: number }>(),
+      )
+      .values(),
+  ];
   return (
     <>
       <PageHeader
@@ -24,22 +36,27 @@ export default async function ApprovalsPage({ searchParams }: { searchParams: Pr
         description={can(auth.role, "content.approve") ? undefined : "Você acompanha; a decisão é de quem aprova."}
       />
       {client ? (
-        <p className="-mt-4 mb-6 text-[13.5px] text-ink-300">
-          Só de <span className="font-medium text-ink-50">{client.name}</span> ·{" "}
-          <Link href="/aprovacoes" className="text-iris-300 hover:underline">
+        <p className="-mt-4 mb-6 text-base text-muted">
+          Só de <span className="font-medium text-fg">{client.name}</span> ·{" "}
+          <Link href="/aprovacoes" className="text-accent hover:underline">
             ver de todos os clientes
           </Link>
         </p>
       ) : null}
       {items.length > 0 && can(auth.role, "approval.share") ? (
         <Card className="mb-6">
-          <CardHeader title="Enviar para o cliente aprovar" description="Um link por cliente com todas as peças pendentes. O cliente responde peça por peça, sem login." />
-          <ul className="divide-y divide-ink-800">
+          <CardHeader
+            title="Enviar para o cliente aprovar"
+            description="Um link por cliente com todas as peças pendentes. O cliente responde peça por peça, sem login."
+          />
+          <ul className="divide-y divide-line">
             {byClient.map((c) => (
               <li key={c.clientId} className="flex flex-wrap items-start justify-between gap-3 px-5 py-4">
                 <div className="min-w-0">
-                  <div className="font-medium text-ink-50">{c.clientName}</div>
-                  <div className="text-[12.5px] text-ink-400">{c.count === 1 ? "1 peça aguardando" : `${c.count} peças aguardando`}</div>
+                  <div className="font-medium text-fg">{c.clientName}</div>
+                  <div className="text-sm text-muted">
+                    {c.count === 1 ? "1 peça aguardando" : `${c.count} peças aguardando`}
+                  </div>
                 </div>
                 <ClientLinkPanel clientId={c.clientId} clientName={c.clientName} pending={c.count} />
               </li>
@@ -54,26 +71,40 @@ export default async function ApprovalsPage({ searchParams }: { searchParams: Pr
           {items.map((a) => (
             <li key={a.approvalId}>
               <Card className="flex h-full flex-col overflow-hidden">
-                <Link href={`/conteudos/${a.contentId}`} className="block bg-ink-850">
+                <Link href={`/conteudos/${a.contentId}`} className="block bg-surface">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`/api/contents/${a.contentId}/versions/${a.versionId}/slides/0`} alt={`Capa de ${a.title}`} className="mx-auto max-h-72 w-auto" loading="lazy" />
+                  <img
+                    src={`/api/contents/${a.contentId}/versions/${a.versionId}/slides/0`}
+                    alt={`Capa de ${a.title}`}
+                    className="mx-auto max-h-72 w-auto"
+                    loading="lazy"
+                  />
                 </Link>
                 <div className="flex flex-1 flex-col gap-2 p-4">
-                  <Link href={`/conteudos/${a.contentId}`} className="font-medium text-ink-50 underline-offset-4 hover:underline">
+                  <Link
+                    href={`/conteudos/${a.contentId}`}
+                    className="font-medium text-fg underline-offset-4 hover:underline"
+                  >
                     {a.title}
                   </Link>
-                  <div className="flex flex-wrap gap-2 text-xs">
+                  <div className="flex flex-wrap gap-2 text-sm">
                     <Badge>{a.clientName}</Badge>
                     <Badge>{FORMAT_LABELS[a.format]}</Badge>
                     <Badge tone="accent">v{a.versionNumber}</Badge>
-                    {a.warningCount ? <Badge tone="warning">{a.warningCount === 1 ? "1 alerta" : `${a.warningCount} alertas`}</Badge> : null}
+                    {a.warningCount ? (
+                      <Badge tone="warning">{a.warningCount === 1 ? "1 alerta" : `${a.warningCount} alertas`}</Badge>
+                    ) : null}
                   </div>
-                  <p className="text-xs text-ink-400">
-                    Pedido por {a.requestedByName ?? "—"} <span title={formatDateTime(a.requestedAt)}>{formatRelative(a.requestedAt)}</span>
+                  <p className="text-sm text-muted">
+                    Pedido por {a.requestedByName ?? "—"}{" "}
+                    <span title={formatDateTime(a.requestedAt)}>{formatRelative(a.requestedAt)}</span>
                   </p>
-                  {a.requestNote ? <p className="text-sm text-ink-200">“{a.requestNote}”</p> : null}
+                  {a.requestNote ? <p className="text-base text-fg">“{a.requestNote}”</p> : null}
                   <div className="mt-auto pt-2">
-                    <Link href={`/conteudos/${a.contentId}`} className="text-sm font-medium text-iris-300 hover:underline">
+                    <Link
+                      href={`/conteudos/${a.contentId}`}
+                      className="text-base font-medium text-accent hover:underline"
+                    >
                       Revisar e decidir →
                     </Link>
                   </div>

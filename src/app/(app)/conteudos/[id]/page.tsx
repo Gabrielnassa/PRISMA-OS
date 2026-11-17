@@ -13,7 +13,18 @@ import { TEMPLATES, getTemplate } from "@/server/render/templates";
 import { diffDocuments } from "@/server/content/compose";
 import { FAMILY_LABELS } from "@/lib/brand";
 import { ASPECTS, CHANNEL_LABELS, FORMAT_LABELS, OBJECTIVE_LABELS, type DocumentStyle } from "@/lib/content/document";
-import { Alert, Badge, Card, CardHeader, Dot, LinkButton, PageHeader, buttonClass, formatDateTime, formatUsd } from "@/components/ui";
+import {
+  Alert,
+  Badge,
+  Card,
+  CardHeader,
+  Dot,
+  LinkButton,
+  PageHeader,
+  buttonClass,
+  formatDateTime,
+  formatUsd,
+} from "@/components/ui";
 import { SourceBadge, StatusBadge } from "@/components/status";
 import { Icon } from "@/components/icons";
 import { ContentEditor } from "./editor";
@@ -24,7 +35,13 @@ import { PublishForm } from "@/components/publish-form";
 import { AssignmentForm } from "./assignment";
 import { assignableMembers } from "@/server/services/tasks";
 import { PublicationList } from "@/components/publication-list";
-import { compatibility, listPublications, needsPublicUrl, publicUrlProblem, type PublicationKind } from "@/server/services/publications";
+import {
+  compatibility,
+  listPublications,
+  needsPublicUrl,
+  publicUrlProblem,
+  type PublicationKind,
+} from "@/server/services/publications";
 import { listAccounts, NETWORK_LABELS } from "@/server/services/social-accounts";
 import { archiveAction, deleteContentAction, duplicateAction, restoreVersionAction } from "./actions";
 import { CopyButton } from "@/components/copy-button";
@@ -52,7 +69,13 @@ function todayBrasilia(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
 }
 
-export default async function ContentPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ comparar?: string; com?: string }> }) {
+export default async function ContentPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ comparar?: string; com?: string }>;
+}) {
   const auth = await requireAuth();
   const { id } = await params;
   const { comparar, com } = await searchParams;
@@ -66,35 +89,52 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
     listMedia(auth, { clientId: detail.clientId, imagesOnly: true, limit: 200 }),
   ]);
   const provider = providerStatus();
-  const approvedVersion = detail.status === "approved" ? detail.versions.find((v) => v.id === detail.approvedVersionId) : undefined;
+  const approvedVersion =
+    detail.status === "approved" ? detail.versions.find((v) => v.id === detail.approvedVersionId) : undefined;
   const members = await assignableMembers(auth, detail.clientId);
   const [publications, accounts, approvedDoc] = await Promise.all([
     listPublications(auth, { contentId: id }),
     approvedVersion && can(auth.role, "social.publish") ? listAccounts(auth, detail.clientId) : Promise.resolve([]),
-    approvedVersion && can(auth.role, "social.publish") ? getVersionDocument(auth, id, approvedVersion.id) : Promise.resolve(null),
+    approvedVersion && can(auth.role, "social.publish")
+      ? getVersionDocument(auth, id, approvedVersion.id)
+      : Promise.resolve(null),
   ]);
-  const publish = approvedDoc && approvedVersion
-    ? (() => {
-        const kind: PublicationKind = detail.format === "carousel" && approvedDoc.document.slides.length > 1 ? "carousel" : detail.format === "story" ? "story" : "image";
-        const urlProblem = publicUrlProblem();
-        return {
-          versionNumber: approvedVersion.number,
-          caption: [approvedDoc.document.caption, approvedDoc.document.hashtags.join(" ")].filter(Boolean).join("\n\n"),
-          accounts: accounts.map((a) => ({
-            id: a.id,
-            network: a.network,
-            networkLabel: NETWORK_LABELS[a.network],
-            label: a.username ? `@${a.username.replace(/^@/, "")}` : a.displayName,
-            privacyOptions: Array.isArray(a.details.privacyOptions) ? (a.details.privacyOptions as string[]) : [],
-            blocked:
-              a.status !== "active"
-                ? "Conecte a conta de novo na aba Redes do cliente."
-                : (compatibility(a.network, kind, approvedDoc.document.aspect) ?? (needsPublicUrl(a.network, kind) && urlProblem ? "Disponível depois de hospedar com domínio e HTTPS." : null)),
-          })),
-        };
-      })()
-    : null;
-  const canEdit = can(auth.role, "content.edit") && ["draft", "in_review", "awaiting_approval", "approved", "rejected", "failed"].includes(detail.status) && Boolean(detail.current);
+  const publish =
+    approvedDoc && approvedVersion
+      ? (() => {
+          const kind: PublicationKind =
+            detail.format === "carousel" && approvedDoc.document.slides.length > 1
+              ? "carousel"
+              : detail.format === "story"
+                ? "story"
+                : "image";
+          const urlProblem = publicUrlProblem();
+          return {
+            versionNumber: approvedVersion.number,
+            caption: [approvedDoc.document.caption, approvedDoc.document.hashtags.join(" ")]
+              .filter(Boolean)
+              .join("\n\n"),
+            accounts: accounts.map((a) => ({
+              id: a.id,
+              network: a.network,
+              networkLabel: NETWORK_LABELS[a.network],
+              label: a.username ? `@${a.username.replace(/^@/, "")}` : a.displayName,
+              privacyOptions: Array.isArray(a.details.privacyOptions) ? (a.details.privacyOptions as string[]) : [],
+              blocked:
+                a.status !== "active"
+                  ? "Conecte a conta de novo na aba Redes do cliente."
+                  : (compatibility(a.network, kind, approvedDoc.document.aspect) ??
+                    (needsPublicUrl(a.network, kind) && urlProblem
+                      ? "Disponível depois de hospedar com domínio e HTTPS."
+                      : null)),
+            })),
+          };
+        })()
+      : null;
+  const canEdit =
+    can(auth.role, "content.edit") &&
+    ["draft", "in_review", "awaiting_approval", "approved", "rejected", "failed"].includes(detail.status) &&
+    Boolean(detail.current);
   const current = detail.current;
   const brandStyle: DocumentStyle = {
     colors: { ...client.brand.visual.colors },
@@ -105,7 +145,13 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
     handle: client.brand.channels.instagram,
   };
 
-  let compare: null | { a: Awaited<ReturnType<typeof getVersionDocument>>; b: Awaited<ReturnType<typeof getVersionDocument>>; aId: string; bId: string; changes: string[] } = null;
+  let compare: null | {
+    a: Awaited<ReturnType<typeof getVersionDocument>>;
+    b: Awaited<ReturnType<typeof getVersionDocument>>;
+    aId: string;
+    bId: string;
+    changes: string[];
+  } = null;
   if (comparar && com) {
     try {
       const [a, b] = await Promise.all([getVersionDocument(auth, id, comparar), getVersionDocument(auth, id, com)]);
@@ -136,15 +182,27 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
               </a>
             ) : null}
             {current && current.id !== detail.approvedVersionId ? (
-              <a href={`/api/contents/${id}/export?format=zip&version=${current.id}`} className={buttonClass("secondary", "sm")} title="Arquivo identificado como rascunho">
+              <a
+                href={`/api/contents/${id}/export?format=zip&version=${current.id}`}
+                className={buttonClass("secondary", "sm")}
+                title="Arquivo identificado como rascunho"
+              >
                 Baixar rascunho
               </a>
             ) : null}
             {current && (current.document.caption || current.document.hashtags.length) ? (
-              <CopyButton text={[current.document.caption, current.document.hashtags.join(" ")].filter(Boolean).join("\n\n")} label="Copiar legenda" />
+              <CopyButton
+                text={[current.document.caption, current.document.hashtags.join(" ")].filter(Boolean).join("\n\n")}
+                label="Copiar legenda"
+              />
             ) : null}
             {current && can(auth.role, "content.create") ? (
-              <InlineAction action={duplicateAction} fields={{ contentId: id }} label="Duplicar peça" pendingText="Duplicando..." />
+              <InlineAction
+                action={duplicateAction}
+                fields={{ contentId: id }}
+                label="Duplicar peça"
+                pendingText="Duplicando..."
+              />
             ) : null}
           </>
         }
@@ -182,7 +240,16 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
             baseVersionId={current.id}
             initialDocument={current.document}
             initialQuality={detail.quality}
-            templates={TEMPLATES.map((t) => ({ id: t.id, name: t.name, familyLabel: FAMILY_LABELS[t.family], formats: t.formats, aspects: t.aspects, image: t.image, fieldLimits: t.fieldLimits, capacity: t.capacity }))}
+            templates={TEMPLATES.map((t) => ({
+              id: t.id,
+              name: t.name,
+              familyLabel: FAMILY_LABELS[t.family],
+              formats: t.formats,
+              aspects: t.aspects,
+              image: t.image,
+              fieldLimits: t.fieldLimits,
+              capacity: t.capacity,
+            }))}
             images={media.items.map((m) => ({ id: m.id, filename: m.filename }))}
             brandStyle={brandStyle}
             canEdit={canEdit}
@@ -190,17 +257,26 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
         ) : (
           <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_420px]">
             <Card>
-              <CardHeader title={`Versão ${current.number}`} description={`Layout ${getTemplate(current.document.templateId).template.name}`} />
+              <CardHeader
+                title={`Versão ${current.number}`}
+                description={`Layout ${getTemplate(current.document.templateId).template.name}`}
+              />
               <div className="grid grid-cols-2 gap-3 p-5 md:grid-cols-3">
                 {current.document.slides.map((s, i) => (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img key={s.id} src={`/api/contents/${id}/versions/${current.id}/slides/${i}`} alt={`Lâmina ${i + 1}`} className="w-full rounded-lg border border-ink-700" loading="lazy" />
+                  <img
+                    key={s.id}
+                    src={`/api/contents/${id}/versions/${current.id}/slides/${i}`}
+                    alt={`Lâmina ${i + 1}`}
+                    className="w-full rounded-md border border-line"
+                    loading="lazy"
+                  />
                 ))}
               </div>
-              <div className="border-t border-ink-700 p-5 text-sm">
-                <div className="text-[12px] font-medium text-ink-400">Legenda</div>
-                <p className="mt-1 whitespace-pre-wrap text-ink-100">{current.document.caption || "—"}</p>
-                <p className="mt-2 text-iris-300">{current.document.hashtags.join(" ")}</p>
+              <div className="border-t border-line p-5 text-base">
+                <div className="text-sm font-medium text-muted">Legenda</div>
+                <p className="mt-1 whitespace-pre-wrap text-fg">{current.document.caption || "—"}</p>
+                <p className="mt-2 text-accent">{current.document.hashtags.join(" ")}</p>
               </div>
             </Card>
             <QualityPanel report={detail.quality} />
@@ -211,8 +287,23 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
         <div className="flex min-w-0 flex-col gap-6">
           <Card>
-            <CardHeader title="Responsável e prazo" description={detail.dueDate && !["approved", "published", "archived"].includes(detail.status) && detail.dueDate < todayBrasilia() ? "Prazo vencido" : undefined} />
-            <AssignmentForm contentId={id} members={members} assigneeId={detail.assignee?.id ?? null} dueDate={detail.dueDate} canEdit={can(auth.role, "content.edit")} />
+            <CardHeader
+              title="Responsável e prazo"
+              description={
+                detail.dueDate &&
+                !["approved", "published", "archived"].includes(detail.status) &&
+                detail.dueDate < todayBrasilia()
+                  ? "Prazo vencido"
+                  : undefined
+              }
+            />
+            <AssignmentForm
+              contentId={id}
+              members={members}
+              assigneeId={detail.assignee?.id ?? null}
+              dueDate={detail.dueDate}
+              canEdit={can(auth.role, "content.edit")}
+            />
           </Card>
           {current ? (
             <ApprovalPanel
@@ -245,28 +336,40 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
           {publications.length ? (
             <Card>
               <CardHeader title="Publicações desta peça" />
-              <PublicationList items={publications} showClient={false} showContent={false} canAct={can(auth.role, "social.publish")} />
+              <PublicationList
+                items={publications}
+                showClient={false}
+                showContent={false}
+                canAct={can(auth.role, "social.publish")}
+              />
             </Card>
           ) : null}
           <CommentsPanel contentId={id} comments={detail.comments} canComment={can(auth.role, "content.comment")} />
-          {current && can(auth.role, "content.edit") ? <AiReviewPanel contentId={id} enabled={provider.configured} /> : null}
+          {current && can(auth.role, "content.edit") ? (
+            <AiReviewPanel contentId={id} enabled={provider.configured} />
+          ) : null}
         </div>
         <div className="flex min-w-0 flex-col gap-6">
           <Card>
             <CardHeader title="Versões" />
-            <ul className="divide-y divide-ink-800">
+            <ul className="divide-y divide-line">
               {detail.versions.map((v, i) => (
-                <li key={v.id} className="flex flex-wrap items-center gap-2 px-5 py-2.5 text-sm">
-                  <span className="font-semibold text-ink-100">v{v.number}</span>
+                <li key={v.id} className="flex flex-wrap items-center gap-2 px-5 py-2.5 text-base">
+                  <span className="font-semibold text-fg">v{v.number}</span>
                   <SourceBadge source={v.source} />
                   {v.id === detail.approvedVersionId ? <Badge tone="success">Aprovada</Badge> : null}
-                  {v.qualityPassed === false ? <Badge tone="danger">{v.criticalCount === 1 ? "1 crítico" : `${v.criticalCount} críticos`}</Badge> : null}
-                  <span className="min-w-0 flex-1 truncate text-xs text-ink-400">
+                  {v.qualityPassed === false ? (
+                    <Badge tone="danger">{v.criticalCount === 1 ? "1 crítico" : `${v.criticalCount} críticos`}</Badge>
+                  ) : null}
+                  <span className="min-w-0 flex-1 truncate text-sm text-muted">
                     {v.createdByName ?? "—"} · {formatDateTime(v.createdAt)}
                     {v.changeNote ? ` · ${v.changeNote}` : ""}
                   </span>
                   {detail.versions[i + 1] ? (
-                    <Link href={`/conteudos/${id}?comparar=${detail.versions[i + 1]!.id}&com=${v.id}#comparacao`} className="text-xs text-iris-300 hover:underline">
+                    <Link
+                      href={`/conteudos/${id}?comparar=${detail.versions[i + 1]!.id}&com=${v.id}#comparacao`}
+                      className="text-sm text-accent hover:underline"
+                    >
                       Comparar com v{detail.versions[i + 1]!.number}
                     </Link>
                   ) : null}
@@ -281,35 +384,37 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
                   ) : null}
                 </li>
               ))}
-              {detail.versions.length === 0 ? <li className="px-5 py-3 text-sm text-ink-400">Nenhuma versão ainda.</li> : null}
+              {detail.versions.length === 0 ? (
+                <li className="px-5 py-3 text-base text-muted">Nenhuma versão ainda.</li>
+              ) : null}
             </ul>
           </Card>
 
           <Card>
             <CardHeader title="Briefing" />
-            <dl className="space-y-3 p-5 text-sm">
+            <dl className="space-y-3 p-5 text-base">
               <div>
-                <dt className="text-xs text-ink-400">Briefing</dt>
-                <dd className="mt-0.5 whitespace-pre-wrap text-ink-100">{detail.briefing.text}</dd>
+                <dt className="text-sm text-muted">Briefing</dt>
+                <dd className="mt-0.5 whitespace-pre-wrap text-fg">{detail.briefing.text}</dd>
               </div>
               {detail.briefing.keyMessages ? (
                 <div>
-                  <dt className="text-xs text-ink-400">Mensagens-chave</dt>
-                  <dd className="mt-0.5 whitespace-pre-wrap text-ink-100">{detail.briefing.keyMessages}</dd>
+                  <dt className="text-sm text-muted">Mensagens-chave</dt>
+                  <dd className="mt-0.5 whitespace-pre-wrap text-fg">{detail.briefing.keyMessages}</dd>
                 </div>
               ) : null}
               <div className="grid gap-3 sm:grid-cols-3">
                 <div>
-                  <dt className="text-xs text-ink-400">Público</dt>
-                  <dd className="mt-0.5 text-ink-100">{detail.briefing.audience || "Perfil da marca"}</dd>
+                  <dt className="text-sm text-muted">Público</dt>
+                  <dd className="mt-0.5 text-fg">{detail.briefing.audience || "Perfil da marca"}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-ink-400">Oferta</dt>
-                  <dd className="mt-0.5 text-ink-100">{detail.briefing.offer || "—"}</dd>
+                  <dt className="text-sm text-muted">Oferta</dt>
+                  <dd className="mt-0.5 text-fg">{detail.briefing.offer || "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-ink-400">CTA</dt>
-                  <dd className="mt-0.5 text-ink-100">{detail.briefing.cta || "—"}</dd>
+                  <dt className="text-sm text-muted">CTA</dt>
+                  <dd className="mt-0.5 text-fg">{detail.briefing.cta || "—"}</dd>
                 </div>
               </div>
             </dl>
@@ -317,19 +422,25 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
 
           <Card>
             <CardHeader title="Histórico" />
-            <ol className="max-h-96 divide-y divide-ink-800 overflow-y-auto">
+            <ol className="max-h-96 divide-y divide-line overflow-y-auto">
               {history.map((h) => (
-                <li key={h.id} className="px-5 py-2.5 text-sm">
+                <li key={h.id} className="px-5 py-2.5 text-base">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-ink-100">{ACTION_LABELS[h.action] ?? h.action}</span>
-                    <span className="text-xs text-ink-400">
+                    <span className="text-fg">{ACTION_LABELS[h.action] ?? h.action}</span>
+                    <span className="text-sm text-muted">
                       {h.actorName ?? (h.actorType === "worker" ? "worker" : "sistema")} · {formatDateTime(h.createdAt)}
                     </span>
                   </div>
-                  {h.action === "content.version_created" && Array.isArray(h.metadata.changes) && h.metadata.changes.length ? (
-                    <p className="mt-0.5 text-xs text-ink-400">v{String(h.metadata.version)}: {(h.metadata.changes as string[]).slice(0, 8).join(", ")}</p>
+                  {h.action === "content.version_created" &&
+                  Array.isArray(h.metadata.changes) &&
+                  h.metadata.changes.length ? (
+                    <p className="mt-0.5 text-sm text-muted">
+                      v{String(h.metadata.version)}: {(h.metadata.changes as string[]).slice(0, 8).join(", ")}
+                    </p>
                   ) : null}
-                  {h.action.startsWith("approval.") && h.metadata.note ? <p className="mt-0.5 text-xs text-ink-400">“{String(h.metadata.note)}”</p> : null}
+                  {h.action.startsWith("approval.") && h.metadata.note ? (
+                    <p className="mt-0.5 text-sm text-muted">“{String(h.metadata.note)}”</p>
+                  ) : null}
                 </li>
               ))}
             </ol>
@@ -338,16 +449,34 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
           {detail.aiRuns.length ? (
             <Card>
               <CardHeader title="Execuções de IA" />
-              <ul className="divide-y divide-ink-800 text-sm">
+              <ul className="divide-y divide-line text-base">
                 {detail.aiRuns.map((r) => (
                   <li key={r.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-2.5">
-                    <span className="font-mono text-[12.5px] text-ink-100">{r.skillId}</span>
-                    <Dot tone={r.status === "succeeded" ? "success" : r.status === "running" ? "info" : r.status === "refused" ? "warning" : "danger"}>
-                      {r.status === "succeeded" ? "Concluída" : r.status === "running" ? "Em andamento" : r.status === "refused" ? "Recusada pela IA" : "Falhou"}
+                    <span className="font-mono text-sm text-fg">{r.skillId}</span>
+                    <Dot
+                      tone={
+                        r.status === "succeeded"
+                          ? "success"
+                          : r.status === "running"
+                            ? "info"
+                            : r.status === "refused"
+                              ? "warning"
+                              : "danger"
+                      }
+                    >
+                      {r.status === "succeeded"
+                        ? "Concluída"
+                        : r.status === "running"
+                          ? "Em andamento"
+                          : r.status === "refused"
+                            ? "Recusada pela IA"
+                            : "Falhou"}
                     </Dot>
                     {r.isDemo ? <Badge tone="warning">demo</Badge> : null}
-                    <span className="basis-full tabular text-[11.5px] text-ink-400">
-                      {r.model} · {r.isDemo ? "sem custo" : r.costUsd === null ? "tarifa não cadastrada" : formatUsd(r.costUsd, 4)} · {formatDateTime(r.createdAt)}
+                    <span className="tabular basis-full text-xs text-muted">
+                      {r.model} ·{" "}
+                      {r.isDemo ? "sem custo" : r.costUsd === null ? "tarifa não cadastrada" : formatUsd(r.costUsd, 4)}{" "}
+                      · {formatDateTime(r.createdAt)}
                     </span>
                   </li>
                 ))}
@@ -384,7 +513,11 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
           <CardHeader
             title={`Comparação: v${compare.a.number} → v${compare.b.number}`}
             description={compare.changes.length ? compare.changes.join(" · ") : "Sem diferenças."}
-            actions={<LinkButton href={`/conteudos/${id}`} variant="ghost" size="sm">Fechar</LinkButton>}
+            actions={
+              <LinkButton href={`/conteudos/${id}`} variant="ghost" size="sm">
+                Fechar
+              </LinkButton>
+            }
           />
           <div className="grid gap-6 p-5 md:grid-cols-2">
             {[
@@ -392,14 +525,20 @@ export default async function ContentPage({ params, searchParams }: { params: Pr
               { v: compare.b, vid: compare.bId },
             ].map(({ v, vid }) => (
               <div key={vid}>
-                <div className="mb-2 text-sm font-semibold text-ink-100">Versão {v.number}</div>
+                <div className="mb-2 text-base font-semibold text-fg">Versão {v.number}</div>
                 <div className="grid grid-cols-2 gap-2">
                   {v.document.slides.map((s, i) => (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img key={s.id} src={`/api/contents/${id}/versions/${vid}/slides/${i}`} alt={`v${v.number} lâmina ${i + 1}`} className="w-full rounded-lg border border-ink-700" loading="lazy" />
+                    <img
+                      key={s.id}
+                      src={`/api/contents/${id}/versions/${vid}/slides/${i}`}
+                      alt={`v${v.number} lâmina ${i + 1}`}
+                      className="w-full rounded-md border border-line"
+                      loading="lazy"
+                    />
                   ))}
                 </div>
-                <p className="mt-2 whitespace-pre-wrap text-xs text-ink-400">{v.document.caption}</p>
+                <p className="mt-2 text-sm whitespace-pre-wrap text-muted">{v.document.caption}</p>
               </div>
             ))}
           </div>

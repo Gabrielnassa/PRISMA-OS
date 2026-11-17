@@ -23,9 +23,19 @@ const line = (label: string, value: string | string[]) => {
  * público, voz) e memória aprovada. Hipóteses e sugestões são rotuladas para
  * não serem tratadas como fatos.
  */
-export async function buildClientContext(tx: Queryable, organizationId: string, clientId: string): Promise<ClientContext> {
-  const org = await one<{ global_context: string }>(tx, "SELECT global_context FROM organizations WHERE id = $1", [organizationId]);
-  const client = await one<{ name: string; segment: string }>(tx, "SELECT name, segment FROM clients WHERE id = $1 AND organization_id = $2", [clientId, organizationId]);
+export async function buildClientContext(
+  tx: Queryable,
+  organizationId: string,
+  clientId: string,
+): Promise<ClientContext> {
+  const org = await one<{ global_context: string }>(tx, "SELECT global_context FROM organizations WHERE id = $1", [
+    organizationId,
+  ]);
+  const client = await one<{ name: string; segment: string }>(
+    tx,
+    "SELECT name, segment FROM clients WHERE id = $1 AND organization_id = $2",
+    [clientId, organizationId],
+  );
   const { brand } = await loadBrandProfile(tx, clientId);
   const memories = await many<{ kind: string; content: string }>(
     tx,
@@ -34,10 +44,16 @@ export async function buildClientContext(tx: Queryable, organizationId: string, 
      ORDER BY kind, created_at DESC LIMIT 60`,
     [clientId],
   );
-  const kindLabel: Record<string, string> = { fact: "Fato confirmado", preference: "Preferência confirmada", hypothesis: "Hipótese (não afirmar como fato)" };
+  const kindLabel: Record<string, string> = {
+    fact: "Fato confirmado",
+    preference: "Preferência confirmada",
+    hypothesis: "Hipótese (não afirmar como fato)",
+  };
   const b = brand;
   const sections = [
-    org.global_context.trim() ? `<contexto_global_da_agencia>\n${escapeData(org.global_context.trim())}\n</contexto_global_da_agencia>` : "",
+    org.global_context.trim()
+      ? `<contexto_global_da_agencia>\n${escapeData(org.global_context.trim())}\n</contexto_global_da_agencia>`
+      : "",
     `<contexto_do_cliente>
 ${[
   line("Cliente", client.name),
@@ -70,5 +86,11 @@ ${[
       ? `<memoria_do_cliente>\n${memories.map((m) => `- [${kindLabel[m.kind] ?? m.kind}] ${escapeData(m.content)}`).join("\n")}\n</memoria_do_cliente>`
       : "",
   ].filter(Boolean);
-  return { clientName: client.name, segment: b.business.segment || client.segment, brand, text: sections.join("\n\n"), memoryCount: memories.length };
+  return {
+    clientName: client.name,
+    segment: b.business.segment || client.segment,
+    brand,
+    text: sections.join("\n\n"),
+    memoryCount: memories.length,
+  };
 }

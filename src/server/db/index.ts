@@ -7,9 +7,7 @@ import { getPool } from "./pool";
  * - system: login, worker e scripts administrativos; o chamador é responsável
  *   pela autorização e deve informar o motivo (registrado em logs de depuração).
  */
-export type DbContext =
-  | { kind: "user"; userId: string }
-  | { kind: "system"; reason: string };
+export type DbContext = { kind: "user"; userId: string } | { kind: "system"; reason: string };
 
 export interface Queryable {
   query<R extends pg.QueryResultRow = pg.QueryResultRow>(text: string, values?: unknown[]): Promise<pg.QueryResult<R>>;
@@ -21,10 +19,10 @@ export async function withTx<T>(ctx: DbContext, fn: (tx: Tx) => Promise<T>): Pro
   const client = await getPool().connect();
   try {
     await client.query("BEGIN");
-    await client.query(
-      "SELECT set_config('app.user_id', $1, true), set_config('app.system', $2, true)",
-      [ctx.kind === "user" ? ctx.userId : "", ctx.kind === "system" ? "on" : "off"],
-    );
+    await client.query("SELECT set_config('app.user_id', $1, true), set_config('app.system', $2, true)", [
+      ctx.kind === "user" ? ctx.userId : "",
+      ctx.kind === "system" ? "on" : "off",
+    ]);
     const tx: Tx = Object.assign(
       {
         query: <R extends pg.QueryResultRow>(text: string, values?: unknown[]) => client.query<R>(text, values),
@@ -52,7 +50,11 @@ export async function one<R extends pg.QueryResultRow>(tx: Queryable, text: stri
   return row;
 }
 
-export async function maybeOne<R extends pg.QueryResultRow>(tx: Queryable, text: string, values?: unknown[]): Promise<R | null> {
+export async function maybeOne<R extends pg.QueryResultRow>(
+  tx: Queryable,
+  text: string,
+  values?: unknown[],
+): Promise<R | null> {
   const res = await tx.query<R>(text, values);
   return res.rows[0] ?? null;
 }

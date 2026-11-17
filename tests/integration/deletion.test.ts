@@ -8,7 +8,12 @@ import { getCostSummary, setClientBudget } from "../../src/server/services/costs
 import { createCustomSkill } from "../../src/server/services/custom-skills";
 import { deleteMedia, getMediaFile, uploadMedia } from "../../src/server/services/media";
 import { updateMember } from "../../src/server/services/users";
-import { deleteClient, deleteContent, deleteContents, getClientDeletionSummary } from "../../src/server/services/deletion";
+import {
+  deleteClient,
+  deleteContent,
+  deleteContents,
+  getClientDeletionSummary,
+} from "../../src/server/services/deletion";
 import { confirmsName } from "../../src/lib/confirm-name";
 import { processNextJob } from "../../src/server/jobs/worker";
 import { storage } from "../../src/server/storage";
@@ -16,8 +21,23 @@ import { addMember, newOrg, samplePng } from "./helpers";
 
 const briefing = { text: "Dicas práticas de pão de fermentação natural para fazer em casa." };
 
-async function content(auth: AuthContext, clientId: string, title: string, mode: "ai" | "manual" = "manual"): Promise<string> {
-  const r = await createContent(auth, { clientId, title, channel: "instagram", format: "post", objective: "education", briefing, slideCount: 1, mode, requestId: crypto.randomUUID() });
+async function content(
+  auth: AuthContext,
+  clientId: string,
+  title: string,
+  mode: "ai" | "manual" = "manual",
+): Promise<string> {
+  const r = await createContent(auth, {
+    clientId,
+    title,
+    channel: "instagram",
+    format: "post",
+    objective: "education",
+    briefing,
+    slideCount: 1,
+    mode,
+    requestId: crypto.randomUUID(),
+  });
   return r.contentId;
 }
 
@@ -28,7 +48,7 @@ async function drainJobs() {
   }
 }
 
-const sys = <T,>(fn: Parameters<typeof withTx<T>>[1]) => withTx(systemCtx("teste"), fn);
+const sys = <T>(fn: Parameters<typeof withTx<T>>[1]) => withTx(systemCtx("teste"), fn);
 
 describe("exclusão de conteúdos", () => {
   it("apaga versões, aprovações, comentários e relatórios; o custo continua, sem o texto gerado", async () => {
@@ -40,7 +60,9 @@ describe("exclusão de conteúdos", () => {
     expect(detail.status).toBe("in_review");
     await submitForApproval(owner, id, { versionId: detail.current!.id });
     await addComment(owner, id, { body: "Ficou ótimo, só ajustar a legenda." });
-    const versionIds = (await sys((tx) => many<{ id: string }>(tx, "SELECT id FROM content_versions WHERE content_item_id = $1", [id]))).map((v) => v.id);
+    const versionIds = (
+      await sys((tx) => many<{ id: string }>(tx, "SELECT id FROM content_versions WHERE content_item_id = $1", [id]))
+    ).map((v) => v.id);
     const runsBefore = (await getCostSummary(owner)).totals.runs;
     expect(runsBefore).toBeGreaterThan(0);
 
@@ -62,12 +84,24 @@ describe("exclusão de conteúdos", () => {
     expect(left).toEqual({ items: 0, versions: 0, approvals: 0, comments: 0, reports: 0 });
 
     // Execuções de IA ficam para os custos, sem vínculo e sem o texto gerado.
-    const runs = await sys((tx) => many<{ content_item_id: string | null; output: unknown }>(tx, "SELECT content_item_id, output FROM ai_runs WHERE client_id = $1", [clientId]));
+    const runs = await sys((tx) =>
+      many<{ content_item_id: string | null; output: unknown }>(
+        tx,
+        "SELECT content_item_id, output FROM ai_runs WHERE client_id = $1",
+        [clientId],
+      ),
+    );
     expect(runs.length).toBeGreaterThan(0);
     expect(runs.every((x) => x.content_item_id === null && x.output === null)).toBe(true);
     expect((await getCostSummary(owner)).totals.runs).toBe(runsBefore);
 
-    const log = await sys((tx) => many<{ metadata: Record<string, unknown> }>(tx, "SELECT metadata FROM audit_logs WHERE action = 'content.deleted' AND entity_id = $1", [id]));
+    const log = await sys((tx) =>
+      many<{ metadata: Record<string, unknown> }>(
+        tx,
+        "SELECT metadata FROM audit_logs WHERE action = 'content.deleted' AND entity_id = $1",
+        [id],
+      ),
+    );
     expect(log[0]?.metadata).toMatchObject({ title: "Fermentação natural", status: "awaiting_approval", versions: 1 });
   });
 
@@ -120,12 +154,26 @@ describe("exclusão de cliente", () => {
     const { id: clientId } = await createClient(owner, { name: "Café da Esquina" });
     const { id: otherId } = await createClient(owner, { name: "Outro Cliente" });
 
-    const logo = await uploadMedia(owner, clientId, { filename: "logo.png", data: samplePng(400, 200, "#9a3412") }, { kind: "logo" });
-    const removed = await uploadMedia(owner, clientId, { filename: "antiga.png", data: samplePng(300, 300, "#1d4ed8") }, {});
+    const logo = await uploadMedia(
+      owner,
+      clientId,
+      { filename: "logo.png", data: samplePng(400, 200, "#9a3412") },
+      { kind: "logo" },
+    );
+    const removed = await uploadMedia(
+      owner,
+      clientId,
+      { filename: "antiga.png", data: samplePng(300, 300, "#1d4ed8") },
+      {},
+    );
     await deleteMedia(owner, removed.id);
     const kept = await uploadMedia(owner, otherId, { filename: "outro.png", data: samplePng(300, 300, "#15803d") }, {});
     await addMemory(owner, clientId, { kind: "fact", content: "Abre aos domingos." });
-    await createCustomSkill(owner, { name: "Roteiro do café", instructions: "Roteiros curtos sobre o cardápio do dia.", clientId });
+    await createCustomSkill(owner, {
+      name: "Roteiro do café",
+      instructions: "Roteiros curtos sobre o cardápio do dia.",
+      clientId,
+    });
     await setClientBudget(owner, clientId, { monthlyLimitUsd: 20 });
     const generating = await content(owner, clientId, "Cardápio de inverno", "ai");
     const otherContent = await content(owner, otherId, "Peça do outro cliente");
@@ -136,14 +184,26 @@ describe("exclusão de cliente", () => {
     await submitForApproval(owner, generating, { versionId: detail.current!.id });
 
     const summary = await getClientDeletionSummary(owner, clientId);
-    expect(summary).toMatchObject({ name: "Café da Esquina", contents: 1, versions: 1, media: 1, memories: 1, skills: 1, inProgress: false });
+    expect(summary).toMatchObject({
+      name: "Café da Esquina",
+      contents: 1,
+      versions: 1,
+      media: 1,
+      memories: 1,
+      skills: 1,
+      inProgress: false,
+    });
     expect(summary.aiRuns).toBeGreaterThan(0);
 
     const wrong = await deleteClient(owner, clientId, "Outro Cliente").catch((e) => e);
     expect(wrong).toBeInstanceOf(ValidationError);
     expect((wrong as ValidationError).fieldErrors.confirmation).toBeTruthy();
 
-    const keys = (await sys((tx) => many<{ storage_key: string }>(tx, "SELECT storage_key FROM media_assets WHERE client_id = $1", [clientId]))).map((k) => k.storage_key);
+    const keys = (
+      await sys((tx) =>
+        many<{ storage_key: string }>(tx, "SELECT storage_key FROM media_assets WHERE client_id = $1", [clientId]),
+      )
+    ).map((k) => k.storage_key);
     expect(keys).toHaveLength(2);
     const runsBefore = (await getCostSummary(owner)).totals.runs;
 
@@ -177,11 +237,22 @@ describe("exclusão de cliente", () => {
     const costs = await getCostSummary(owner);
     expect(costs.totals.runs).toBe(runsBefore);
     expect(costs.recent.some((x) => x.clientName === "Café da Esquina (excluído)")).toBe(true);
-    const orphanOutputs = await sys((tx) => many<{ output: unknown }>(tx, "SELECT output FROM ai_runs WHERE input_summary->>'deletedClient' = 'Café da Esquina'"));
+    const orphanOutputs = await sys((tx) =>
+      many<{ output: unknown }>(
+        tx,
+        "SELECT output FROM ai_runs WHERE input_summary->>'deletedClient' = 'Café da Esquina'",
+      ),
+    );
     expect(orphanOutputs.length).toBe(summary.aiRuns);
     expect(orphanOutputs.every((x) => x.output === null)).toBe(true);
 
-    const log = await sys((tx) => many<{ client_id: string | null; metadata: Record<string, unknown> }>(tx, "SELECT client_id, metadata FROM audit_logs WHERE action = 'client.deleted' AND entity_id = $1", [clientId]));
+    const log = await sys((tx) =>
+      many<{ client_id: string | null; metadata: Record<string, unknown> }>(
+        tx,
+        "SELECT client_id, metadata FROM audit_logs WHERE action = 'client.deleted' AND entity_id = $1",
+        [clientId],
+      ),
+    );
     expect(log).toHaveLength(1);
     expect(log[0]!.client_id).toBeNull();
     expect(log[0]!.metadata).toMatchObject({ name: "Café da Esquina", contents: 1, media: 1, memories: 1, skills: 1 });

@@ -9,5 +9,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const url = new URL(request.url);
   const f = await readSignedFile(id, file, url.searchParams.get("exp"), url.searchParams.get("sig"));
   if (!f) return new Response("Não encontrado", { status: 404 });
-  return new Response(new Uint8Array(f.data), { headers: { "content-type": f.mimeType, "content-length": String(f.data.length), "cache-control": "private, no-store", "x-robots-tag": "noindex" } });
+  return new Response(new Uint8Array(f.data), {
+    headers: {
+      "content-type": f.mimeType,
+      "content-length": String(f.data.length),
+      "cache-control": "private, no-store",
+      "x-robots-tag": "noindex",
+    },
+  });
 }

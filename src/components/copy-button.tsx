@@ -4,7 +4,15 @@ import { useState } from "react";
 import { buttonClass, cx } from "./ui";
 
 /** Copia um texto. Fora de contexto seguro (http na rede local) usa o método antigo do navegador. */
-export function CopyButton({ text, label = "Copiar", className }: { text: string; label?: string; className?: string }) {
+export function CopyButton({
+  text,
+  label = "Copiar",
+  className,
+}: {
+  text: string;
+  label?: string;
+  className?: string;
+}) {
   const [done, setDone] = useState<"ok" | "fail" | null>(null);
   async function copy() {
     try {

@@ -2,7 +2,13 @@ import crypto from "node:crypto";
 import { maybeOne, one, systemCtx, userCtx, withTx, type Queryable } from "../db";
 import type { AuthContext } from "../auth/types";
 import { env } from "../env";
-import { ConflictError, IntegrationError, ProviderNotConfiguredError, RateLimitError, ValidationError } from "../errors";
+import {
+  ConflictError,
+  IntegrationError,
+  ProviderNotConfiguredError,
+  RateLimitError,
+  ValidationError,
+} from "../errors";
 import { getProvider } from "../ai/gateway";
 import type { StructuredResult, TokenUsage, UsageByModel } from "../ai/types";
 import type { AiSkill } from "../skills/types";
@@ -62,14 +68,21 @@ const ZERO: TokenUsage = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, 
  * fica nulo ("sem tarifa") e a estimativa usa a tarifa do modelo configurado,
  * para que o teto mensal do cliente continue valendo.
  */
-async function priceUsage(tx: Queryable, organizationId: string, providerId: string, primaryModel: string, byModel: UsageByModel) {
+async function priceUsage(
+  tx: Queryable,
+  organizationId: string,
+  providerId: string,
+  primaryModel: string,
+  byModel: UsageByModel,
+) {
   const primary = await currentPrice(tx, organizationId, providerId, primaryModel);
   let cost: number | null = 0;
   let estimated: number | null = 0;
   let priceId: string | null = null;
   const breakdown: Array<{ model: string; usage: TokenUsage; costUsd: number | null; priceId: string | null }> = [];
   for (const entry of byModel) {
-    const price: PriceRow | null = entry.model === primaryModel ? primary : await currentPrice(tx, organizationId, providerId, entry.model);
+    const price: PriceRow | null =
+      entry.model === primaryModel ? primary : await currentPrice(tx, organizationId, providerId, entry.model);
     const c = price ? computeCostUsd(entry.usage, price) : null;
     breakdown.push({ model: entry.model, usage: entry.usage, costUsd: c, priceId: price?.id ?? null });
     priceId ??= price?.id ?? null;
@@ -85,7 +98,10 @@ async function priceUsage(tx: Queryable, organizationId: string, providerId: str
  * Orquestrador (seção 8): valida acesso e limites, recupera contexto, executa
  * a skill pelo gateway de IA, valida a saída e registra resultado, custo e erros.
  */
-export async function runAiSkill<I, O, In>(skill: AiSkill<I, O, In>, req: SkillRunRequest<In>): Promise<SkillRunResult<O>> {
+export async function runAiSkill<I, O, In>(
+  skill: AiSkill<I, O, In>,
+  req: SkillRunRequest<In>,
+): Promise<SkillRunResult<O>> {
   const parsedInput = skill.inputSchema.safeParse(req.input);
   if (!parsedInput.success) throw new ValidationError(`Entrada inválida para a skill ${skill.name}.`);
   const input = parsedInput.data;
@@ -93,15 +109,32 @@ export async function runAiSkill<I, O, In>(skill: AiSkill<I, O, In>, req: SkillR
   if (!provider) throw new ProviderNotConfiguredError();
   const { auth } = req;
 
-  const key = req.idempotencyKey ? effectiveKey(req.idempotencyKey, skill.id, skill.version, provider.isDemo ? "demo" : `${provider.id}:${provider.model}`, input) : null;
+  const key = req.idempotencyKey
+    ? effectiveKey(
+        req.idempotencyKey,
+        skill.id,
+        skill.version,
+        provider.isDemo ? "demo" : `${provider.id}:${provider.model}`,
+        input,
+      )
+    : null;
 
   // 1) Reaproveitamento idempotente e preparação (transação curta, sem chamada externa).
   const prep = await withTx(userCtx(auth.userId), async (tx) => {
     await requireClient(tx, auth, req.clientId);
     if (key) {
       const existing = await maybeOne<{
-        id: string; status: string; output: unknown; is_demo: boolean; model: string; input_tokens: number; output_tokens: number;
-        cache_read_tokens: number; cache_write_tokens: number; cost_usd: string | null; stale: boolean;
+        id: string;
+        status: string;
+        output: unknown;
+        is_demo: boolean;
+        model: string;
+        input_tokens: number;
+        output_tokens: number;
+        cache_read_tokens: number;
+        cache_write_tokens: number;
+        cost_usd: string | null;
+        stale: boolean;
       }>(
         tx,
         `SELECT id, status, output, is_demo, model, input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, cost_usd,
@@ -134,7 +167,8 @@ export async function runAiSkill<I, O, In>(skill: AiSkill<I, O, In>, req: SkillR
         "SELECT count(*)::int AS n FROM ai_runs WHERE created_by = $1 AND job_id IS NULL AND created_at > now() - interval '1 minute'",
         [auth.userId],
       );
-      if (recent.n >= env().GENERATION_RATE_PER_MINUTE) throw new RateLimitError("Muitas solicitações à IA em sequência. Aguarde um minuto.");
+      if (recent.n >= env().GENERATION_RATE_PER_MINUTE)
+        throw new RateLimitError("Muitas solicitações à IA em sequência. Aguarde um minuto.");
     }
     await assertWithinBudget(tx, req.clientId);
     const context = await buildClientContext(tx, auth.organizationId, req.clientId);
@@ -173,7 +207,12 @@ export async function runAiSkill<I, O, In>(skill: AiSkill<I, O, In>, req: SkillR
       output: prep.output as O,
       isDemo: r.is_demo,
       model: r.model,
-      usage: { inputTokens: r.input_tokens, outputTokens: r.output_tokens, cacheReadTokens: r.cache_read_tokens, cacheWriteTokens: r.cache_write_tokens },
+      usage: {
+        inputTokens: r.input_tokens,
+        outputTokens: r.output_tokens,
+        cacheReadTokens: r.cache_read_tokens,
+        cacheWriteTokens: r.cache_write_tokens,
+      },
       costUsd: r.cost_usd === null ? null : Number(r.cost_usd),
       reused: true,
     };
@@ -200,14 +239,18 @@ export async function runAiSkill<I, O, In>(skill: AiSkill<I, O, In>, req: SkillR
     else {
       // Erro fora do mapeamento do provedor: a pessoa vê uma mensagem genérica; o detalhe fica no registro da execução.
       technicalError = (err as Error)?.message ?? String(err);
-      failure = new IntegrationError("Falha inesperada ao chamar a IA. O detalhe foi registrado.", false, { cause: err, providerCode: "unexpected" });
+      failure = new IntegrationError("Falha inesperada ao chamar a IA. O detalhe foi registrado.", false, {
+        cause: err,
+        providerCode: "unexpected",
+      });
     }
   }
 
   // 3) Registro do resultado, custo e auditoria. Em contexto de sistema (a
   // execução já foi autorizada na preparação): se a pessoa perder o acesso
   // durante a chamada, o consumo cobrado continua registrado.
-  const billed = (failure as unknown as { usage?: TokenUsage; usageByModel?: UsageByModel; model?: string } | null) ?? null;
+  const billed =
+    (failure as unknown as { usage?: TokenUsage; usageByModel?: UsageByModel; model?: string } | null) ?? null;
   const usage: TokenUsage = result?.usage ?? billed?.usage ?? ZERO;
   const servedModel = result?.model ?? billed?.model ?? provider.model;
   const usageByModel: UsageByModel = result?.usageByModel ?? billed?.usageByModel ?? [{ model: servedModel, usage }];

@@ -39,7 +39,12 @@ export function getProvider(): AiProvider | null {
   }
   if (id === "openai") {
     if (!e.OPENAI_API_KEY) return null;
-    return new OpenAiProvider({ apiKey: e.OPENAI_API_KEY, model: e.OPENAI_MODEL, effort: e.OPENAI_EFFORT, timeoutMs: e.AI_TIMEOUT_MS });
+    return new OpenAiProvider({
+      apiKey: e.OPENAI_API_KEY,
+      model: e.OPENAI_MODEL,
+      effort: e.OPENAI_EFFORT,
+      timeoutMs: e.AI_TIMEOUT_MS,
+    });
   }
   if (id === "demo") {
     if (e.NODE_ENV === "production") return null;
@@ -66,7 +71,8 @@ export function providerStatus(): ProviderStatus {
           : `Modelo ${p.model}, esforço ${e.ANTHROPIC_EFFORT ? `fixo em ${e.ANTHROPIC_EFFORT} (ANTHROPIC_EFFORT)` : "definido por skill"}, fallback do servidor ${e.ANTHROPIC_FALLBACKS === "default" ? "ativado" : "desativado"}.`,
     };
   }
-  let detail = "Nenhuma chave de IA conectada. Defina ANTHROPIC_API_KEY (Claude) ou OPENAI_API_KEY (ChatGPT) na configuração do servidor.";
+  let detail =
+    "Nenhuma chave de IA conectada. Defina ANTHROPIC_API_KEY (Claude) ou OPENAI_API_KEY (ChatGPT) na configuração do servidor.";
   if (id === "anthropic") detail = "AI_PROVIDER=anthropic, mas ANTHROPIC_API_KEY não está definida.";
   if (id === "openai") detail = "AI_PROVIDER=openai, mas OPENAI_API_KEY não está definida.";
   if (id === "demo" && e.NODE_ENV === "production") detail = "O provedor de demonstração é bloqueado em produção.";

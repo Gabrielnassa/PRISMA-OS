@@ -16,25 +16,26 @@ export function DeleteClientCard({ clientId, summary }: { clientId: string; summ
   const matches = confirmsName(typed, summary.name);
 
   return (
-    <Card className="border-red-400/20">
+    <Card className="border-danger/40">
       <CardHeader title="Excluir cliente" description="Apaga de vez o cliente e tudo dele. Não dá para desfazer." />
       <div className="grid gap-4 p-5">
-        <div className="text-[13px] leading-relaxed text-ink-300">
-          <div className="text-ink-200">Será apagado:</div>
+        <div className="text-base leading-relaxed text-muted">
+          <div className="text-fg">Será apagado:</div>
           <ul className="mt-1 list-disc space-y-0.5 pl-5">
             {summary.contents ? (
               <li>
-                {plural(summary.contents, "conteúdo", "conteúdos")} ({plural(summary.versions, "versão", "versões")}), com aprovações e comentários
+                {plural(summary.contents, "conteúdo", "conteúdos")} ({plural(summary.versions, "versão", "versões")}),
+                com aprovações e comentários
               </li>
             ) : null}
             {summary.media ? <li>{plural(summary.media, "arquivo", "arquivos")} da biblioteca</li> : null}
             {summary.memories ? <li>{plural(summary.memories, "registro", "registros")} de memória</li> : null}
-            {summary.skills ? <li>{plural(summary.skills, "skill exclusiva", "skills exclusivas")} deste cliente</li> : null}
+            {summary.skills ? (
+              <li>{plural(summary.skills, "skill exclusiva", "skills exclusivas")} deste cliente</li>
+            ) : null}
             <li>perfil da marca e limite de custos</li>
           </ul>
-          <p className="mt-2 text-ink-400">
-            Para só tirar o cliente das listas, prefira arquivar em Dados do cliente.
-          </p>
+          <p className="mt-2 text-muted">Para só tirar o cliente das listas, prefira arquivar em Dados do cliente.</p>
         </div>
         {summary.inProgress ? (
           <Alert tone="warning" title="Geração em andamento">
@@ -46,13 +47,20 @@ export function DeleteClientCard({ clientId, summary }: { clientId: string; summ
           <Field
             label={
               <>
-                Para confirmar, digite <span className="font-semibold text-ink-50">{summary.name}</span>
+                Para confirmar, digite <span className="font-semibold text-fg">{summary.name}</span>
               </>
             }
             htmlFor="delete-confirmation"
             error={state.status === "error" ? state.fieldErrors?.confirmation : undefined}
           >
-            <Input id="delete-confirmation" name="confirmation" autoComplete="off" spellCheck={false} value={typed} onChange={(e) => setTyped(e.target.value)} />
+            <Input
+              id="delete-confirmation"
+              name="confirmation"
+              autoComplete="off"
+              spellCheck={false}
+              value={typed}
+              onChange={(e) => setTyped(e.target.value)}
+            />
           </Field>
           {state.status === "error" && !state.fieldErrors?.confirmation ? <FormMessage state={state} /> : null}
           <div>

@@ -18,9 +18,11 @@ const startsWith = (buf: Buffer, bytes: number[], offset = 0) => bytes.every((b,
 
 export function sniffType(buf: Buffer): SniffedType | null {
   if (buf.length < 12) return null;
-  if (startsWith(buf, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) return { mime: "image/png", ext: "png", category: "image" };
+  if (startsWith(buf, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+    return { mime: "image/png", ext: "png", category: "image" };
   if (startsWith(buf, [0xff, 0xd8, 0xff])) return { mime: "image/jpeg", ext: "jpg", category: "image" };
-  if (buf.toString("ascii", 0, 4) === "RIFF" && buf.toString("ascii", 8, 12) === "WEBP") return { mime: "image/webp", ext: "webp", category: "image" };
+  if (buf.toString("ascii", 0, 4) === "RIFF" && buf.toString("ascii", 8, 12) === "WEBP")
+    return { mime: "image/webp", ext: "webp", category: "image" };
   const head6 = buf.toString("ascii", 0, 6);
   if (head6 === "GIF87a" || head6 === "GIF89a") return { mime: "image/gif", ext: "gif", category: "image" };
   if (buf.toString("ascii", 0, 5) === "%PDF-") return { mime: "application/pdf", ext: "pdf", category: "document" };
@@ -39,7 +41,9 @@ export function sniffType(buf: Buffer): SniffedType | null {
 /** SVG com script, objetos externos ou manipuladores de evento é recusado. */
 export function isUnsafeSvg(buf: Buffer): boolean {
   const s = buf.toString("utf8").toLowerCase();
-  return /<script|javascript:|<foreignobject|\son[a-z]+\s*=|<iframe|<embed|<object|xlink:href\s*=\s*["']https?:|href\s*=\s*["']https?:/.test(s);
+  return /<script|javascript:|<foreignobject|\son[a-z]+\s*=|<iframe|<embed|<object|xlink:href\s*=\s*["']https?:|href\s*=\s*["']https?:/.test(
+    s,
+  );
 }
 
 export interface ImageSize {
@@ -128,7 +132,10 @@ function webpSize(buf: Buffer): ImageSize | null {
   const chunk = buf.toString("ascii", 12, 16);
   if (chunk === "VP8 ") return { width: buf.readUInt16LE(26) & 0x3fff, height: buf.readUInt16LE(28) & 0x3fff };
   if (chunk === "VP8L") {
-    const b0 = buf[21]!, b1 = buf[22]!, b2 = buf[23]!, b3 = buf[24]!;
+    const b0 = buf[21]!,
+      b1 = buf[22]!,
+      b2 = buf[23]!,
+      b3 = buf[24]!;
     return { width: 1 + (((b1 & 0x3f) << 8) | b0), height: 1 + (((b3 & 0x0f) << 10) | (b2 << 2) | ((b1 & 0xc0) >> 6)) };
   }
   if (chunk === "VP8X") return { width: 1 + buf.readUIntLE(24, 3), height: 1 + buf.readUIntLE(27, 3) };

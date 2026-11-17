@@ -27,27 +27,50 @@ export function AppKeysForm({
     <ActionForm action={action} state={state} resetOnSuccess className="flex flex-col gap-3">
       <input type="hidden" name="provider" value={provider} />
       <Field label={publicLabel} htmlFor={`${provider}-id`} error={err("publicId")}>
-        <Input id={`${provider}-id`} name="publicId" defaultValue={publicId ?? ""} autoComplete="off" spellCheck={false} required />
+        <Input
+          id={`${provider}-id`}
+          name="publicId"
+          defaultValue={publicId ?? ""}
+          autoComplete="off"
+          spellCheck={false}
+          required
+        />
       </Field>
-      <Field label={secretLabel} htmlFor={`${provider}-secret`} error={err("secret")} hint={secretHint ? `Salva: ${secretHint}. Deixe vazio para manter.` : undefined}>
+      <Field
+        label={secretLabel}
+        htmlFor={`${provider}-secret`}
+        error={err("secret")}
+        hint={secretHint ? `Salva: ${secretHint}. Deixe vazio para manter.` : undefined}
+      >
         <Input id={`${provider}-secret`} name="secret" type="password" autoComplete="new-password" spellCheck={false} />
       </Field>
       <div className="flex flex-wrap items-center gap-3">
         <SubmitButton size="sm" variant="secondary">
           Salvar chaves
         </SubmitButton>
-        {state.status === "error" && !state.fieldErrors ? <span className="text-[12.5px] text-red-300">{state.message}</span> : null}
+        {state.status === "error" && !state.fieldErrors ? (
+          <span className="text-sm text-danger">{state.message}</span>
+        ) : null}
       </div>
     </ActionForm>
   );
 }
 
-export function SmtpForm({ initial }: { initial: { host: string; port: number; secure: boolean; user: string; from: string; passwordHint: string | null } }) {
+export function SmtpForm({
+  initial,
+}: {
+  initial: { host: string; port: number; secure: boolean; user: string; from: string; passwordHint: string | null };
+}) {
   const [state, action] = useToastAction(saveSmtpAction);
   const err = (k: string) => (state.status === "error" ? state.fieldErrors?.[k] : undefined);
   return (
     <ActionForm action={action} state={state} resetOnSuccess className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_110px]">
-      <Field label="Servidor SMTP" htmlFor="smtp-host" error={err("host")} hint="Hostinger: smtp.hostinger.com · Gmail: smtp.gmail.com">
+      <Field
+        label="Servidor SMTP"
+        htmlFor="smtp-host"
+        error={err("host")}
+        hint="Hostinger: smtp.hostinger.com · Gmail: smtp.gmail.com"
+      >
         <Input id="smtp-host" name="host" defaultValue={initial.host} autoComplete="off" spellCheck={false} required />
       </Field>
       <Field label="Porta" htmlFor="smtp-port" error={err("port")}>
@@ -56,13 +79,30 @@ export function SmtpForm({ initial }: { initial: { host: string; port: number; s
       <Field label="Usuário (e-mail)" htmlFor="smtp-user" error={err("user")}>
         <Input id="smtp-user" name="user" defaultValue={initial.user} autoComplete="off" required />
       </Field>
-      <Field label="Senha" htmlFor="smtp-pass" error={err("password")} hint={initial.passwordHint ? "Deixe vazio para manter." : undefined}>
-        <Input id="smtp-pass" name="password" type="password" autoComplete="new-password" placeholder={initial.passwordHint ?? ""} />
+      <Field
+        label="Senha"
+        htmlFor="smtp-pass"
+        error={err("password")}
+        hint={initial.passwordHint ? "Deixe vazio para manter." : undefined}
+      >
+        <Input
+          id="smtp-pass"
+          name="password"
+          type="password"
+          autoComplete="new-password"
+          placeholder={initial.passwordHint ?? ""}
+        />
       </Field>
       <Field label="Remetente" htmlFor="smtp-from" error={err("from")} className="sm:col-span-2">
-        <Input id="smtp-from" name="from" defaultValue={initial.from} placeholder="Agência <contato@suaagencia.com.br>" required />
+        <Input
+          id="smtp-from"
+          name="from"
+          defaultValue={initial.from}
+          placeholder="Agência <contato@suaagencia.com.br>"
+          required
+        />
       </Field>
-      <label className="flex items-center gap-2 text-[13px] text-ink-200 sm:col-span-2">
+      <label className="flex items-center gap-2 text-base text-fg sm:col-span-2">
         <input type="checkbox" name="secure" defaultChecked={initial.secure} />
         Conexão segura (SSL, porta 465). Desmarque para STARTTLS na porta 587.
       </label>
@@ -70,7 +110,9 @@ export function SmtpForm({ initial }: { initial: { host: string; port: number; s
         <SubmitButton size="sm" variant="secondary">
           Salvar e-mail
         </SubmitButton>
-        {state.status === "error" && !state.fieldErrors ? <span className="text-[12.5px] text-red-300">{state.message}</span> : null}
+        {state.status === "error" && !state.fieldErrors ? (
+          <span className="text-sm text-danger">{state.message}</span>
+        ) : null}
       </div>
     </ActionForm>
   );
@@ -91,24 +133,31 @@ export function SmtpTestButton() {
 }
 
 export function WebhookForm({ events }: { events: Array<[string, string]> }) {
-  const [state, action] = useActionState<ActionState<{ secret: string }>, FormData>(createWebhookAction, { status: "idle" });
+  const [state, action] = useActionState<ActionState<{ secret: string }>, FormData>(createWebhookAction, {
+    status: "idle",
+  });
   const err = (k: string) => (state.status === "error" ? state.fieldErrors?.[k] : undefined);
   return (
     <ActionForm action={action} state={state} resetOnSuccess className="flex flex-col gap-3">
-      <Field label="Endereço" htmlFor="wh-url" error={err("url")} hint="O endereço que o n8n, o Zapier ou o Make mostra para receber webhooks.">
+      <Field
+        label="Endereço"
+        htmlFor="wh-url"
+        error={err("url")}
+        hint="O endereço que o n8n, o Zapier ou o Make mostra para receber webhooks."
+      >
         <Input id="wh-url" name="url" type="url" placeholder="https://" required />
       </Field>
       <fieldset>
-        <legend className="mb-1.5 text-[13px] font-medium text-ink-200">Avisar quando</legend>
+        <legend className="mb-1.5 text-base font-medium text-fg">Avisar quando</legend>
         <div className="grid gap-1.5 sm:grid-cols-2">
           {events.map(([id, label]) => (
-            <label key={id} className="flex items-center gap-2 text-[13px] text-ink-200">
+            <label key={id} className="flex items-center gap-2 text-base text-fg">
               <input type="checkbox" name="events" value={id} defaultChecked />
               {label}
             </label>
           ))}
         </div>
-        {err("events") ? <p className="mt-1 text-[12.5px] text-red-300">{err("events")}</p> : null}
+        {err("events") ? <p className="mt-1 text-sm text-danger">{err("events")}</p> : null}
       </fieldset>
       <div>
         <SubmitButton size="sm" variant="secondary">
@@ -116,10 +165,12 @@ export function WebhookForm({ events }: { events: Array<[string, string]> }) {
         </SubmitButton>
       </div>
       {state.status === "ok" && state.data ? (
-        <div className="rounded-[10px] border border-emerald-400/25 bg-emerald-400/[0.05] p-3 text-[13px] text-ink-100">
+        <div className="rounded-md border border-ok/40 bg-ok/5 p-3 text-base text-fg">
           <p>Segredo de assinatura (aparece só agora). Use para conferir o cabeçalho X-Prisma-Signature:</p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <code className="select-all break-all rounded-[4px] bg-ink-950 px-2 py-1 font-mono text-[12px] ring-1 ring-ink-700">{state.data.secret}</code>
+            <code className="rounded-sm bg-bg px-2 py-1 font-mono text-sm break-all ring-1 ring-line select-all">
+              {state.data.secret}
+            </code>
             <CopyButton text={state.data.secret} />
           </div>
         </div>

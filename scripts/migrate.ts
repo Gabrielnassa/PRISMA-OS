@@ -11,7 +11,9 @@ if (!migrationUrl) {
 
 migrate({ migrationUrl, appUrl: process.env.DATABASE_URL, log: (m) => console.log(m) })
   .then((r) => {
-    console.log(`Migrations aplicadas: ${r.applied.length ? r.applied.join(", ") : "nenhuma"} (já aplicadas: ${r.skipped.length})`);
+    console.log(
+      `Migrations aplicadas: ${r.applied.length ? r.applied.join(", ") : "nenhuma"} (já aplicadas: ${r.skipped.length})`,
+    );
     if (r.appRoleGranted) console.log(`Papel prisma_app concedido a "${r.appRoleGranted}".`);
     for (const w of r.warnings) console.warn(`AVISO: ${w}`);
   })

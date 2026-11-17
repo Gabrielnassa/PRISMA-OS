@@ -47,7 +47,16 @@ function svgUrl(svg: string): string {
 
 function Counter({ value, limit }: { value: string; limit: number }) {
   const over = value.length > limit;
-  return <span className={cx("tabular-nums", over ? "font-semibold text-red-300" : value.length > limit * 0.9 ? "text-amber-300" : "text-ink-400")}>{value.length}/{limit}</span>;
+  return (
+    <span
+      className={cx(
+        "tabular-nums",
+        over ? "font-semibold text-danger" : value.length > limit * 0.9 ? "text-warn" : "text-muted",
+      )}
+    >
+      {value.length}/{limit}
+    </span>
+  );
 }
 
 export function ContentEditor({
@@ -94,7 +103,13 @@ export function ContentEditor({
   const dirty = useMemo(() => JSON.stringify(doc) !== JSON.stringify(initialDocument), [doc, initialDocument]);
   const template = templates.find((t) => t.id === doc.templateId) ?? templates[0]!;
   const slide = doc.slides[Math.min(selected, doc.slides.length - 1)]!;
-  const limits = effectiveLimits(template.fieldLimits[slide.kind], template.capacity, doc.aspect, slide.kind, Boolean(slide.imageAssetId) && template.image !== "none");
+  const limits = effectiveLimits(
+    template.fieldLimits[slide.kind],
+    template.capacity,
+    doc.aspect,
+    slide.kind,
+    Boolean(slide.imageAssetId) && template.image !== "none",
+  );
   const requestSeq = useRef(0);
 
   // Pré-visualização com atraso para não renderizar a cada tecla.
@@ -125,7 +140,8 @@ export function ContentEditor({
         setUrls(next);
         setQuality(json.quality);
       } catch {
-        if (seq === requestSeq.current && !controller.signal.aborted) setPreviewError("Sem conexão para atualizar a prévia.");
+        if (seq === requestSeq.current && !controller.signal.aborted)
+          setPreviewError("Sem conexão para atualizar a prévia.");
       } finally {
         if (seq === requestSeq.current) setRendering(false);
       }
@@ -150,7 +166,11 @@ export function ContentEditor({
       const link = (e.target as Element | null)?.closest?.("a[href]");
       if (!(link instanceof HTMLAnchorElement) || link.target === "_blank" || link.hasAttribute("download")) return;
       const url = new URL(link.href, window.location.href);
-      if (url.origin !== window.location.origin || (url.pathname === window.location.pathname && url.search === window.location.search)) return;
+      if (
+        url.origin !== window.location.origin ||
+        (url.pathname === window.location.pathname && url.search === window.location.search)
+      )
+        return;
       if (!window.confirm("Há alterações não salvas no editor. Sair mesmo assim?")) {
         e.preventDefault();
         e.stopPropagation();
@@ -168,11 +188,14 @@ export function ContentEditor({
     (patch: Partial<Slide> | ((s: Slide) => Partial<Slide>)) =>
       setDoc((d) => ({
         ...d,
-        slides: d.slides.map((s, i) => (i === selected ? { ...s, ...(typeof patch === "function" ? patch(s) : patch) } : s)),
+        slides: d.slides.map((s, i) =>
+          i === selected ? { ...s, ...(typeof patch === "function" ? patch(s) : patch) } : s,
+        ),
       })),
     [selected],
   );
-  const setField = (key: FieldKey, value: string) => updateSlide((s) => ({ fields: { ...s.fields, [key]: value.slice(0, FIELD_MAX[key]) } }));
+  const setField = (key: FieldKey, value: string) =>
+    updateSlide((s) => ({ fields: { ...s.fields, [key]: value.slice(0, FIELD_MAX[key]) } }));
   const setStyle = (patch: Partial<DocumentStyle>) => setDoc((d) => ({ ...d, style: { ...d.style, ...patch } }));
 
   const slideLimits = SLIDE_LIMITS[doc.format];
@@ -245,17 +268,28 @@ export function ContentEditor({
         <Card>
           <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
             <div className="flex flex-col gap-3">
-              <div className="relative overflow-hidden rounded-[var(--radius-card)] border border-ink-800 bg-ink-850" style={{ aspectRatio: `${ASPECTS[doc.aspect].width} / ${ASPECTS[doc.aspect].height}` }}>
+              <div
+                className="relative overflow-hidden rounded-md border border-line bg-surface"
+                style={{ aspectRatio: `${ASPECTS[doc.aspect].width} / ${ASPECTS[doc.aspect].height}` }}
+              >
                 {urls[selected] ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={urls[selected]} alt={`Pré-visualização da lâmina ${selected + 1}`} className="h-full w-full object-contain" />
+                  <img
+                    src={urls[selected]}
+                    alt={`Pré-visualização da lâmina ${selected + 1}`}
+                    className="h-full w-full object-contain"
+                  />
                 ) : (
-                  <div className="flex h-full items-center justify-center text-sm text-ink-400">Renderizando...</div>
+                  <div className="flex h-full items-center justify-center text-base text-muted">Renderizando...</div>
                 )}
-                {rendering ? <span className="absolute right-2 top-2 rounded bg-black/60 px-2 py-0.5 text-[11px] text-white">atualizando</span> : null}
+                {rendering ? (
+                  <span className="rounded absolute top-2 right-2 bg-black/60 px-2 py-0.5 text-xs text-white">
+                    atualizando
+                  </span>
+                ) : null}
               </div>
               {previewError ? (
-                <p role="alert" className="text-xs text-red-300">
+                <p role="alert" className="text-sm text-danger">
                   {previewError}
                 </p>
               ) : null}
@@ -267,30 +301,68 @@ export function ContentEditor({
                     role="tab"
                     aria-selected={i === selected}
                     onClick={() => setSelected(i)}
-                    className={cx("relative w-20 shrink-0 overflow-hidden rounded-lg border-2 bg-ink-850", i === selected ? "border-iris-400" : "border-ink-700 hover:border-ink-500")}
+                    className={cx(
+                      "relative w-20 shrink-0 overflow-hidden rounded-md border-2 bg-surface",
+                      i === selected ? "border-accent" : "border-line hover:border-control",
+                    )}
                     style={{ aspectRatio: `${ASPECTS[doc.aspect].width} / ${ASPECTS[doc.aspect].height}` }}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     {urls[i] ? <img src={urls[i]} alt="" className="h-full w-full object-cover" /> : null}
-                    <span className="absolute bottom-0.5 left-0.5 rounded bg-black/70 px-1 text-[10px] text-white">{i + 1}</span>
+                    <span className="rounded absolute bottom-0.5 left-0.5 bg-black/70 px-1 text-xs text-white">
+                      {i + 1}
+                    </span>
                   </button>
                 ))}
               </div>
               {canEdit && doc.format === "carousel" ? (
                 <div className="flex flex-wrap gap-2">
-                  <Button type="button" size="sm" variant="secondary" onClick={addSlide} disabled={doc.slides.length >= slideLimits.max}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={addSlide}
+                    disabled={doc.slides.length >= slideLimits.max}
+                  >
                     + Lâmina
                   </Button>
-                  <Button type="button" size="sm" variant="secondary" onClick={duplicateSlide} disabled={doc.slides.length >= slideLimits.max}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={duplicateSlide}
+                    disabled={doc.slides.length >= slideLimits.max}
+                  >
                     Duplicar
                   </Button>
-                  <Button type="button" size="sm" variant="ghost" onClick={() => moveSlide(-1)} disabled={selected === 0} aria-label="Mover para a esquerda">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => moveSlide(-1)}
+                    disabled={selected === 0}
+                    aria-label="Mover para a esquerda"
+                  >
                     ←
                   </Button>
-                  <Button type="button" size="sm" variant="ghost" onClick={() => moveSlide(1)} disabled={selected === doc.slides.length - 1} aria-label="Mover para a direita">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => moveSlide(1)}
+                    disabled={selected === doc.slides.length - 1}
+                    aria-label="Mover para a direita"
+                  >
                     →
                   </Button>
-                  <Button type="button" size="sm" variant="ghost" onClick={removeSlide} disabled={doc.slides.length <= slideLimits.min} className="text-red-300">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={removeSlide}
+                    disabled={doc.slides.length <= slideLimits.min}
+                    className="text-danger"
+                  >
                     Remover
                   </Button>
                 </div>
@@ -299,8 +371,13 @@ export function ContentEditor({
 
             <fieldset disabled={!canEdit} className="flex min-w-0 flex-col gap-3">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="shrink-0 whitespace-nowrap text-[13.5px] font-semibold text-ink-100">Lâmina {selected + 1}</h3>
-                <Select aria-label="Tipo da lâmina" value={slide.kind} onChange={(e) => updateSlide({ kind: e.target.value as SlideKind })} className="w-48">
+                <h3 className="shrink-0 text-base font-semibold whitespace-nowrap text-fg">Lâmina {selected + 1}</h3>
+                <Select
+                  aria-label="Tipo da lâmina"
+                  value={slide.kind}
+                  onChange={(e) => updateSlide({ kind: e.target.value as SlideKind })}
+                  className="w-48"
+                >
                   {SLIDE_KINDS.map((k) => (
                     <option key={k} value={k}>
                       {SLIDE_KIND_LABELS[k]}
@@ -310,30 +387,47 @@ export function ContentEditor({
               </div>
               {FIELD_KEYS.filter((k) => limits[k] !== undefined).map((k) => (
                 <div key={k} className="flex flex-col gap-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <label htmlFor={`f-${k}`} className="font-medium text-ink-200">
+                  <div className="flex items-center justify-between text-sm">
+                    <label htmlFor={`f-${k}`} className="font-medium text-fg">
                       {FIELD_LABELS[k]}
                     </label>
                     <Counter value={slide.fields[k]} limit={limits[k]!} />
                   </div>
                   {k === "body" || k === "title" ? (
-                    <Textarea id={`f-${k}`} value={slide.fields[k]} onChange={(e) => setField(k, e.target.value)} className={k === "title" ? "min-h-16" : "min-h-24"} />
+                    <Textarea
+                      id={`f-${k}`}
+                      value={slide.fields[k]}
+                      onChange={(e) => setField(k, e.target.value)}
+                      className={k === "title" ? "min-h-16" : "min-h-24"}
+                    />
                   ) : (
                     <Input id={`f-${k}`} value={slide.fields[k]} onChange={(e) => setField(k, e.target.value)} />
                   )}
                 </div>
               ))}
               {unusedWithText.length ? (
-                <p className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-amber-200">
+                <p className="rounded-md border border-warn/40 bg-warn/5 px-3 py-2 text-sm text-fg">
                   Campos com texto que este template não exibe: {unusedWithText.map((k) => FIELD_LABELS[k]).join(", ")}.{" "}
-                  <button type="button" className="underline" onClick={() => updateSlide((s) => ({ fields: { ...s.fields, ...Object.fromEntries(unusedWithText.map((k) => [k, ""])) } }))}>
+                  <button
+                    type="button"
+                    className="underline"
+                    onClick={() =>
+                      updateSlide((s) => ({
+                        fields: { ...s.fields, ...Object.fromEntries(unusedWithText.map((k) => [k, ""])) },
+                      }))
+                    }
+                  >
                     Limpar
                   </button>
                 </p>
               ) : null}
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Tema da lâmina" htmlFor="theme">
-                  <Select id="theme" value={slide.theme} onChange={(e) => updateSlide({ theme: e.target.value as Slide["theme"] })}>
+                  <Select
+                    id="theme"
+                    value={slide.theme}
+                    onChange={(e) => updateSlide({ theme: e.target.value as Slide["theme"] })}
+                  >
                     {SLIDE_THEMES.map((t) => (
                       <option key={t} value={t}>
                         {SLIDE_THEME_LABELS[t]}
@@ -342,7 +436,11 @@ export function ContentEditor({
                   </Select>
                 </Field>
                 <Field label="Alinhamento" htmlFor="align">
-                  <Select id="align" value={slide.align} onChange={(e) => updateSlide({ align: e.target.value as Slide["align"] })}>
+                  <Select
+                    id="align"
+                    value={slide.align}
+                    onChange={(e) => updateSlide({ align: e.target.value as Slide["align"] })}
+                  >
                     <option value="auto">Padrão</option>
                     <option value="left">Esquerda</option>
                     <option value="center">Centro</option>
@@ -350,12 +448,27 @@ export function ContentEditor({
                 </Field>
               </div>
               <Field label={`Escala do texto (${Math.round(slide.textScale * 100)}%)`} htmlFor="scale">
-                <input id="scale" type="range" min={0.7} max={1.3} step={0.05} value={slide.textScale} onChange={(e) => updateSlide({ textScale: Number(e.target.value) })} />
+                <input
+                  id="scale"
+                  type="range"
+                  min={0.7}
+                  max={1.3}
+                  step={0.05}
+                  value={slide.textScale}
+                  onChange={(e) => updateSlide({ textScale: Number(e.target.value) })}
+                />
               </Field>
               {template.image !== "none" ? (
-                <div className="flex flex-col gap-3 rounded-lg border border-ink-700 p-3">
-                  <Field label={`Imagem${template.image === "required" ? " (obrigatória neste layout)" : ""}`} htmlFor="image">
-                    <Select id="image" value={slide.imageAssetId ?? ""} onChange={(e) => updateSlide({ imageAssetId: e.target.value || null })}>
+                <div className="flex flex-col gap-3 rounded-md border border-line p-3">
+                  <Field
+                    label={`Imagem${template.image === "required" ? " (obrigatória neste layout)" : ""}`}
+                    htmlFor="image"
+                  >
+                    <Select
+                      id="image"
+                      value={slide.imageAssetId ?? ""}
+                      onChange={(e) => updateSlide({ imageAssetId: e.target.value || null })}
+                    >
                       <option value="">Sem imagem</option>
                       {images.map((img) => (
                         <option key={img.id} value={img.id}>
@@ -368,17 +481,48 @@ export function ContentEditor({
                     <>
                       <div className="grid grid-cols-3 gap-3">
                         <Field label={`Foco X ${slide.imageFocus.x}%`} htmlFor="fx">
-                          <input id="fx" type="range" min={0} max={100} value={slide.imageFocus.x} onChange={(e) => updateSlide((s) => ({ imageFocus: { ...s.imageFocus, x: Number(e.target.value) } }))} />
+                          <input
+                            id="fx"
+                            type="range"
+                            min={0}
+                            max={100}
+                            value={slide.imageFocus.x}
+                            onChange={(e) =>
+                              updateSlide((s) => ({ imageFocus: { ...s.imageFocus, x: Number(e.target.value) } }))
+                            }
+                          />
                         </Field>
                         <Field label={`Foco Y ${slide.imageFocus.y}%`} htmlFor="fy">
-                          <input id="fy" type="range" min={0} max={100} value={slide.imageFocus.y} onChange={(e) => updateSlide((s) => ({ imageFocus: { ...s.imageFocus, y: Number(e.target.value) } }))} />
+                          <input
+                            id="fy"
+                            type="range"
+                            min={0}
+                            max={100}
+                            value={slide.imageFocus.y}
+                            onChange={(e) =>
+                              updateSlide((s) => ({ imageFocus: { ...s.imageFocus, y: Number(e.target.value) } }))
+                            }
+                          />
                         </Field>
                         <Field label={`Zoom ${slide.imageZoom.toFixed(1)}×`} htmlFor="zoom">
-                          <input id="zoom" type="range" min={1} max={2.5} step={0.1} value={slide.imageZoom} onChange={(e) => updateSlide({ imageZoom: Number(e.target.value) })} />
+                          <input
+                            id="zoom"
+                            type="range"
+                            min={1}
+                            max={2.5}
+                            step={0.1}
+                            value={slide.imageZoom}
+                            onChange={(e) => updateSlide({ imageZoom: Number(e.target.value) })}
+                          />
                         </Field>
                       </div>
                       <Field label="Texto alternativo da imagem" htmlFor="alt">
-                        <Input id="alt" value={slide.alt} maxLength={400} onChange={(e) => updateSlide({ alt: e.target.value })} />
+                        <Input
+                          id="alt"
+                          value={slide.alt}
+                          maxLength={400}
+                          onChange={(e) => updateSlide({ alt: e.target.value })}
+                        />
                       </Field>
                     </>
                   ) : null}
@@ -392,33 +536,63 @@ export function ContentEditor({
           <CardHeader title="Legenda e CTA" />
           <fieldset disabled={!canEdit} className="grid gap-4 p-5">
             <div className="flex flex-col gap-1">
-              <div className="flex justify-between text-xs">
-                <label htmlFor="caption" className="font-medium text-ink-200">
+              <div className="flex justify-between text-sm">
+                <label htmlFor="caption" className="font-medium text-fg">
                   Legenda
                 </label>
                 <Counter value={doc.caption} limit={2200} />
               </div>
-              <Textarea id="caption" value={doc.caption} onChange={(e) => setDoc((d) => ({ ...d, caption: e.target.value.slice(0, 2200) }))} className="min-h-32" />
+              <Textarea
+                id="caption"
+                value={doc.caption}
+                onChange={(e) => setDoc((d) => ({ ...d, caption: e.target.value.slice(0, 2200) }))}
+                className="min-h-32"
+              />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label={`Hashtags (${doc.hashtags.length}/30)`} htmlFor="hashtags" hint="Separe por espaço. Hashtags inválidas são descartadas.">
+              <Field
+                label={`Hashtags (${doc.hashtags.length}/30)`}
+                htmlFor="hashtags"
+                hint="Separe por espaço. Hashtags inválidas são descartadas."
+              >
                 <Input
                   id="hashtags"
                   value={hashtagText}
                   onChange={(e) => setHashtagText(e.target.value)}
                   onBlur={() => {
-                    const tags = [...new Set(hashtagText.split(/[\s,]+/).map(normalizeHashtag).filter((h): h is string => Boolean(h)))].slice(0, 30);
+                    const tags = [
+                      ...new Set(
+                        hashtagText
+                          .split(/[\s,]+/)
+                          .map(normalizeHashtag)
+                          .filter((h): h is string => Boolean(h)),
+                      ),
+                    ].slice(0, 30);
                     setHashtagText(tags.join(" "));
                     setDoc((d) => ({ ...d, hashtags: tags }));
                   }}
                 />
               </Field>
               <Field label="CTA" htmlFor="cta">
-                <Input id="cta" value={doc.cta} maxLength={200} onChange={(e) => setDoc((d) => ({ ...d, cta: e.target.value }))} />
+                <Input
+                  id="cta"
+                  value={doc.cta}
+                  maxLength={200}
+                  onChange={(e) => setDoc((d) => ({ ...d, cta: e.target.value }))}
+                />
               </Field>
             </div>
-            <Field label="Notas de produção" htmlFor="notes" hint="Conceito, premissas e pontos a confirmar (não aparecem na peça).">
-              <Textarea id="notes" value={doc.notes} maxLength={3000} onChange={(e) => setDoc((d) => ({ ...d, notes: e.target.value }))} />
+            <Field
+              label="Notas de produção"
+              htmlFor="notes"
+              hint="Conceito, premissas e pontos a confirmar (não aparecem na peça)."
+            >
+              <Textarea
+                id="notes"
+                value={doc.notes}
+                maxLength={3000}
+                onChange={(e) => setDoc((d) => ({ ...d, notes: e.target.value }))}
+              />
             </Field>
           </fieldset>
         </Card>
@@ -426,26 +600,46 @@ export function ContentEditor({
 
       <div className="flex min-w-0 flex-col gap-4">
         {canEdit ? (
-          <Card className={cx(dirty && "border-amber-400/40")}>
+          <Card className={cx(dirty && "border-warn/40")}>
             <div className="flex flex-col gap-3 p-4">
               <Field label="Nota da alteração (opcional)" htmlFor="note">
-                <Input id="note" value={changeNote} maxLength={500} onChange={(e) => setChangeNote(e.target.value)} placeholder="Ex.: título mais direto" />
+                <Input
+                  id="note"
+                  value={changeNote}
+                  maxLength={500}
+                  onChange={(e) => setChangeNote(e.target.value)}
+                  placeholder="Ex.: título mais direto"
+                />
               </Field>
               <div className="flex flex-wrap items-center gap-2">
                 <Button type="button" onClick={save} disabled={!dirty || saving}>
                   {saving ? "Salvando..." : "Salvar nova versão"}
                 </Button>
-                <Button type="button" variant="ghost" disabled={!dirty || saving} onClick={() => {
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={!dirty || saving}
+                  onClick={() => {
                     setDoc(initialDocument);
                     setHashtagText(initialDocument.hashtags.join(" "));
                     setSelected((i) => Math.min(i, initialDocument.slides.length - 1));
-                  }}>
+                  }}
+                >
                   Descartar alterações
                 </Button>
               </div>
-              {dirty ? <p className="text-xs text-amber-300">Alterações não salvas. Salvar cria uma nova versão e exige nova aprovação.</p> : <p className="text-xs text-ink-400">Sem alterações pendentes.</p>}
+              {dirty ? (
+                <p className="text-sm text-warn">
+                  Alterações não salvas. Salvar cria uma nova versão e exige nova aprovação.
+                </p>
+              ) : (
+                <p className="text-sm text-muted">Sem alterações pendentes.</p>
+              )}
               {saveMessage ? (
-                <p role={saveMessage.tone === "error" ? "alert" : "status"} className={cx("text-sm", saveMessage.tone === "error" ? "text-red-300" : "text-emerald-300")}>
+                <p
+                  role={saveMessage.tone === "error" ? "alert" : "status"}
+                  className={cx("text-base", saveMessage.tone === "error" ? "text-danger" : "text-ok")}
+                >
                   {saveMessage.text}
                 </p>
               ) : null}
@@ -459,7 +653,11 @@ export function ContentEditor({
           <CardHeader title="Layout e estilo" />
           <fieldset disabled={!canEdit} className="grid gap-4 p-5">
             <Field label="Template" htmlFor="template">
-              <Select id="template" value={doc.templateId} onChange={(e) => setDoc((d) => ({ ...d, templateId: e.target.value }))}>
+              <Select
+                id="template"
+                value={doc.templateId}
+                onChange={(e) => setDoc((d) => ({ ...d, templateId: e.target.value }))}
+              >
                 {compatibleTemplates.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.familyLabel} — {t.name}
@@ -490,21 +688,33 @@ export function ContentEditor({
             </Field>
             <div className="grid grid-cols-5 gap-2">
               {(["primary", "secondary", "accent", "background", "text"] as const).map((k) => (
-                <label key={k} className="flex flex-col items-center gap-1 text-[11px] text-ink-400">
+                <label key={k} className="flex flex-col items-center gap-1 text-xs text-muted">
                   <input
                     type="color"
                     value={doc.style.colors[k]}
                     onChange={(e) => setStyle({ colors: { ...doc.style.colors, [k]: e.target.value } })}
-                    className="h-9 w-full cursor-pointer rounded-md border border-ink-600 bg-transparent"
+                    className="h-9 w-full cursor-pointer rounded-md border border-control bg-transparent"
                     aria-label={`Cor ${k}`}
                   />
-                  {{ primary: "Primária", secondary: "Secundária", accent: "Destaque", background: "Fundo", text: "Texto" }[k]}
+                  {
+                    {
+                      primary: "Primária",
+                      secondary: "Secundária",
+                      accent: "Destaque",
+                      background: "Fundo",
+                      text: "Texto",
+                    }[k]
+                  }
                 </label>
               ))}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Fonte dos títulos" htmlFor="hf">
-                <Select id="hf" value={doc.style.headingFont} onChange={(e) => setStyle({ headingFont: e.target.value as FontId })}>
+                <Select
+                  id="hf"
+                  value={doc.style.headingFont}
+                  onChange={(e) => setStyle({ headingFont: e.target.value as FontId })}
+                >
                   {FONT_IDS.map((f) => (
                     <option key={f} value={f}>
                       {FONT_CATALOG[f].label}
@@ -513,7 +723,11 @@ export function ContentEditor({
                 </Select>
               </Field>
               <Field label="Fonte dos textos" htmlFor="bf">
-                <Select id="bf" value={doc.style.bodyFont} onChange={(e) => setStyle({ bodyFont: e.target.value as FontId })}>
+                <Select
+                  id="bf"
+                  value={doc.style.bodyFont}
+                  onChange={(e) => setStyle({ bodyFont: e.target.value as FontId })}
+                >
                   {FONT_IDS.map((f) => (
                     <option key={f} value={f}>
                       {FONT_CATALOG[f].label}
@@ -522,12 +736,22 @@ export function ContentEditor({
                 </Select>
               </Field>
             </div>
-            <label className="flex items-center gap-2 text-sm text-ink-200">
-              <input type="checkbox" checked={doc.style.showLogo} onChange={(e) => setStyle({ showLogo: e.target.checked })} className="accent-iris-400" />
+            <label className="flex items-center gap-2 text-base text-fg">
+              <input
+                type="checkbox"
+                checked={doc.style.showLogo}
+                onChange={(e) => setStyle({ showLogo: e.target.checked })}
+                className="accent-accent"
+              />
               Exibir logotipo / assinatura
             </label>
             <Field label="Assinatura (quando não há logotipo)" htmlFor="handle">
-              <Input id="handle" value={doc.style.handle} maxLength={60} onChange={(e) => setStyle({ handle: e.target.value })} />
+              <Input
+                id="handle"
+                value={doc.style.handle}
+                maxLength={60}
+                onChange={(e) => setStyle({ handle: e.target.value })}
+              />
             </Field>
             <Button type="button" variant="secondary" size="sm" onClick={() => setStyle(structuredClone(brandStyle))}>
               Restaurar estilo da marca

@@ -37,9 +37,22 @@ export function DecisionForm({ token, approvalId }: { token: string; approvalId:
       <input type="hidden" name="token" value={token} />
       <input type="hidden" name="approvalId" value={approvalId} />
       <Field label="Seu nome" htmlFor={`d-name-${approvalId}`} error={err("name")}>
-        <Input id={`d-name-${approvalId}`} name="name" required minLength={2} maxLength={120} autoComplete="name" ref={nameRef} />
+        <Input
+          id={`d-name-${approvalId}`}
+          name="name"
+          required
+          minLength={2}
+          maxLength={120}
+          autoComplete="name"
+          ref={nameRef}
+        />
       </Field>
-      <Field label="Comentário" htmlFor={`d-note-${approvalId}`} error={err("note")} hint="Obrigatório se pedir ajuste: diga o que precisa mudar.">
+      <Field
+        label="Comentário"
+        htmlFor={`d-note-${approvalId}`}
+        error={err("note")}
+        hint="Obrigatório se pedir ajuste: diga o que precisa mudar."
+      >
         <Textarea id={`d-note-${approvalId}`} name="note" maxLength={2000} className="min-h-20" />
       </Field>
       {state.status === "error" && !state.fieldErrors ? <FormMessage state={state} /> : null}

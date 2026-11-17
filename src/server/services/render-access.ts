@@ -29,10 +29,19 @@ async function loadContext(auth: AuthContext, contentId: string, doc: ContentDoc
   });
 }
 
-export async function previewDocument(auth: AuthContext, contentId: string, raw: unknown): Promise<{ slides: RenderedSlide[]; quality: QualityReport }> {
+export async function previewDocument(
+  auth: AuthContext,
+  contentId: string,
+  raw: unknown,
+): Promise<{ slides: RenderedSlide[]; quality: QualityReport }> {
   const parsed = ContentDocumentSchema.safeParse(raw);
   if (!parsed.success) {
-    throw new ValidationError(parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).slice(0, 5).join("; "));
+    throw new ValidationError(
+      parsed.error.issues
+        .map((i) => `${i.path.join(".")}: ${i.message}`)
+        .slice(0, 5)
+        .join("; "),
+    );
   }
   const doc = parsed.data;
   const { item, images, brand } = await loadContext(auth, contentId, doc);
@@ -48,12 +57,21 @@ export async function previewDocument(auth: AuthContext, contentId: string, raw:
   return { slides, quality };
 }
 
-export async function renderStoredSlide(auth: AuthContext, contentId: string, doc: ContentDocument, index: number): Promise<RenderedSlide> {
+export async function renderStoredSlide(
+  auth: AuthContext,
+  contentId: string,
+  doc: ContentDocument,
+  index: number,
+): Promise<RenderedSlide> {
   const { images } = await loadContext(auth, contentId, doc);
   return renderSlide(doc, index, { images });
 }
 
-export async function renderStoredDocument(auth: AuthContext, contentId: string, doc: ContentDocument): Promise<RenderedSlide[]> {
+export async function renderStoredDocument(
+  auth: AuthContext,
+  contentId: string,
+  doc: ContentDocument,
+): Promise<RenderedSlide[]> {
   const { images } = await loadContext(auth, contentId, doc);
   return renderDocument(doc, { images });
 }

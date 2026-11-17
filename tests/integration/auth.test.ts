@@ -19,12 +19,15 @@ describe("autenticação", () => {
   it("recusa senha errada sem revelar se o e-mail existe", async () => {
     const { email } = await newOrg();
     await expect(login({ email, password: "errada-123456" })).rejects.toBeInstanceOf(UnauthenticatedError);
-    await expect(login({ email: "naoexiste@teste.prisma", password: "errada-123456" })).rejects.toThrow("E-mail ou senha inválidos.");
+    await expect(login({ email: "naoexiste@teste.prisma", password: "errada-123456" })).rejects.toThrow(
+      "E-mail ou senha inválidos.",
+    );
   });
 
   it("bloqueia após 5 tentativas falhas", async () => {
     const { email } = await newOrg();
-    for (let i = 0; i < 5; i++) await expect(login({ email, password: `errada-${i}xxxxx` })).rejects.toBeInstanceOf(UnauthenticatedError);
+    for (let i = 0; i < 5; i++)
+      await expect(login({ email, password: `errada-${i}xxxxx` })).rejects.toBeInstanceOf(UnauthenticatedError);
     await expect(login({ email, password: PASSWORD })).rejects.toBeInstanceOf(RateLimitError);
   });
 
@@ -44,7 +47,9 @@ describe("autenticação", () => {
 
   it("tentativas paralelas não escapam do limite de 5 falhas", async () => {
     const { email } = await newOrg();
-    const results = await Promise.allSettled(Array.from({ length: 12 }, (_, i) => login({ email, password: `paralela-${i}-errada` })));
+    const results = await Promise.allSettled(
+      Array.from({ length: 12 }, (_, i) => login({ email, password: `paralela-${i}-errada` })),
+    );
     const reasons = results.map((r) => (r.status === "rejected" ? r.reason : null));
     expect(reasons.filter((e) => e instanceof UnauthenticatedError)).toHaveLength(5);
     expect(reasons.filter((e) => e instanceof RateLimitError)).toHaveLength(7);
@@ -57,15 +62,24 @@ describe("autenticação", () => {
     const { userId, temporaryPassword } = await inviteMember(owner, { name: "Pessoa Nova", email, role: "editor" });
     const first = await authFor(email, temporaryPassword);
     expect(first.mustChangePassword).toBe(true);
-    await withTx(systemCtx("test"), (tx) => tx.query("UPDATE users SET password_set_at = now() - interval '8 days' WHERE id = $1", [userId]));
+    await withTx(systemCtx("test"), (tx) =>
+      tx.query("UPDATE users SET password_set_at = now() - interval '8 days' WHERE id = $1", [userId]),
+    );
     await expect(login({ email, password: temporaryPassword })).rejects.toThrow("Senha temporária expirada");
   });
 
   it("convite para e-mail já cadastrado não vincula a conta de outra organização", async () => {
     const a = await newOrg();
     const b = await newOrg();
-    await expect(inviteMember(b.owner, { name: "Dono de A", email: a.email, role: "admin" })).rejects.toBeInstanceOf(ConflictError);
-    const rows = await withTx(systemCtx("test"), (tx) => many(tx, "SELECT 1 FROM memberships WHERE organization_id = $1 AND user_id = $2", [b.owner.organizationId, a.owner.userId]));
+    await expect(inviteMember(b.owner, { name: "Dono de A", email: a.email, role: "admin" })).rejects.toBeInstanceOf(
+      ConflictError,
+    );
+    const rows = await withTx(systemCtx("test"), (tx) =>
+      many(tx, "SELECT 1 FROM memberships WHERE organization_id = $1 AND user_id = $2", [
+        b.owner.organizationId,
+        a.owner.userId,
+      ]),
+    );
     expect(rows).toHaveLength(0);
   });
 
@@ -73,9 +87,18 @@ describe("autenticação", () => {
     const a = await newOrg();
     const b = await newOrg();
     const email = uniqueEmail("dupla");
-    const { userId, temporaryPassword } = await inviteMember(a.owner, { name: "Pessoa em duas agências", email, role: "editor" });
+    const { userId, temporaryPassword } = await inviteMember(a.owner, {
+      name: "Pessoa em duas agências",
+      email,
+      role: "editor",
+    });
     // Vínculo à organização B feito pelo operador (como em `npm run member:add`).
-    await withTx(systemCtx("test"), (tx) => tx.query("INSERT INTO memberships (organization_id, user_id, role) VALUES ($1, $2, 'viewer')", [b.owner.organizationId, userId]));
+    await withTx(systemCtx("test"), (tx) =>
+      tx.query("INSERT INTO memberships (organization_id, user_id, role) VALUES ($1, $2, 'viewer')", [
+        b.owner.organizationId,
+        userId,
+      ]),
+    );
     const inA = await authFor(email, temporaryPassword);
     expect(inA.organizationId).toBe(a.owner.organizationId);
 
@@ -85,14 +108,17 @@ describe("autenticação", () => {
     const inB = await resolveSession(token);
     expect(inB?.organizationId).toBe(b.owner.organizationId);
     expect(inB?.role).toBe("viewer");
-    const user = await withTx(systemCtx("test"), (tx) => many<{ is_active: boolean }>(tx, "SELECT is_active FROM users WHERE id = $1", [userId]));
+    const user = await withTx(systemCtx("test"), (tx) =>
+      many<{ is_active: boolean }>(tx, "SELECT is_active FROM users WHERE id = $1", [userId]),
+    );
     expect(user[0]?.is_active).toBe(true);
   });
 
   it("redefinição pelo terminal libera o bloqueio, troca a senha e encerra sessões", async () => {
     const { email } = await newOrg();
     const { token } = await login({ email, password: PASSWORD });
-    for (let i = 0; i < 5; i++) await expect(login({ email, password: `errada-${i}-xxxx` })).rejects.toBeInstanceOf(UnauthenticatedError);
+    for (let i = 0; i < 5; i++)
+      await expect(login({ email, password: `errada-${i}-xxxx` })).rejects.toBeInstanceOf(UnauthenticatedError);
     await expect(login({ email, password: PASSWORD })).rejects.toBeInstanceOf(RateLimitError);
 
     await expect(operatorResetPassword(email, "curta")).rejects.toBeInstanceOf(ValidationError);
@@ -105,4 +131,3 @@ describe("autenticação", () => {
     expect((await resolveSession(fresh.token))?.mustChangePassword).toBe(false);
   });
 });
-

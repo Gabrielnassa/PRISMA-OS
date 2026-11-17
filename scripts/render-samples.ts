@@ -24,7 +24,10 @@ for (const t of TEMPLATES) {
       const file = path.join(outDir, `${t.id}_${aspect.replace(":", "x")}_${i + 1}.png`);
       fs.writeFileSync(file, svgToPng(s.svg, 540));
       const bad = s.texts.filter((x) => !x.fits).map((x) => x.key);
-      if (bad.length || s.issues.length) console.log(`${path.basename(file)}: transbordo=${bad.join(",") || "-"} ocorrências=${s.issues.join(",") || "-"}`);
+      if (bad.length || s.issues.length)
+        console.log(
+          `${path.basename(file)}: transbordo=${bad.join(",") || "-"} ocorrências=${s.issues.join(",") || "-"}`,
+        );
     });
   }
 }

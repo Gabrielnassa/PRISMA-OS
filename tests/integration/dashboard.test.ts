@@ -26,7 +26,9 @@ describe("dashboard", () => {
     await createContent(owner, manual(a.id, "instagram", "Post A1"));
     await createContent(owner, manual(a.id, "linkedin", "Post A2"));
     const old = await createContent(owner, manual(b.id, "instagram", "Post B1 antigo"));
-    await withTx(systemCtx("test"), (tx) => tx.query("UPDATE content_items SET created_at = now() - interval '60 days' WHERE id = $1", [old.contentId]));
+    await withTx(systemCtx("test"), (tx) =>
+      tx.query("UPDATE content_items SET created_at = now() - interval '60 days' WHERE id = $1", [old.contentId]),
+    );
 
     const all = await getDashboard(owner, { period: "90d" });
     expect(all.producedInPeriod).toBe(3);

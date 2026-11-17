@@ -5,7 +5,10 @@ import { requireAuth } from "@/server/auth/next";
 import { runAction, type ActionState } from "@/server/actions";
 import { createCalendarFeed, revokeCalendarFeed } from "@/server/services/calendar-feed";
 
-export async function createFeedAction(_prev: ActionState<{ url: string }>, _form: FormData): Promise<ActionState<{ url: string }>> {
+export async function createFeedAction(
+  _prev: ActionState<{ url: string }>,
+  _form: FormData,
+): Promise<ActionState<{ url: string }>> {
   const auth = await requireAuth();
   return runAction(async () => {
     const url = await createCalendarFeed(auth);

@@ -15,10 +15,19 @@ import {
 } from "@/server/services/clients";
 import { setClientBudget } from "@/server/services/costs";
 import type { BrandProfile, TemplateFamily } from "@/lib/brand";
-import { suggestColorsFromInstagram, suggestColorsFromMedia, type InstagramColors } from "@/server/services/brand-colors";
+import {
+  suggestColorsFromInstagram,
+  suggestColorsFromMedia,
+  type InstagramColors,
+} from "@/server/services/brand-colors";
 import { deleteClient } from "@/server/services/deletion";
 import { setPackage } from "@/server/services/packages";
-import { approveEditorialPlan, proposeEditorialPlan, setEditorialItemStatus, updateEditorialItem } from "@/server/services/editorial";
+import {
+  approveEditorialPlan,
+  proposeEditorialPlan,
+  setEditorialItemStatus,
+  updateEditorialItem,
+} from "@/server/services/editorial";
 import { importFromDrive, setDriveFolder } from "@/server/services/drive";
 import { choosePage, disconnectAccount } from "@/server/services/social-accounts";
 import type { EditorialFormat } from "@/server/skills/editorial";
@@ -133,7 +142,10 @@ export async function saveBrandAction(_prev: ActionState, form: FormData): Promi
 export async function addMemoryAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const auth = await requireAuth();
   return runAction(async () => {
-    await addMemory(auth, str(form, "clientId"), { kind: str(form, "kind") as MemoryKind, content: str(form, "content") });
+    await addMemory(auth, str(form, "clientId"), {
+      kind: str(form, "kind") as MemoryKind,
+      content: str(form, "content"),
+    });
     refresh();
     return { message: "Informação registrada." };
   });
@@ -144,7 +156,13 @@ export async function memoryStatusAction(_prev: ActionState, form: FormData): Pr
   return runAction(async () => {
     const op = str(form, "op");
     if (op === "delete") await deleteMemory(auth, str(form, "clientId"), str(form, "memoryId"));
-    else await setMemoryStatus(auth, str(form, "clientId"), str(form, "memoryId"), op === "archive" ? "archived" : "active");
+    else
+      await setMemoryStatus(
+        auth,
+        str(form, "clientId"),
+        str(form, "memoryId"),
+        op === "archive" ? "archived" : "active",
+      );
     refresh();
   });
 }
@@ -170,15 +188,26 @@ export async function budgetAction(_prev: ActionState, form: FormData): Promise<
 
 // --- Sugestão de cores da marca (chamadas diretas do formulário do perfil) ---
 
-export async function suggestColorsFromMediaAction(clientId: string, mediaIds: string[]): Promise<ActionState<PaletteSuggestion>> {
+export async function suggestColorsFromMediaAction(
+  clientId: string,
+  mediaIds: string[],
+): Promise<ActionState<PaletteSuggestion>> {
   const auth = await requireAuth();
-  return runAction(async () => ({ data: await suggestColorsFromMedia(auth, String(clientId), Array.isArray(mediaIds) ? mediaIds.map(String) : []) }));
+  return runAction(async () => ({
+    data: await suggestColorsFromMedia(auth, String(clientId), Array.isArray(mediaIds) ? mediaIds.map(String) : []),
+  }));
 }
 
-export async function suggestColorsFromInstagramAction(clientId: string, handle: string, saveProfilePicture: boolean): Promise<ActionState<InstagramColors>> {
+export async function suggestColorsFromInstagramAction(
+  clientId: string,
+  handle: string,
+  saveProfilePicture: boolean,
+): Promise<ActionState<InstagramColors>> {
   const auth = await requireAuth();
   return runAction(async () => {
-    const data = await suggestColorsFromInstagram(auth, String(clientId), String(handle ?? ""), { saveProfilePicture: saveProfilePicture === true });
+    const data = await suggestColorsFromInstagram(auth, String(clientId), String(handle ?? ""), {
+      saveProfilePicture: saveProfilePicture === true,
+    });
     if (data.savedLogoId) refresh();
     return { data };
   });
@@ -205,7 +234,11 @@ export async function proposeEditorialAction(_prev: ActionState, form: FormData)
   const auth = await requireAuth();
   return runAction(async () => {
     const useAi = str(form, "mode") === "ai";
-    const r = await proposeEditorialPlan(auth, str(form, "clientId"), { month: str(form, "month"), theme: str(form, "theme"), useAi });
+    const r = await proposeEditorialPlan(auth, str(form, "clientId"), {
+      month: str(form, "month"),
+      theme: str(form, "theme"),
+      useAi,
+    });
     refresh();
     return {
       message: useAi
@@ -235,9 +268,20 @@ export async function editorialItemStatusAction(_prev: ActionState, form: FormDa
   const auth = await requireAuth();
   return runAction(async () => {
     const status = str(form, "status");
-    await setEditorialItemStatus(auth, str(form, "itemId"), status === "done" ? "done" : status === "skipped" ? "skipped" : "planned");
+    await setEditorialItemStatus(
+      auth,
+      str(form, "itemId"),
+      status === "done" ? "done" : status === "skipped" ? "skipped" : "planned",
+    );
     refresh();
-    return { message: status === "done" ? "Marcado como feito." : status === "skipped" ? "Fora deste mês." : "Pauta de volta à lista." };
+    return {
+      message:
+        status === "done"
+          ? "Marcado como feito."
+          : status === "skipped"
+            ? "Fora deste mês."
+            : "Pauta de volta à lista.",
+    };
   });
 }
 
@@ -247,8 +291,14 @@ export async function approveEditorialAction(_prev: ActionState, form: FormData)
     const r = await approveEditorialPlan(auth, str(form, "planId"));
     refresh();
     const parts = [r.created === 1 ? "1 peça enviada para criação." : `${r.created} peças enviadas para criação.`];
-    if (r.videos) parts.push(r.videos === 1 ? "1 vídeo fica para marcar quando feito." : `${r.videos} vídeos ficam para marcar quando feitos.`);
-    if (r.stoppedBecause) parts.push(`Parou antes de terminar: ${r.stoppedBecause} Clique de novo para criar as ${r.pending} restantes.`);
+    if (r.videos)
+      parts.push(
+        r.videos === 1
+          ? "1 vídeo fica para marcar quando feito."
+          : `${r.videos} vídeos ficam para marcar quando feitos.`,
+      );
+    if (r.stoppedBecause)
+      parts.push(`Parou antes de terminar: ${r.stoppedBecause} Clique de novo para criar as ${r.pending} restantes.`);
     return { message: parts.join(" ") };
   });
 }
@@ -258,7 +308,13 @@ export async function driveFolderAction(_prev: ActionState, form: FormData): Pro
   return runAction(async () => {
     const r = await setDriveFolder(auth, str(form, "clientId"), str(form, "folder"));
     refresh();
-    return { message: str(form, "folder") ? (r.folderName ? `Pasta ligada: ${r.folderName}.` : "Pasta salva.") : "Pasta desligada." };
+    return {
+      message: str(form, "folder")
+        ? r.folderName
+          ? `Pasta ligada: ${r.folderName}.`
+          : "Pasta salva."
+        : "Pasta desligada.",
+    };
   });
 }
 
@@ -268,7 +324,10 @@ export async function driveImportAction(_prev: ActionState, form: FormData): Pro
     const r = await importFromDrive(auth, str(form, "clientId"));
     refresh();
     const parts = [r.imported === 1 ? "1 arquivo importado." : `${r.imported} arquivos importados.`];
-    if (r.failed.length) parts.push(`${r.failed.length === 1 ? "1 recusado" : `${r.failed.length} recusados`}: ${r.failed.slice(0, 3).join("; ")}${r.failed.length > 3 ? "..." : ""}`);
+    if (r.failed.length)
+      parts.push(
+        `${r.failed.length === 1 ? "1 recusado" : `${r.failed.length} recusados`}: ${r.failed.slice(0, 3).join("; ")}${r.failed.length > 3 ? "..." : ""}`,
+      );
     if (r.remaining) parts.push(`Faltam ${r.remaining}: clique de novo para continuar.`);
     return { message: parts.join(" ") };
   });
@@ -289,6 +348,7 @@ export async function choosePageAction(_prev: ActionState, form: FormData): Prom
     const out = await choosePage(auth, str(form, "stateId"), str(form, "pageId"));
     return { data: out };
   });
-  if (r.status === "ok" && r.data) redirect(`/clientes/${r.data.clientId}?aba=redes&ok=${encodeURIComponent(r.data.message)}`);
+  if (r.status === "ok" && r.data)
+    redirect(`/clientes/${r.data.clientId}?aba=redes&ok=${encodeURIComponent(r.data.message)}`);
   return r.status === "error" ? r : { status: "idle" };
 }
