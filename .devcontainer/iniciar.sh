@@ -30,9 +30,13 @@ for nome in web worker; do
   fi
 done
 
+# Dependências e build de acordo com a versão do código (também depois de um
+# `git pull` feito à mão).
+. .devcontainer/_versao.sh
+dependencias_em_dia
 node .devcontainer/esperar-banco.mjs
 npm run --silent db:migrate
-[ -f .next/BUILD_ID ] || npm run build
+build_em_dia
 
 setsid nohup npm start -- -p 3000 >/tmp/prisma-web.log 2>&1 </dev/null &
 echo $! >/tmp/prisma-web.pid

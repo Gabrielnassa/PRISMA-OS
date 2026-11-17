@@ -19,8 +19,6 @@ for nome in web worker; do
 done
 echo "Site parado para a atualização (volta sozinho no fim)."
 
-npm ci --no-audit --no-fund
-# Build do zero: nada da versão anterior fica misturado.
-rm -rf .next
-APP_URL="$(bash .devcontainer/endereco.sh)" NODE_ENV=production npm run build
+# O iniciar.sh instala as dependências e refaz o build quando a versão mudou
+# (build do zero: nada da versão anterior fica misturado).
 bash .devcontainer/iniciar.sh
